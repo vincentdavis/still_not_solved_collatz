@@ -682,6 +682,94 @@ footer{border-top:1px solid var(--rule);padding-top:28px;font-size:.84rem;color:
 </section>
 
 
+<!-- ══ CENSUS ════════════════════════════════════════════════════ -->
+<section>
+  <div class="eyebrow">Testing the belief itself</div>
+  <h2>Check the heuristic where cycles actually exist</h2>
+  <div class="prose stack">
+    <p>Everything on this page that says a cycle is unlikely rests on one heuristic: the expected
+    number of bounded backward chains decays like <code>(λ/3)^k</code>. Subcritical — but by only
+    <b>5.4%</b>. The whole conjecture lives in that margin, and nobody can check the heuristic
+    against a real counterexample, because none is known.</p>
+    <p>Except in <code>3n+q</code>, where cycles are abundant. That is the one laboratory where the
+    heuristic can be held against reality. So: <b>does it predict how many cycles each
+    <code>q</code> has?</b></p>
+    <p>Count <em>primitive</em> cycles — <code>gcd(q, elements) = 1</code>, so scaled copies of
+    smaller systems aren't counted twice — with maximum below <code>R·q</code>. Fixing the
+    <em>ratio</em> rather than the bound makes the prediction identical for every <code>q</code>,
+    so the counts become comparable and the distribution testable.</p>
+  </div>
+
+  <figure>
+    <div class="frame">
+      <canvas id="cen-hist" height="300" aria-label="Cycles per q: observed counts against the Poisson prediction"></canvas>
+      <div class="tip" id="cen-tip"></div>
+    </div>
+    <div class="legend" id="cen-legend"></div>
+    <figcaption id="cen-cap"></figcaption>
+  </figure>
+
+  <div class="tally" id="cen-stats"></div>
+
+  <div class="note kill" id="cen-verdict1"></div>
+
+  <div class="prose stack">
+    <h3>What is doing it</h3>
+    <p>The clue is where the excess sits. Over-dispersion is <b>extreme within a single cycle
+    length</b> — variance-to-mean up to 13.9 at fixed <code>L</code> — while counts at
+    <em>different</em> lengths are essentially uncorrelated. So it isn't that some <code>q</code>
+    are globally rich. Something acts per <code>(L, B)</code>. It is this:</p>
+  </div>
+
+  <div class="frame" style="text-align:center;padding:26px 18px">
+    <div class="mono" style="font-size:clamp(.9rem,2.2vw,1.15rem);line-height:2;color:var(--ink)">
+      q &nbsp;divides&nbsp; 2<sup>B</sup> − 3<sup>L</sup>
+      &nbsp;&nbsp;&nbsp;that is&nbsp;&nbsp;&nbsp;
+      <span style="color:var(--violet)">2<sup>B</sup> ≡ 3<sup>L</sup> (mod q)</span>
+    </div>
+    <div style="font-size:.78rem;color:var(--ink-3);margin-top:8px" id="cen-thm"></div>
+  </div>
+
+  <div class="prose stack">
+    <p>The proof is three lines. For a prime <code>p | q</code>, the relation
+    <code>2^{a_j}·x_j = 3x_{j−1} + q</code> shows <code>p</code> divides every element or none;
+    primitivity rules out "every", so <code>gcd(x₀, q) = 1</code>. The cycle equation
+    <code>x₀(2^B − 3^L) = qS</code> then forces <code>q | 2^B − 3^L</code>.</p>
+    <h3>The burst</h3>
+    <p>The strongest case is when <code>2^B − 3^L</code> equals <code>q</code> <em>exactly</em>. Then
+    the cycle equation collapses to <code>x₀ = S</code> — and <em>every</em> admissible halving
+    vector of that <code>(L, B)</code> yields an integer candidate. One hit can produce a burst of
+    cycles at once.</p>
+  </div>
+
+  <div class="frame stack" id="cen-burst"></div>
+
+  <div class="frame scroll">
+    <table id="cen-top"><thead><tr>
+      <th>q</th><th>cycles</th><th>of which burst</th><th>exact hit 2^B − 3^L = q</th>
+    </tr></thead><tbody></tbody></table>
+  </div>
+
+  <div class="note warn" id="cen-partial"></div>
+
+  <div class="prose stack">
+    <h3>And that is exactly why <code>q = 1</code> is different</h3>
+    <p>Ask when <code>q = 1</code> gets a burst: <code>2^B − 3^L = 1</code>. For <code>L ≥ 2</code>
+    the number <code>3^L + 1</code> is <code>2</code> or <code>4</code> mod 8 — never a higher power
+    of two — so <code>2^B ≤ 4</code>. No deep theorem required.</p>
+  </div>
+
+  <div class="frame" id="cen-mod8"></div>
+
+  <div class="note" style="border-color:var(--violet)" id="cen-q1"></div>
+
+  <div class="prose stack">
+    <h3>The verdict — including on this experiment</h3>
+  </div>
+  <div class="note kill" id="cen-verdict2"></div>
+</section>
+
+
 <!-- ══ STATUS ════════════════════════════════════════════════════ -->
 <section>
   <div class="eyebrow">Bookkeeping</div>
@@ -1783,6 +1871,164 @@ document.getElementById("as-limit").innerHTML =
 
 onTheme(asPlot);
 asPlot();
+
+/* ═══ 7c. THE 3n+q CENSUS ══════════════════════════════════════ */
+var CEN = D.census;
+
+/* --- observed vs Poisson, log scale so the tail is visible --- */
+var cenCv = document.getElementById("cen-hist"), cenTip = document.getElementById("cen-tip");
+var cenG = null;
+function cenHist(){
+  var p = pal(), g = hidpi(cenCv, 300), c = g.c;
+  var padL = 46, padR = 14, padT = 16, padB = 38;
+  var W = g.w - padL - padR, H = 300 - padT - padB;
+  var ks = Object.keys(CEN.hist).map(Number).sort(function(a,b){return a-b;});
+  var kmax = ks[ks.length-1];
+  var FLOOR = 0.05;
+  var top = Math.max.apply(null, ks.map(function(k){ return Math.max(CEN.hist[k]||0, CEN.poisson[k]||0); }));
+  function X(k){ return padL + (k / (kmax + 1)) * W; }
+  function Y(v){ var t = Math.max(v, FLOOR);
+    return padT + H - (Math.log10(t) - Math.log10(FLOOR)) / (Math.log10(top) - Math.log10(FLOOR)) * H; }
+  var bw = W / (kmax + 1);
+  cenG = {X:X, Y:Y, bw:bw, kmax:kmax};
+  c.clearRect(0,0,g.w,300);
+  c.strokeStyle = p.rule; c.lineWidth = 1; c.font = '10px "IBM Plex Mono", monospace'; c.fillStyle = p.ink3;
+  [0.1, 1, 10, 100].forEach(function(v){
+    var y = Y(v); if(y < padT) return;
+    c.beginPath(); c.moveTo(padL, y); c.lineTo(padL+W, y); c.stroke();
+    c.textAlign = "right"; c.fillText(v < 1 ? "0.1" : String(v), padL - 6, y + 3);
+  });
+  for(var k = 0; k <= kmax; k += 5){
+    c.textAlign = "center"; c.fillText(k, X(k) + bw/2, 300 - 20);
+  }
+  c.textAlign = "center"; c.fillText("cycles found for a given q", padL + W/2, 300 - 5);
+  /* observed bars */
+  ks.forEach(function(k){
+    var v = CEN.hist[k] || 0; if(!v) return;
+    var y = Y(v);
+    c.fillStyle = p.violet; c.globalAlpha = .85;
+    c.fillRect(X(k) + bw*0.12, y, bw*0.76, padT + H - y);
+  });
+  c.globalAlpha = 1;
+  /* Poisson prediction */
+  c.strokeStyle = p.pink; c.lineWidth = 2; c.setLineDash([5,3]); c.beginPath();
+  ks.forEach(function(k, i){
+    var v = CEN.poisson[k] || 0; var x = X(k) + bw/2, y = Y(v);
+    i ? c.lineTo(x, y) : c.moveTo(x, y);
+  });
+  c.stroke(); c.setLineDash([]);
+  /* mark where Poisson has effectively died but observations continue */
+  var lastReal = ks.filter(function(k){ return (CEN.poisson[k]||0) >= 0.5; }).pop();
+  c.save(); c.strokeStyle = p.amber; c.lineWidth = 1.3; c.setLineDash([3,3]);
+  c.beginPath(); c.moveTo(X(lastReal+1), padT); c.lineTo(X(lastReal+1), padT+H); c.stroke(); c.restore();
+  c.fillStyle = p.amber; c.textAlign = "left"; c.font = '600 10px "IBM Plex Mono", monospace';
+  c.fillText("Poisson predicts ~0 beyond here", X(lastReal+1)+5, padT+11);
+}
+cenCv.addEventListener("mousemove", function(e){
+  if(!cenG) return;
+  var r = cenCv.getBoundingClientRect();
+  var k = Math.floor((e.clientX - r.left - 46) / cenG.bw);
+  if(k < 0 || k > cenG.kmax){ cenTip.style.opacity = 0; return; }
+  cenTip.innerHTML = "<b>" + k + "</b> cycles<br>observed: <b>" + (CEN.hist[k]||0) + "</b> values of q" +
+    "<br>Poisson: " + (CEN.poisson[k]||0).toFixed(2);
+  cenTip.style.left = (cenG.X(k) + cenG.bw/2) + "px";
+  cenTip.style.top = (cenG.Y(Math.max(CEN.hist[k]||0, CEN.poisson[k]||0)) - 4) + "px";
+  cenTip.style.opacity = 1;
+});
+cenCv.addEventListener("mouseleave", function(){ cenTip.style.opacity = 0; });
+(function cenLegend(){
+  var p = pal();
+  document.getElementById("cen-legend").innerHTML = [
+    [p.violet, "observed — how many q have exactly this many cycles"],
+    [p.pink, "what Poisson predicts, at the same mean"],
+    [p.amber, "where the prediction runs out"]
+  ].map(function(it){ return '<span><i class="sw" style="background:'+it[0]+'"></i>'+it[1]+'</span>'; }).join("");
+})();
+document.getElementById("cen-cap").innerHTML =
+  "Log scale, so the tail is visible. Census of <b>" + CEN.n_q + "</b> systems (<code>q ≤ " +
+  CEN.Q + "</code>) at scale <code>X = " + CEN.R + "q</code>, finding <b>" + fmt(CEN.n_cycles) +
+  "</b> primitive cycles. The bars run far past where the Poisson curve has effectively vanished.";
+
+document.getElementById("cen-stats").innerHTML = [
+  [CEN.mean.toFixed(2), "mean cycles per q"],
+  [CEN.var.toFixed(1), "variance"],
+  [CEN.var_over_mean.toFixed(2), "variance ÷ mean — Poisson would give 1"],
+  [fmt(CEN.n_cycles), "primitive cycles across " + CEN.n_q + " systems"]
+].map(function(t){ return "<div><b>"+t[0]+"</b><span>"+t[1]+"</span></div>"; }).join("");
+
+document.getElementById("cen-verdict1").innerHTML =
+  "<b>The heuristic's Poisson assumption is rejected.</b> Variance is " + CEN.var_over_mean.toFixed(2) +
+  "× the mean. Some <code>q</code> carry 20–" + Object.keys(CEN.hist).map(Number).sort(function(a,b){return b-a;})[0] +
+  " cycles where Poisson predicts essentially none. It survives every control — it holds separately " +
+  "for prime and composite <code>q</code>, and is not explained by how many divisors <code>q</code> has.";
+
+document.getElementById("cen-thm").innerHTML =
+  "verified exactly on <b>" + fmt(CEN.n_cycles) + " / " + fmt(CEN.n_cycles) + "</b> cycles (" +
+  CEN.congruence_violations + " violations), with the supporting lemma checked on all <b>" +
+  fmt(CEN.n_elements_checked) + "</b> cycle elements · folklore in the 3n+q literature";
+
+(function burst(){
+  var b = CEN.burst, ex = CEN.example;
+  document.getElementById("cen-burst").innerHTML =
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:0">'+
+      '<div style="padding:2px 18px 2px 0;border-right:1px solid var(--rule)">'+
+        '<div class="mono" style="font-size:1.7rem;font-weight:600;color:var(--violet);line-height:1.2">'+
+          b.hit_mean+'</div><div style="font-size:.83rem;color:var(--ink-2)">mean cycles for the <b>'+
+          b.hit_n+'</b> values of q that admit an exact hit</div></div>'+
+      '<div style="padding:2px 0 2px 18px">'+
+        '<div class="mono" style="font-size:1.7rem;font-weight:600;color:var(--ink-3);line-height:1.2">'+
+          b.other_mean+'</div><div style="font-size:.83rem;color:var(--ink-2)">mean for the other <b>'+
+          b.other_n+'</b></div></div></div>'+
+    '<div class="note" style="border-color:var(--violet);font-size:.9rem">'+
+      '<b>' + (b.hit_mean/b.other_mean).toFixed(1) + '× enrichment.</b> And the very first cycle on this page fits: '+
+      '<code>q = '+ex.q+'</code>’s cycle <code>{'+ex.elements.join(", ")+'}</code> has '+
+      '<code>L = '+ex.L+', B = '+ex.B+'</code> — which <em>is</em> its exact hit, '+
+      '<code>2<sup>'+ex.B+'</sup> − 3<sup>'+ex.L+'</sup> = '+ex.q+'</code>.</div>';
+})();
+
+document.querySelector("#cen-top tbody").innerHTML = CEN.top_q.map(function(r){
+  return '<tr'+(r.hit?' class="hl"':'')+'><td class="n">'+r.q+'</td><td class="n">'+r.count+
+    '</td><td class="n">'+r.d1+'</td><td class="n">'+
+    (r.hit ? '<span class="ok">✓ '+r.hits.map(function(h){return "L="+h[0]+", B="+h[1];}).join("; ")+'</span>'
+           : '<span class="dash">—</span>')+'</td></tr>';
+}).join("");
+
+document.getElementById("cen-partial").innerHTML =
+  "<b>Partial, and said so.</b> Removing the burst cycles drops variance-over-mean from <b>" +
+  CEN.var_over_mean.toFixed(2) + "</b> to <b>" + CEN.burst.var_over_mean_without_d1 +
+  "</b> — about a third of the excess. The rest is unexplained. Note also that <code>q = 499</code> " +
+  "and <code>q = 893</code> are cycle-rich with <em>no</em> exact hit at all, so this is not the whole story.";
+
+(function mod8(){
+  var p = pal(), rows = CEN.q1.mod8;
+  document.getElementById("cen-mod8").innerHTML =
+    '<div class="scroll"><table style="min-width:420px"><thead><tr><th>L</th>'+
+      rows.map(function(r){ return '<th class="n">'+r.L+'</th>'; }).join("")+'</tr></thead><tbody>'+
+      '<tr><td class="n">3<sup>L</sup>+1 mod 8</td>'+
+      rows.map(function(r){ return '<td class="n" style="color:var(--violet);font-weight:600">'+r.r+'</td>'; }).join("")+
+      '</tr></tbody></table></div>'+
+    '<div style="font-size:.83rem;color:var(--ink-3);margin-top:10px">Always 2 or 4 — never 0 — so '+
+      '<code>3<sup>L</sup>+1</code> is never divisible by 8, and <code>2<sup>B</sup> = 3<sup>L</sup>+1</code> '+
+      'forces <code>B ≤ 2</code>.</div>';
+})();
+
+document.getElementById("cen-q1").innerHTML =
+  "<b>So <code>q = 1</code> gets exactly one burst — and it is the cycle we already know.</b> " +
+  "The only solution of <code>2^B − 3^L = 1</code> with <code>L ≥ 1</code> is " +
+  "<code>(L, B) = (1, 2)</code>: the trivial cycle <code>1 → 4 → 2 → 1</code>.";
+
+document.getElementById("cen-verdict2").innerHTML =
+  "<b>The test is confounded, and that is the finding.</b> For <code>q &gt; 1</code>, cycles are " +
+  "largely manufactured by the arithmetic condition <code>q | 2^B − 3^L</code>, which is satisfiable " +
+  "with a modest <code>2^B − 3^L</code>. For <code>q = 1</code> that condition is <b>vacuous</b> — and " +
+  "correspondingly useless. What constrains <code>q = 1</code> instead is <code>x₀ &gt; 2.39×10²¹</code>, " +
+  "forcing <code>2^B − 3^L</code> to be minuscule relative to <code>2^B</code>: a Diophantine condition " +
+  "of a completely different character. <b>So cycle abundance in <code>3n+q</code> says little about " +
+  "Collatz itself.</b> The experiment answers its own question in the negative — which is worth " +
+  "knowing, and is why it is written up here rather than quietly dropped.";
+
+onTheme(cenHist);
+cenHist();
 
 /* ═══ 7. STATUS ════════════════════════════════════════════════ */
 document.querySelector("#th-table tbody").innerHTML = D.theorems.map(function(t){
