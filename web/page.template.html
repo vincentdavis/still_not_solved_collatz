@@ -770,6 +770,75 @@ footer{border-top:1px solid var(--rule);padding-top:28px;font-size:.84rem;color:
 </section>
 
 
+<!-- ══ LEAN LENGTH BOUND ═════════════════════════════════════════ -->
+<section>
+  <div class="eyebrow">What a machine can check</div>
+  <h2>A cycle-length bound, with the hard part quarantined</h2>
+  <div class="prose stack">
+    <p>Every published lower bound on the length of a Collatz cycle — Steiner, Simons–de Weger,
+    Hercher — runs through <b>Baker's theorem</b> on linear forms in logarithms, which bounds how
+    close <code>2^B / 3^L</code> can get to 1. That is deep analytic number theory, and the Lean
+    development here has no real numbers at all, let alone Baker.</p>
+    <p>So the Baker input is <em>quarantined</em>: stated as an explicit hypothesis, in whole
+    numbers, sitting in plain sight in the theorem's own statement. Everything downstream of it is
+    proved.</p>
+  </div>
+
+  <div class="frame" style="text-align:center;padding:26px 18px">
+    <div class="mono" style="font-size:clamp(.82rem,2vw,1.05rem);line-height:2.1;color:var(--ink)" id="ln-thm"></div>
+  </div>
+
+  <div class="prose stack">
+    <h3>The part that would normally need analysis</h3>
+    <p>The textbook derivation takes logarithms of <code>2^B = ∏ (3 + 1/x_j)</code>. With no
+    <code>ℝ</code> available that route is closed — but the same content turns out to sit in two
+    elementary statements about whole numbers, each a plain induction.</p>
+  </div>
+
+  <div class="frame stack" id="ln-replace"></div>
+
+  <div class="prose stack">
+    <h3>What it gives you</h3>
+    <p>Read contrapositively: if every number below <code>m</code> has been checked to reach 1, any
+    cycle must be at least this long. Try it — <code>κ</code> and <code>c</code> would come from a
+    published irrationality measure for <code>log₂3</code>.</p>
+  </div>
+
+  <figure>
+    <div class="frame stack">
+      <div class="row">
+        <label for="ln-k">κ</label>
+        <input id="ln-k" type="number" min="1" max="12" step="1" value="4" style="width:70px">
+        <label for="ln-c">c</label>
+        <input id="ln-c" type="number" min="1" max="1000" step="1" value="1" style="width:80px">
+        <label for="ln-m">verified up to m</label>
+        <select id="ln-m">
+          <option value="21.379">2.39 × 10²¹ — Barina 2025</option>
+          <option value="18">10¹⁸</option>
+          <option value="12">10¹²</option>
+          <option value="6">10⁶</option>
+        </select>
+      </div>
+      <div id="ln-calc" class="verdict"></div>
+    </div>
+    <figcaption>The bound is <code>L^(κ+1) ≥ 3mc / 2q</code>, so it is only as good as the
+    <code>(κ, c)</code> you feed it — and this repository verifies no such pair. That is precisely
+    the part left as a hypothesis.</figcaption>
+  </figure>
+
+  <div class="prose stack">
+    <h3>Not vacuous — checked on a cycle that exists</h3>
+    <p>A formalization about a hypothetical object can be true purely because nothing satisfies its
+    hypotheses. So the theorem is stated for <code>3n+q</code> and instantiated on a <b>real</b>
+    cycle: the <code>q = 5</code> cycle that has appeared throughout this page.</p>
+  </div>
+
+  <div class="frame stack" id="ln-inst"></div>
+
+  <div class="note warn" id="ln-caveat"></div>
+</section>
+
+
 <!-- ══ STATUS ════════════════════════════════════════════════════ -->
 <section>
   <div class="eyebrow">Bookkeeping</div>
@@ -2029,6 +2098,88 @@ document.getElementById("cen-verdict2").innerHTML =
 
 onTheme(cenHist);
 cenHist();
+
+/* ═══ 7d. THE LEAN CYCLE-LENGTH BOUND ══════════════════════════ */
+var LN = D.lean;
+
+document.getElementById("ln-thm").innerHTML =
+  '<span style="color:var(--ink-3);font-size:.8em">hypothesis (Baker, assumed)</span><br>' +
+  LN.theorem.hypothesis.replace(/\^(\([^)]*\)|[A-Za-z0-9κ]+)/g, "<sup>$1</sup>") +
+  '<br><span style="color:var(--ink-3);font-size:.78em">that is, ' +
+  LN.theorem.meaning.replace(/\^(\([^)]*\)|[A-Za-z0-9κ]+)/g, "<sup>$1</sup>") + '</span>' +
+  '<br><br><span style="color:var(--violet);font-size:1.15em">⟹&nbsp; ' +
+  LN.theorem.conclusion.replace(/\^(\([^)]*\)|[A-Za-z0-9κ]+)/g, "<sup>$1</sup>") + '</span>' +
+  '<div style="font-size:.76rem;color:var(--ink-3);margin-top:12px">' +
+  LN.audited_decls + ' declarations audited · axioms: ' + LN.axioms +
+  ' · no <code>sorry</code>, no <code>Classical.choice</code>, no Mathlib</div>';
+
+(function replace(){
+  document.getElementById("ln-replace").innerHTML = LN.replaces_analysis.map(function(r){
+    return '<div style="display:flex;gap:14px;align-items:baseline;flex-wrap:wrap">'+
+      '<span class="ok">✓</span>'+
+      '<div style="flex:1;min-width:240px">'+
+        '<div class="mono" style="font-size:.95rem;color:var(--ink)">'+
+          r.stmt.replace(/\^(\([^)]*\)|[A-Za-z0-9κ]+)/g, "<sup>$1</sup>")+'</div>'+
+        '<div style="font-size:.82rem;color:var(--ink-2);margin-top:3px">'+
+          r.role.replace(/\^(\([^)]*\)|[A-Za-z0-9κ]+)/g, "<sup>$1</sup>")+'</div>'+
+        '<div class="mono" style="font-size:.72rem;color:var(--ink-3);margin-top:3px">'+r.name+'</div>'+
+      '</div></div>';
+  }).join("");
+})();
+
+/* --- the L-bound calculator --- */
+function lnCalc(){
+  var k = Math.max(1, parseInt(document.getElementById("ln-k").value, 10) || 4);
+  var c = Math.max(1, parseInt(document.getElementById("ln-c").value, 10) || 1);
+  var logm = parseFloat(document.getElementById("ln-m").value);
+  /* L^(k+1) >= 3 m c / 2  (q = 1) -> work in log10 */
+  var logRhs = Math.log10(3 * c / 2) + logm;
+  var logL = logRhs / (k + 1);
+  var L = Math.pow(10, logL);
+  var pretty = L >= 1e6 ? L.toExponential(2).replace("e+", " × 10^")
+                        : fmt(Math.round(L));
+  document.getElementById("ln-calc").innerHTML =
+    '<div class="head"><span class="n">L ≥ ' + pretty + '</span>' +
+      '<span class="badge b-live">odd steps</span></div>' +
+    '<div class="work">L<sup>' + (k+1) + '</sup> ≥ 3·m·c / 2 &nbsp;with&nbsp; m ≈ 10<sup>' +
+      logm + '</sup>, κ = ' + k + ', c = ' + c + '</div>' +
+    '<div class="note" style="border-color:var(--ink-3);font-size:.85rem">' +
+      'For comparison: Hercher (2023) proved any nontrivial cycle needs <b>at least 92 circuits</b> ' +
+      'and more than <b>1.375 × 10¹¹</b> odd elements — using the real Baker machinery this ' +
+      'formalization only assumes.</div>';
+}
+["ln-k","ln-c","ln-m"].forEach(function(id){
+  document.getElementById(id).addEventListener("input", lnCalc);
+  document.getElementById(id).addEventListener("change", lnCalc);
+});
+lnCalc();
+
+/* --- the non-vacuous instance --- */
+(function inst(){
+  var I = LN.instance;
+  document.getElementById("ln-inst").innerHTML =
+    '<div class="row" style="justify-content:space-between;align-items:baseline">'+
+      '<span class="mono" style="font-size:.95rem">q = '+I.q+' &nbsp;·&nbsp; cycle {'+I.elements.join(", ")+'}</span>'+
+      '<span class="badge b-live">a cycle that really exists</span></div>'+
+    '<div class="work">'+
+      'L = <b>'+I.L+'</b> &nbsp;·&nbsp; B = <b>'+I.B+'</b> &nbsp;·&nbsp; minimum m = <b>'+I.m+'</b>'+
+      ' &nbsp;·&nbsp; halvings b = ['+I.bb.join(", ")+']<br>'+
+      'the exact identity: ∏(3x<sub>j</sub>+q) = <b>'+fmt(I.prodG)+'</b> = 2<sup>'+I.B+'</sup> · '+
+        fmt(I.prodFrom0)+' = <b>'+fmt(I.two_pow_B * I.prodFrom0)+'</b> ✓'+
+    '</div>'+
+    '<div class="note" style="border-color:var(--violet)">'+
+      '<b>The Baker input holds here — with equality.</b> At κ = '+I.kappa+', c = '+I.c+':<br>'+
+      '<span class="mono">3<sup>'+I.L+'</sup>·'+I.L+'<sup>'+I.kappa+'</sup> + '+I.c+'·3<sup>'+I.L+
+        '</sup> = '+fmt(I.baker_lhs)+' = 2<sup>'+I.B+'</sup>·'+I.L+'<sup>'+I.kappa+'</sup></span><br>'+
+      'so c = '+I.c+' is exactly sharp. The conclusion then reads <span class="mono">'+
+      I.concl_lhs+' ≤ '+I.concl_rhs+'</span> — a true statement about an actual cycle, '+
+      'not a hypothetical one.</div>';
+})();
+
+document.getElementById("ln-caveat").innerHTML =
+  "<b>What this is not.</b> The bound is " + LN.caveat + ". Novelty: none — it is the classical " +
+  "Crandall-style squeeze, rearranged to avoid <code>ℝ</code>. What is gained is that everything " +
+  "<em>after</em> the Baker input is machine-checked and free of the axiom of choice.";
 
 /* ═══ 7. STATUS ════════════════════════════════════════════════ */
 document.querySelector("#th-table tbody").innerHTML = D.theorems.map(function(t){
