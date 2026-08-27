@@ -931,6 +931,87 @@ footer{border-top:1px solid var(--rule);padding-top:28px;font-size:.84rem;color:
 </section>
 
 
+<!-- ══ WHY NOT ═══════════════════════════════════════════════════ -->
+<section>
+  <div class="eyebrow">The answer underneath</div>
+  <h2>Why none of this could ever have worked</h2>
+  <div class="prose stack">
+    <p>Five separate routes on this page end at the same wall, and each ends by measuring some
+    density that stubbornly fails to reach zero. Here is the same fact with no densities, no limits
+    and no analysis at all — and with something the other arguments never had: an explicit witness.</p>
+    <h3>The periodic points <em>are</em> the cycle equation</h3>
+    <p>Run the backward map with a fixed halving pattern and ask for a fixed point. Telescoping
+    gives exactly one, and it is a rational number:</p>
+  </div>
+
+  <div class="frame" style="text-align:center;padding:26px 18px">
+    <div class="mono" style="font-size:clamp(.86rem,2.1vw,1.15rem);line-height:2;color:var(--ink)">
+      y &nbsp;=&nbsp; <span style="color:var(--violet)">c<sub>L</sub> / (2<sup>B</sup> − 3<sup>L</sup>)</span>
+    </div>
+    <div style="font-size:.78rem;color:var(--ink-3);margin-top:8px" id="pa-repro"></div>
+  </div>
+
+  <div class="prose stack">
+    <p>So the periodic points of the backward map <b>are</b> the candidate cycles — one for every
+    halving pattern — and a genuine cycle is simply one that happens to land on a
+    <b>positive integer</b>. Try a pattern:</p>
+  </div>
+
+  <figure>
+    <div class="frame stack">
+      <div class="row">
+        <label for="pa-in">halving pattern</label>
+        <input id="pa-in" type="text" value="1,1,1" size="18" aria-label="halving pattern">
+        <label for="pa-q">q</label>
+        <input id="pa-q" type="number" value="1" min="1" step="2" style="width:70px">
+        <button class="pa-eg" data-b="1,1,1" data-q="1">1,1,1</button>
+        <button class="pa-eg" data-b="2" data-q="1">2</button>
+        <button class="pa-eg" data-b="3" data-q="1">3</button>
+        <button class="pa-eg" data-b="1,1,3" data-q="5">1,1,3 · q=5</button>
+      </div>
+      <div id="pa-out" class="verdict"></div>
+    </div>
+    <figcaption>The <code>q = 5</code> preset is the halving vector of the real cycle
+    <code>{19, 31, 49}</code> — and the formula returns its maximum, from the pattern alone.</figcaption>
+  </figure>
+
+  <div class="prose stack">
+    <h3>The witness</h3>
+    <p>Take the pattern where every hop is a single halving. Then <code>3y = 2y − 1</code>, so
+    <code>y = −1</code> — at every length. And in the 3-adic integers <code>−1</code> is
+    <code>…2222</code>: it is <code>≡ 2 (mod 3^k)</code> for every <code>k</code>, which is exactly
+    the parity an odd halving count requires at every step.</p>
+  </div>
+
+  <div class="frame scroll" id="pa-witness"></div>
+
+  <div class="note" style="border-color:var(--violet)" id="pa-witness-note"></div>
+
+  <div class="prose stack">
+    <p>The constant patterns give <code>q/(2^b − 3)</code> in full:</p>
+  </div>
+
+  <div class="frame scroll">
+    <table id="pa-const"><thead><tr><th>b</th><th>periodic point (q = 1)</th><th>a positive integer?</th></tr></thead><tbody></tbody></table>
+  </div>
+
+  <div class="prose stack">
+    <h3>And so</h3>
+    <p>A congruence sieve tests membership in <code>ℤ₃</code>. It cannot see <b>sign</b>. It cannot
+    see <b>integrality</b>. Its limit set is full of points like <code>−1</code> and <code>1/5</code>
+    that pass every congruence test at every depth and are not natural numbers.</p>
+  </div>
+
+  <div class="note kill" id="pa-point"></div>
+
+  <div class="prose stack">
+    <p>It also explains the shape of every measurement above, in a single number.</p>
+  </div>
+
+  <div class="tally" id="pa-dim"></div>
+</section>
+
+
 <!-- ══ STATUS ════════════════════════════════════════════════════ -->
 <section>
   <div class="eyebrow">Bookkeeping</div>
@@ -2370,6 +2451,101 @@ document.getElementById("bd-never").innerHTML =
   "always survives. That is not an accident of the computation: by the equivalence theorem, "+
   "certifying <em>every</em> class would prove the conjecture. Coverage climbs toward 100% and "+
   "never arrives. The same wall, in its fifth disguise.";
+
+/* ═══ 7f. WHY A CONGRUENCE SIEVE CANNOT FINISH ═════════════════ */
+var PA = D.padic;
+
+document.getElementById("pa-repro").innerHTML =
+  "this is the cycle equation — it reproduces all <b>" + PA.reproduced +
+  "</b> real 3n+q cycles in the census exactly, from their halving vectors alone (" +
+  PA.mismatches + " mismatches)";
+
+/* --- exact rational arithmetic on BigInt --- */
+function bgcd(a, b){ a = a < 0n ? -a : a; b = b < 0n ? -b : b;
+  while(b){ var t = a % b; a = b; b = t; } return a; }
+function periodicPoint(bs, q){
+  var L = BigInt(bs.length), B = 0n;
+  bs.forEach(function(b){ B += BigInt(b); });
+  var c = 0n, p3 = 1n;
+  bs.forEach(function(b){ c = (1n << BigInt(b)) * c + p3 * BigInt(q); p3 *= 3n; });
+  var den = (1n << B) - 3n ** L;
+  if(den === 0n) return null;
+  var g = bgcd(c, den); c /= g; den /= g;
+  if(den < 0n){ c = -c; den = -den; }
+  return {num: c, den: den};
+}
+function paRender(){
+  var raw = document.getElementById("pa-in").value.split(/[^0-9]+/).filter(Boolean).map(Number);
+  var q = Math.max(1, parseInt(document.getElementById("pa-q").value, 10) || 1);
+  var out = document.getElementById("pa-out");
+  if(!raw.length || raw.some(function(b){ return b < 1; })){
+    out.innerHTML = '<div class="work">Enter one or more halving counts, e.g. <code>1,1,3</code>.</div>';
+    return;
+  }
+  var r = periodicPoint(raw, q);
+  if(!r){ out.innerHTML = '<div class="work">2<sup>B</sup> = 3<sup>L</sup> is impossible.</div>'; return; }
+  var isInt = r.den === 1n, isPos = r.num > 0n;
+  var cycle = isInt && isPos;
+  var L = raw.length, B = raw.reduce(function(a,b){ return a+b; }, 0);
+  out.innerHTML =
+    '<div class="head"><span class="n">' + r.num + (isInt ? '' : ' / ' + r.den) + '</span>' +
+      '<span class="badge ' + (cycle ? 'b-live' : 'b-kill') + '">' +
+      (cycle ? 'a positive integer — a real cycle' :
+       isInt ? 'an integer, but not positive' : 'not an integer') + '</span></div>' +
+    '<div class="work">L = <b>' + L + '</b> &nbsp;·&nbsp; B = <b>' + B +
+      '</b> &nbsp;·&nbsp; 2<sup>B</sup> − 3<sup>L</sup> = <b>' +
+      ((1n << BigInt(B)) - 3n ** BigInt(L)) + '</b></div>' +
+    '<div class="note" style="border-color:var(--' + (cycle ? 'violet' : 'ink-3') + ')">' +
+      (cycle ? 'This pattern really does close into a cycle of 3n+' + q + '.'
+             : 'It passes every congruence test at every depth — and is not a natural number. ' +
+               'A sieve cannot tell the difference.') + '</div>';
+}
+["pa-in","pa-q"].forEach(function(id){
+  document.getElementById(id).addEventListener("input", paRender);
+});
+Array.prototype.forEach.call(document.querySelectorAll(".pa-eg"), function(b){
+  b.addEventListener("click", function(){
+    document.getElementById("pa-in").value = b.dataset.b;
+    document.getElementById("pa-q").value = b.dataset.q;
+    paRender();
+  });
+});
+paRender();
+
+(function witness(){
+  document.getElementById("pa-witness").innerHTML =
+    '<table><thead><tr><th>k</th>' +
+      PA.witness.map(function(w){ return '<th class="n">' + w.k + '</th>'; }).join("") +
+    '</tr></thead><tbody><tr><td class="n">−1 mod 3<sup>k</sup> alive?</td>' +
+      PA.witness.map(function(w){ return '<td class="n"><span class="ok">' +
+        (w.alive ? '✓' : '✗') + '</span></td>'; }).join("") +
+    '</tr></tbody></table>';
+  document.getElementById("pa-witness-note").innerHTML =
+    "<b>So <code>a_k ≥ 1</code> for every <code>k</code> — provably, with a witness.</b> " +
+    "The all-ones pattern returns <code>−1</code> at every length (" +
+    PA.ones.map(function(o){ return "L=" + o.L; }).join(", ") + " all give " + PA.ones[0].value +
+    "), so the sieve can never empty. And <code>−1</code> is not a natural number.";
+})();
+
+document.querySelector("#pa-const tbody").innerHTML = PA.constants.map(function(c){
+  return '<tr' + (c.pos_int ? ' class="hl"' : '') + '><td class="n">' + c.b + '</td>' +
+    '<td class="n"><b>' + c.num + (c.den === 1 ? '' : ' / ' + c.den) + '</b></td>' +
+    '<td class="n">' + (c.pos_int ? '<span class="ok">✓ the trivial cycle</span>'
+                                  : '<span class="dash">—</span>') + '</td></tr>';
+}).join("");
+
+document.getElementById("pa-point").innerHTML =
+  "<b>Collatz says: no periodic point other than <code>1</code> lands on a positive integer.</b> " +
+  "That is not a congruence question at all — which is why every route on this page stops in the " +
+  "same place. The only constant pattern reaching a positive integer is <code>b = " +
+  PA.only_positive_integer_b + "</code>, and it gives the cycle we already knew about.";
+
+document.getElementById("pa-dim").innerHTML = [
+  [PA.dimension.lo + "–" + PA.dimension.hi, "box dimension of the surviving set in ℤ₃"],
+  ["> 0", "so it is uncountable — never empty, at any depth"],
+  ["< 1", "so it has density zero — the sieve does keep cutting"],
+  ["1", "dimension of the 2-adic survivors: positive density, no cutting at all"]
+].map(function(t){ return "<div><b>" + t[0] + "</b><span>" + t[1] + "</span></div>"; }).join("");
 
 /* ═══ 7. STATUS ════════════════════════════════════════════════ */
 document.querySelector("#th-table tbody").innerHTML = D.theorems.map(function(t){
