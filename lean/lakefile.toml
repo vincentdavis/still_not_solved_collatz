@@ -1,0 +1,9 @@
+name = "collatz"
+version = "0.1.0"
+defaultTargets = ["Collatz"]
+
+# NO `require` lines.  This project depends on Lean 4 core only: no Mathlib,
+# no Batteries, no network access needed to build.
+
+[[lean_lib]]
+name = "Collatz"

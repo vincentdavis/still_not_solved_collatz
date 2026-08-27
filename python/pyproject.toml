@@ -1,0 +1,23 @@
+[project]
+name = "collatz-maxodd"
+version = "0.1.0"
+description = "Exploration tools for residue restrictions on the largest odd element of a 3n+q cycle"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[dependency-groups]
+dev = ["pytest>=8.0"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["collatz_maxodd"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# No `-q` here on purpose: combined with a `-q` on the command line it becomes
+# `-qq`, which suppresses the "N passed" summary line and makes it look as if
+# nothing ran.

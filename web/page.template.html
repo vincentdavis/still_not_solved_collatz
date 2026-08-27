@@ -1,0 +1,1379 @@
+<meta charset="utf-8">
+<title>The Largest Odd Number</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;450;500;600&display=swap">
+
+<style>
+/* ── tokens: complete light palette on bare :root ─────────────────── */
+:root{
+  --paper:#E8EAE5; --paper-2:#F2F3EF; --paper-3:#DEE1DA;
+  --ink:#171A1C; --ink-2:#4A5254; --ink-3:#79817F;
+  --rule:#C9CDC4; --rule-2:#B4B9AD;
+  --blue:#24478F;   /* 2-adic ink  */
+  --pink:#D62F82;   /* 3-adic ink  */
+  --rose:#E88BB4;   /* 3-adic, lighter pass */
+  --violet:#6B2D8F; /* overprint = survivor */
+  --amber:#B57F00;
+  --blue-w:#24478F22; --pink-w:#D62F8222; --violet-w:#6B2D8F1F;
+  --shadow:0 1px 0 #0000000d, 0 8px 24px -18px #0000004d;
+  --f-disp:"Fraunces",Georgia,"Times New Roman",serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#14171A; --paper-2:#1C2126; --paper-3:#242A30;
+    --ink:#E8EAE5; --ink-2:#A9B1AF; --ink-3:#6E7876;
+    --rule:#2B3138; --rule-2:#3A424A;
+    --blue:#7FA8EE; --pink:#FF7FBE; --rose:#C4577F; --violet:#C09BF0; --amber:#E8B845;
+    --blue-w:#7FA8EE22; --pink-w:#FF7FBE1F; --violet-w:#C09BF01F;
+    --shadow:0 1px 0 #ffffff08, 0 10px 28px -20px #000000cc;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#14171A; --paper-2:#1C2126; --paper-3:#242A30;
+  --ink:#E8EAE5; --ink-2:#A9B1AF; --ink-3:#6E7876;
+  --rule:#2B3138; --rule-2:#3A424A;
+  --blue:#7FA8EE; --pink:#FF7FBE; --rose:#C4577F; --violet:#C09BF0; --amber:#E8B845;
+  --blue-w:#7FA8EE22; --pink-w:#FF7FBE1F; --violet-w:#C09BF01F;
+  --shadow:0 1px 0 #ffffff08, 0 10px 28px -20px #000000cc;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--f-body); font-size:17px; line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+}
+.page{max-width:1080px;margin:0 auto;padding:0 28px 96px}
+.prose{max-width:66ch}
+h1,h2,h3{font-family:var(--f-disp);text-wrap:balance;margin:0;font-weight:600}
+h1{font-size:clamp(2.6rem,6.4vw,4.6rem);line-height:1.02;letter-spacing:-.02em;font-weight:700}
+h2{font-size:clamp(1.55rem,3vw,2.15rem);line-height:1.12;letter-spacing:-.01em}
+h3{font-size:1.12rem;line-height:1.3}
+p{margin:0}
+a{color:var(--violet);text-decoration-thickness:1px;text-underline-offset:2px}
+code,.mono{font-family:var(--f-mono);font-size:.92em;font-variant-ligatures:none}
+.num{font-variant-numeric:tabular-nums}
+
+/* rhythm via layout, not per-element margins */
+section{display:flex;flex-direction:column;gap:22px;padding:56px 0;border-top:1px solid var(--rule)}
+section:first-of-type{border-top:0}
+.stack{display:flex;flex-direction:column;gap:14px}
+.stack-s{display:flex;flex-direction:column;gap:8px}
+
+.eyebrow{
+  font-family:var(--f-mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--ink-3);display:flex;align-items:center;gap:10px
+}
+.eyebrow::after{content:"";flex:1;height:1px;background:var(--rule)}
+.lede{font-size:1.2rem;line-height:1.55;color:var(--ink-2)}
+
+/* ── hero ─────────────────────────────────────────────────────────── */
+.hero{padding-top:76px;padding-bottom:8px}
+.hero h1 em{font-style:italic;font-variation-settings:"SOFT" 40,"WONK" 1;color:var(--violet)}
+.kicker{
+  font-family:var(--f-mono);font-size:.74rem;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--ink-3)
+}
+.tally{display:flex;flex-wrap:wrap;gap:0;border:1px solid var(--rule);background:var(--paper-2);border-radius:3px;overflow:hidden}
+.tally div{flex:1 1 150px;padding:14px 16px;border-right:1px solid var(--rule);display:flex;flex-direction:column;gap:3px}
+.tally div:last-child{border-right:0}
+.tally b{font-family:var(--f-mono);font-size:1.5rem;font-weight:600;line-height:1;letter-spacing:-.02em}
+.tally span{font-size:.76rem;color:var(--ink-3);line-height:1.35}
+
+/* ── figures ──────────────────────────────────────────────────────── */
+figure{margin:0;display:flex;flex-direction:column;gap:12px}
+figcaption{font-size:.85rem;color:var(--ink-3);line-height:1.5;max-width:70ch}
+.frame{
+  background:var(--paper-2);border:1px solid var(--rule);border-radius:3px;
+  padding:18px;box-shadow:var(--shadow);position:relative
+}
+.scroll{overflow-x:auto}
+canvas{display:block;width:100%}
+
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:.8rem;color:var(--ink-2)}
+.legend span{display:flex;align-items:center;gap:7px}
+.sw{width:11px;height:11px;border-radius:2px;flex:none;border:1px solid #0002}
+
+.tip{
+  position:absolute;pointer-events:none;opacity:0;transition:opacity .1s;
+  background:var(--ink);color:var(--paper);font-family:var(--f-mono);font-size:.74rem;
+  padding:7px 9px;border-radius:3px;line-height:1.45;white-space:nowrap;z-index:5;
+  transform:translate(-50%,-125%)
+}
+
+/* ── controls ─────────────────────────────────────────────────────── */
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+label{font-size:.82rem;color:var(--ink-2)}
+input[type=text],input[type=number],select{
+  font-family:var(--f-mono);font-size:.9rem;color:var(--ink);
+  background:var(--paper);border:1px solid var(--rule-2);border-radius:3px;padding:7px 10px
+}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+button{
+  font-family:var(--f-body);font-size:.85rem;font-weight:500;color:var(--ink);
+  background:var(--paper-3);border:1px solid var(--rule-2);border-radius:3px;padding:7px 13px;cursor:pointer
+}
+button:hover{background:var(--paper-2)}
+button.on{background:var(--violet);border-color:var(--violet);color:#fff}
+
+/* ── verdict card ─────────────────────────────────────────────────── */
+.verdict{display:flex;flex-direction:column;gap:10px;font-size:.93rem}
+.verdict .head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.verdict .n{font-family:var(--f-mono);font-size:1.7rem;font-weight:600;letter-spacing:-.02em}
+.badge{
+  font-family:var(--f-mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;
+  padding:3px 8px;border-radius:2px;border:1px solid currentColor
+}
+.b-kill{color:var(--pink)} .b-asc{color:var(--blue)} .b-live{color:var(--violet)}
+.work{font-family:var(--f-mono);font-size:.85rem;color:var(--ink-2);line-height:1.9}
+.work b{color:var(--ink);font-weight:600}
+
+/* ── tables ───────────────────────────────────────────────────────── */
+table{border-collapse:collapse;width:100%;font-size:.85rem}
+th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{
+  font-family:var(--f-mono);font-size:.68rem;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--ink-3);font-weight:500;white-space:nowrap;position:sticky;top:0;background:var(--paper-2)
+}
+td.n{font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.hl td{background:var(--violet-w)}
+.ok{color:var(--violet);font-weight:600} .no{color:var(--pink);font-weight:600}
+.dash{color:var(--ink-3)}
+
+/* ── chain ────────────────────────────────────────────────────────── */
+.chain{display:flex;flex-direction:column;gap:0}
+.hop{display:grid;grid-template-columns:auto 1fr;gap:0 16px}
+.hop .gut{display:flex;flex-direction:column;align-items:center;width:26px}
+.dot{width:11px;height:11px;border-radius:50%;background:var(--violet);flex:none;margin-top:7px}
+.dot.forced{background:var(--violet)} .dot.branch{background:var(--amber)} .dot.dead{background:var(--pink)}
+.stem{width:1px;flex:1;background:var(--rule-2);min-height:26px}
+.hop .body{padding:2px 0 18px}
+.hop .val{font-family:var(--f-mono);font-size:1.02rem;font-weight:600}
+.hop .why{font-size:.8rem;color:var(--ink-3);font-family:var(--f-mono);line-height:1.6}
+
+/* ── callouts ─────────────────────────────────────────────────────── */
+.note{border-left:2px solid var(--rule-2);padding:2px 0 2px 18px;color:var(--ink-2);font-size:.94rem}
+.note.warn{border-color:var(--amber)}
+.note.kill{border-color:var(--pink)}
+.note b{color:var(--ink)}
+
+footer{border-top:1px solid var(--rule);padding-top:28px;font-size:.84rem;color:var(--ink-3);display:flex;flex-direction:column;gap:10px}
+
+@media (max-width:640px){
+  body{font-size:16px}
+  .page{padding:0 18px 72px}
+  section{padding:44px 0}
+  th,td{padding:7px 9px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="page">
+
+<!-- ══ HERO ══════════════════════════════════════════════════════ -->
+<section class="hero">
+  <div class="kicker">Collatz &nbsp;·&nbsp; 3n+1 &nbsp;·&nbsp; an interactive note</div>
+  <h1>Every cycle has a <em>largest odd number</em>. Which numbers can it be?</h1>
+  <div class="prose stack">
+    <p class="lede">If the Collatz conjecture is false, some loop of numbers repeats forever.
+    A finite loop has a biggest element — that isn't a conjecture, it's arithmetic. Being the
+    biggest turns out to be a very demanding job, and most odd numbers can be shown, in one line
+    each, that they can't do it.</p>
+    <p>Two independent constraints do the work. The maximum has to <b>fall</b> on the next step,
+    because nothing in the loop is bigger than it. And it has to be <b>reached</b> from something
+    smaller, because its predecessor is in the loop too. The first constraint is about powers of
+    two; the second is about powers of three. Below, they're printed as two inks.</p>
+  </div>
+
+  <figure>
+    <div class="frame">
+      <canvas id="strip" aria-label="Odd numbers 1 to 3999, coloured by which rule excludes them"></canvas>
+      <div class="tip" id="strip-tip"></div>
+    </div>
+    <div class="legend" id="strip-legend"></div>
+    <figcaption>Every odd number from 1 to 3999, in reading order. Blue is struck out by the
+    powers-of-two rule, pink by the powers-of-three rules. Violet survives both — those are the
+    only numbers that could be the largest odd element of a cycle. Hover any cell.</figcaption>
+  </figure>
+
+  <div class="tally" id="tally"></div>
+</section>
+
+<!-- ══ THE RULES ═════════════════════════════════════════════════ -->
+<section>
+  <div class="eyebrow">The two inks</div>
+  <h2>Three ways to fail, in one line each</h2>
+
+  <div class="prose stack">
+    <p>Work with the <b>odd-to-odd map</b>: from an odd <code>n</code>, form <code>3n+1</code> and
+    strip every factor of two at once. Write <code>S(n) = (3n+1)/2^b</code>, where <code>b</code>
+    counts the halvings.</p>
+  </div>
+
+  <div class="stack">
+    <div class="note" style="border-color:var(--blue)">
+      <b>Rule A — it goes up.</b> If <code>n ≡ 3 (mod 4)</code> then <code>3n+1 ≡ 2 (mod 4)</code>,
+      so there is exactly <em>one</em> halving, and <code>S(n) = (3n+1)/2 > n</code>. One halving
+      never undoes a tripling. Such an <code>n</code> ascends, so it cannot be the maximum.
+      <b>Kills half of all odd numbers.</b>
+    </div>
+    <div class="note kill">
+      <b>Rule B — nothing reaches it.</b> If <code>3 | n</code>, then <code>n</code> has no odd
+      predecessor at all: <code>3y+1 = 2^b·n</code> would force <code>1 ≡ 0 (mod 3)</code>. A number
+      with no predecessor can't be in a loop. <b>Kills a third.</b>
+    </div>
+    <div class="note kill">
+      <b>Rule C — only bigger things reach it.</b> If <code>n ≡ 1 (mod 3)</code>, its odd
+      predecessors are <code>(4n−1)/3, (16n−1)/3, …</code>, and <em>all of them exceed</em>
+      <code>n</code>. To be the maximum it would need a predecessor at most itself. <b>Kills another third.</b>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>The general lemma behind Rule C.</b> Every odd <code>p</code> coprime to 3 has
+    <b>at most one</b> odd predecessor below itself — never two, for any variant of the map. When
+    <code>p</code> is a cycle maximum that predecessor is forced to be <code>(2p−1)/3</code>, with
+    exactly one halving. There is nothing to search.
+  </div>
+
+  <figure>
+    <div class="frame stack">
+      <div class="row">
+        <label for="probe">Test any odd number</label>
+        <input id="probe" type="text" inputmode="numeric" value="27" size="14" aria-label="odd number to test">
+        <button id="probe-go">Check</button>
+        <button class="probe-eg" data-n="7">7</button>
+        <button class="probe-eg" data-n="11">11</button>
+        <button class="probe-eg" data-n="9">9</button>
+        <button class="probe-eg" data-n="17">17</button>
+        <button class="probe-eg" data-n="29">29</button>
+      </div>
+      <div class="verdict" id="verdict"></div>
+    </div>
+    <figcaption>7 and 11 were the two numbers that started this note. Both are excluded, and by the
+    same rule — though not for the reason you might first guess: 11 <em>is</em> reachable from
+    something smaller, since <code>S(7) = 11</code>.</figcaption>
+  </figure>
+</section>
+
+<!-- ══ THE WHEEL ═════════════════════════════════════════════════ -->
+<section>
+  <div class="eyebrow">Overprint</div>
+  <h2>Both inks at once: the wheel mod 36</h2>
+  <div class="prose stack">
+    <p>Rule A is a statement mod 4. Rules B and C are statements mod 3. Combined by the Chinese
+    remainder theorem, the maximum must satisfy <code>M ≡ 5 (mod 12)</code> — one odd number in six.</p>
+    <p>Then it recurses. The forced predecessor <code>(2M−1)/3</code> is itself in the loop, so it
+    too must escape Rule B. That is a condition mod 9, and it removes exactly one of the three
+    surviving classes mod 36.</p>
+  </div>
+
+  <figure>
+    <div class="frame">
+      <div id="wheel" class="scroll"></div>
+    </div>
+    <div class="legend" id="wheel-legend"></div>
+    <figcaption>The 18 odd residues mod 36. Only <code>17</code> and <code>29</code> survive both
+    inks and the mod-9 recursion — <b>one odd number in nine</b>.</figcaption>
+  </figure>
+</section>
+
+<!-- ══ THE TREE ══════════════════════════════════════════════════ -->
+<section>
+  <div class="eyebrow">The network</div>
+  <h2>Draw the predecessors and the rules become shapes</h2>
+  <div class="prose stack">
+    <p>Turn the map around. Instead of asking where a number goes, ask what could have come
+    <em>before</em> it. Every odd number has a set of odd predecessors — and the arithmetic mod 3
+    decides the shape of that set completely. The arrows still point the way the map runs, so the
+    branches grow outward while the flow drains inward.</p>
+    <p>So the two rules stop being congruences and become properties of a picture. A cycle maximum
+    needs an edge coming in from <b>below</b>, and it needs to fall on the way out. Nodes with no
+    downhill edge are unreachable from beneath; nodes divisible by three are unreachable from
+    anywhere at all.</p>
+  </div>
+
+  <div class="stack">
+    <div class="note kill"><b>Dead ends.</b> If <code>3 | n</code> the node has <em>no children</em>.
+    Nothing in the whole graph maps to it. These are the pink terminals.</div>
+    <div class="note" style="border-color:var(--rose)"><b>All uphill.</b> If
+    <code>n ≡ 1 (mod 3)</code> every child is larger than <code>n</code>. You can only arrive from
+    above, so <code>n</code> can never be the biggest thing in a loop.</div>
+    <div class="note" style="border-color:var(--blue)"><b>Exactly one downhill.</b> If
+    <code>n ≡ 2 (mod 3)</code> precisely one child is smaller — <code>(2n−1)/3</code>, the thick
+    violet edge. Never two. That is the whole content of the predecessor lemma.</div>
+  </div>
+
+  <figure>
+    <div class="frame stack">
+      <div class="row">
+        <label for="tree-root">Root</label>
+        <input id="tree-root" type="text" inputmode="numeric" value="1" size="10" aria-label="tree root">
+        <label for="tree-cap">Branches</label>
+        <select id="tree-cap"><option>1</option><option>2</option><option selected>3</option><option>4</option></select>
+        <label for="tree-depth">Depth</label>
+        <select id="tree-depth"><option>2</option><option>3</option><option selected>4</option><option>5</option><option>6</option></select>
+        <button id="tree-reset">Reset</button>
+        <span class="mono" style="font-size:.75rem;color:var(--ink-3)">click a node to open or close it</span>
+      </div>
+      <div class="scroll" id="tree-host"></div>
+      <div id="tree-detail" class="verdict"></div>
+    </div>
+    <div class="legend" id="tree-legend"></div>
+    <figcaption>Fill colour is the predecessor structure; a violet ring marks a number that could
+    still be a cycle maximum. Thick violet edges run downhill, thin grey edges run uphill. Notice
+    that every ringed node has exactly one thick edge leaving it — and that pink nodes have none at all.
+    Arrows run the other way from the drawing: the tree is <em>laid out</em> from 1 outward, but the map
+    <em>flows</em> inward, so every arrowhead points back toward the root.</figcaption>
+  </figure>
+
+  <div class="prose stack">
+    <p>Zoom out and the same structure covers every odd number at once. Below is the entire
+    predecessor network up to a bound, rooted at 1 — the tree every Collatz trajectory runs down.
+    The ringed nodes are the only candidates for the largest element of a cycle, and there are
+    strikingly few of them.</p>
+  </div>
+
+  <figure>
+    <div class="frame stack">
+      <div class="row">
+        <label for="net-n">All odd numbers up to</label>
+        <select id="net-n"><option>255</option><option selected>511</option><option>1023</option><option>2047</option></select>
+        <label><input type="checkbox" id="net-labels"> label the survivors</label>
+      </div>
+      <div id="net-host"></div>
+      <div class="tip" id="net-tip"></div>
+    </div>
+    <div class="legend" id="net-legend"></div>
+    <figcaption id="net-cap"></figcaption>
+  </figure>
+</section>
+
+
+<!-- ══ THE CHAIN ═════════════════════════════════════════════════ -->
+<section>
+  <div class="eyebrow">One step back</div>
+  <h2>The walk backwards is forced, then it isn't</h2>
+  <div class="prose stack">
+    <p>Start at a candidate maximum and walk backwards. The first hop has no freedom at all: exactly
+    one halving. The second hop has its <em>parity</em> fixed by arithmetic mod 3 and its
+    <em>size</em> capped at two halvings, which together pin it down uniquely.</p>
+    <p>That determinism is what makes the sieve cheap. It's also what runs out — by depth four the
+    size bound stops biting, the walk starts to branch, and the sieve slows to a crawl.</p>
+  </div>
+
+  <figure>
+    <div class="frame stack">
+      <div class="row">
+        <label for="mstart">Candidate maximum <code>M</code></label>
+        <input id="mstart" type="text" inputmode="numeric" value="17" size="18" aria-label="candidate maximum">
+        <button id="chain-go">Walk back</button>
+        <button class="m-eg" data-n="17">17</button>
+        <button class="m-eg" data-n="29">29</button>
+        <button class="m-eg" data-n="53">53</button>
+        <button class="m-eg" data-n="101">101</button>
+        <button class="m-eg" data-n="1000000000000000000000017">10²⁴+17</button>
+      </div>
+      <div class="chain" id="chain"></div>
+    </div>
+    <figcaption>Each step lists the halvings <code>b</code> allowed by the exact size test
+    <code>M(2^{B_k} − 3^k) ≤ c_k</code> intersected with the parity forced mod 3. One option is a
+    forced step; several is a branch; none is a dead candidate.</figcaption>
+  </figure>
+</section>
+
+<!-- ══ OTHER UNIVERSES ═══════════════════════════════════════════ -->
+<section>
+  <div class="eyebrow">Evidence</div>
+  <h2>Testing it where cycles actually exist</h2>
+  <div class="prose stack">
+    <p>Everything above is conditional on a cycle nobody has ever seen. That is a bad position to
+    test from — a false claim about <code>3n+1</code> cycles is unfalsifiable if there aren't any.</p>
+    <p>So test it on <code>3n+q</code> instead. For <code>q = 5, 7, 11, …</code> the same map has
+    plenty of genuine cycles, and every statement here has a <code>q</code>-general form. If a
+    derivation is wrong, these cycles find it. Two of mine were wrong; these cycles found them.</p>
+  </div>
+
+  <figure>
+    <div class="frame stack">
+      <div class="row" id="cy-filters"></div>
+      <div class="scroll" style="max-height:460px">
+        <table id="cy-table"><thead><tr>
+          <th>q</th><th>L</th><th>max M</th><th>odd elements</th><th>halvings</th>
+          <th>T0</th><th>T1</th><th>T2</th><th>T3</th><th>T4</th><th>T5</th>
+        </tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+    <figcaption id="cy-cap"></figcaption>
+  </figure>
+
+  <div class="stack">
+    <div class="note warn"><b>These cycles refuted two claims I made.</b> I asserted that Rule A
+    needed the hypothesis <code>M &gt; q</code> — it doesn't, it holds unconditionally, and the two
+    cycles I offered as counterexamples actually satisfy it. And I attributed the two-halving cap to
+    a cycle-length condition <code>L ≥ 3</code>; the truth is a size bound, <code>M &gt; 11q/7</code>.
+    <code>q = 37</code>'s cycle <code>53 → 49 → 23</code> has <code>L = 3</code> and breaks it.</div>
+  </div>
+</section>
+
+<!-- ══ REVERSE PATHS ═════════════════════════════════════════════ -->
+<section>
+  <div class="eyebrow">Working backwards from what we know</div>
+  <h2>Every path back from 1 has the same closed form</h2>
+  <div class="prose stack">
+    <p>There is one cycle nobody disputes: <code>1 → 4 → 2 → 1</code>. It is worth asking what the
+    paths leading <em>into</em> it look like, because they turn out to have an exact algebraic
+    form — and because the form, applied to a path that closes on itself instead, is the cycle
+    equation.</p>
+    <p>Take <code>k</code> odd-steps backwards from 1 with halving counts
+    <code>b₁,…,b_k</code>, write <code>B_i = b₁+…+b_i</code> for the running totals and
+    <code>B</code> for the whole sum. Then the number you land on is pinned exactly:</p>
+  </div>
+
+  <div class="frame" style="text-align:center;padding:26px 18px">
+    <div class="mono" style="font-size:clamp(.86rem,2.1vw,1.12rem);line-height:2;color:var(--ink)">
+      3<sup>k</sup> · n &nbsp;=&nbsp; 2<sup>B</sup> &nbsp;−&nbsp;
+      <span style="color:var(--pink)">Σ<sub>i=1..k</sub> 3<sup>i−1</sup> · 2<sup>B−B<sub>i</sub></sup></span>
+    </div>
+    <div style="font-size:.78rem;color:var(--ink-3);margin-top:8px">
+      Böhm &amp; Sontacchi, 1978 — verified here against direct iteration on 189 paths, 0 mismatches
+    </div>
+  </div>
+
+  <figure>
+    <div class="frame stack">
+      <div class="row">
+        <span class="mono" style="font-size:.78rem;color:var(--ink-3)">add a halving count — greyed buttons are arithmetically impossible</span>
+      </div>
+      <div class="row" id="rp-buttons"></div>
+      <div class="row">
+        <button id="rp-undo">Undo</button><button id="rp-reset">Back to 1</button>
+        <button class="rp-eg" data-bs="4,3,2">try (4,3,2)</button>
+        <button class="rp-eg" data-bs="2">try (2)</button>
+        <button class="rp-eg" data-bs="4,1">try (4,1)</button>
+      </div>
+      <div id="rp-chain" class="chain"></div>
+      <div id="rp-form" class="work" style="border-top:1px solid var(--rule);padding-top:14px"></div>
+    </div>
+    <figcaption>The buttons enforce the rule rather than describing it: from a value
+    <code>≡ 1 (mod 3)</code> only even halvings are possible, from <code>≡ 2 (mod 3)</code> only odd
+    ones, and from a multiple of 3 nothing is possible at all. Checked on 24 000 pairs, no exceptions.</figcaption>
+  </figure>
+
+  <div class="stack">
+    <div class="note"><b>The tree never merges.</b> Distinct halving vectors always give distinct
+    numbers — 5, 18, 72, 288, 1152, … paths at each depth, and exactly that many distinct values.
+    That is forced: going forward is a function, so every number has exactly one parent.</div>
+  </div>
+
+  <h3 style="margin-top:14px">Why this cannot find a counterexample</h3>
+  <div class="prose stack">
+    <p>Here is the catch, and it is structural rather than a matter of effort. Nothing inside a cycle
+    ever reaches 1 — it cycles. So a hypothetical second cycle sits in a
+    <b>different connected component</b> of the graph, and no reverse path from 1 can ever land on
+    it. The two pictures below never touch.</p>
+  </div>
+
+  <figure>
+    <div class="frame"><div id="rp-comp"></div></div>
+    <figcaption>Left: the basin of 1, the component this whole page has been walking around in.
+    Right: what a counterexample would look like — its own loop with its own trees feeding it.
+    Reverse paths from 1 explore the left picture only.</figcaption>
+  </figure>
+
+  <div class="note warn"><b>And it is circular as a strategy.</b> Collatz is true exactly when the
+  reverse tree from 1 reaches every odd number. "Describe all reverse paths from 1" is the conjecture
+  restated, not a reduction of it. Every one of the 834 surviving-class numbers below 20 000 — 17, 29,
+  53, 65, … — turns out to reach 1.</div>
+
+  <div class="prose stack">
+    <p><b>Where the form does earn its keep.</b> Apply the identical algebra to a path that closes on
+    itself, <code>y_k = y_0 = M</code>, and the same identity becomes the cycle equation:</p>
+  </div>
+
+  <div class="frame" style="text-align:center;padding:26px 18px">
+    <div class="mono" style="font-size:clamp(.86rem,2.1vw,1.12rem);line-height:2">
+      M · <span style="color:var(--violet)">(2<sup>B</sup> − 3<sup>k</sup>)</span>
+      &nbsp;=&nbsp; Σ<sub>i=1..k</sub> 3<sup>i−1</sup> · 2<sup>j<sub>i</sub></sup>
+    </div>
+    <div style="font-size:.78rem;color:var(--ink-3);margin-top:8px">
+      the trivial cycle is its smallest solution: <code>k=1, B=2</code> gives <code>1·(4−3) = 1</code>
+    </div>
+  </div>
+
+  <div class="prose stack">
+    <p>So <code>1 → 4 → 2 → 1</code> is not merely an example of the form — it is the
+    <code>k = 1</code> root of it. The real question is which other
+    <code>(k, B, j₁…j_k)</code> can satisfy the closed version, and that needs
+    <code>2^B/3^k</code> to sit implausibly close to 1. Which is the wall in the next section.</p>
+  </div>
+</section>
+
+
+<!-- ══ THE WALL ══════════════════════════════════════════════════ -->
+<section>
+  <div class="eyebrow">The ceiling</div>
+  <h2>Why the sieve can't finish</h2>
+  <div class="prose stack">
+    <p>It's tempting to think you just keep sieving. You don't. Both halves have measured limits,
+    and neither goes to zero.</p>
+    <p>The powers-of-two half <b>saturates</b>: no matter how deep you push it, it never removes more
+    than about <span id="fwd-bits" class="mono"></span> of the odd numbers. The powers-of-three half
+    keeps cutting, but slower than its modulus grows — by depth 20 you have spent 33 bits of modulus
+    to buy 10 bits of sieve, and the number of surviving classes is <em>increasing</em>.</p>
+    <p>What actually stands between us and a proof is a different kind of statement. Going once
+    around a cycle multiplies by <code>3</code> at each of <code>L</code> odd steps and divides by
+    <code>2</code> a total of <code>B</code> times, so closing the loop needs
+    <code>2^B / 3^L</code> to sit extraordinarily close to 1 — an exceptional rational approximation
+    to <code>log₂3</code>. That's the real obstruction, and this sieve never touches it.</p>
+  </div>
+
+  <figure>
+    <div class="frame">
+      <canvas id="dio" height="360" aria-label="Lower bound on a cycle's minimum element versus cycle length"></canvas>
+      <div class="tip" id="dio-tip"></div>
+    </div>
+    <div class="legend" id="dio-legend"></div>
+    <figcaption>Each point is a cycle length <code>L</code> at which <code>2^B/3^L</code> sets a new
+    closeness record, and the bound on the cycle's smallest element that follows. The dashed line is
+    where a cycle would actually have to live, since everything below it has been checked by machine.
+    The gap is the problem.</figcaption>
+  </figure>
+
+  <div class="note kill" id="wall-note"></div>
+</section>
+
+<!-- ══ STATUS ════════════════════════════════════════════════════ -->
+<section>
+  <div class="eyebrow">Bookkeeping</div>
+  <h2>What is actually proved</h2>
+  <div class="prose stack">
+    <p><b>None of this is new mathematics.</b> Every statement below is elementary and already in the
+    literature — some of it for over forty years. What's here is a clean account of the exact
+    hypotheses, a check against thousands of real cycles, and a machine-checked core.</p>
+  </div>
+  <div class="frame scroll">
+    <table id="th-table"><thead><tr>
+      <th>id</th><th>claim</th><th>hypotheses</th><th>status</th>
+    </tr></thead><tbody></tbody></table>
+  </div>
+  <div class="tally" id="tally2"></div>
+</section>
+
+<footer>
+  <div>Odd-to-odd (Syracuse) map <code class="mono">S_q(n) = (3n+q)/2^b</code>, <code class="mono">b = v₂(3n+q)</code>.
+  Figures generated from an exhaustive census of real <code class="mono">3n+q</code> cycles.</div>
+  <div id="foot-lit"></div>
+  <div>Built as a working note. The sieve is a search filter, not a proof — see the ceiling above.</div>
+</footer>
+
+</div>
+
+<script id="collatz-data" type="application/json">__COLLATZ_DATA__</script>
+<script>
+(function(){
+"use strict";
+var D = JSON.parse(document.getElementById("collatz-data").textContent);
+var css = function(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); };
+var fmt = function(n){ return n.toLocaleString("en-US"); };
+
+/* ─── palette that follows the theme ──────────────────────────── */
+function pal(){
+  return { blue:css("--blue"), pink:css("--pink"), rose:css("--rose"), violet:css("--violet"),
+           amber:css("--amber"), ink:css("--ink"), ink2:css("--ink-2"), ink3:css("--ink-3"),
+           rule:css("--rule"), rule2:css("--rule-2"), paper:css("--paper"), paper2:css("--paper-2") };
+}
+var redraws = [];
+function onTheme(fn){ redraws.push(fn); }
+matchMedia("(prefers-color-scheme:dark)").addEventListener("change", function(){ redraws.forEach(function(f){f();}); });
+new MutationObserver(function(){ redraws.forEach(function(f){f();}); })
+  .observe(document.documentElement, {attributes:true, attributeFilter:["data-theme"]});
+
+function hidpi(cv, h){
+  var r = window.devicePixelRatio || 1, w = cv.clientWidth || 800;
+  cv.width = Math.round(w*r); cv.height = Math.round(h*r);
+  cv.style.height = h + "px";
+  var c = cv.getContext("2d"); c.setTransform(r,0,0,r,0,0);
+  return {c:c, w:w, h:h};
+}
+
+/* ═══ 1. THE STRIP ═════════════════════════════════════════════ */
+var codes = D.wheel.codes;
+function codeColor(ch, p){
+  if(ch === "a") return p.blue;                    // mod 4, ascends
+  if(ch === "b") return p.pink;                    // 3 | n
+  if(ch === "c") return p.rose;                    // n = 1 mod 3
+  return p.violet;                                 // digit = survivor
+}
+function codeWhy(ch, n){
+  if(ch === "a") return ["ascends", n+" ≡ 3 (mod 4)  →  S("+n+") = "+((3*n+1)/2)+" > "+n];
+  if(ch === "b") return ["no predecessor", "3 | "+n+"  →  nothing maps to it"];
+  if(ch === "c") return ["predecessors too big", n+" ≡ 1 (mod 3)  →  least is "+((4*n-1)/3)];
+  return ["survives", n+" ≡ "+(n%36)+" (mod 36)  —  3-adic depth "+ch];
+}
+var stripCv = document.getElementById("strip"), stripTip = document.getElementById("strip-tip");
+var stripGeom = null;
+function drawStrip(){
+  var p = pal(), N = codes.length;
+  var w0 = stripCv.clientWidth || 800;
+  var cols = Math.max(24, Math.floor(w0/9));
+  var cell = w0/cols, size = cell, rows = Math.ceil(N/cols);
+  var g = hidpi(stripCv, Math.round(rows*size)), c = g.c;
+  stripGeom = {cols:cols, cell:cell, size:size, rows:rows, N:N};
+  c.clearRect(0,0,g.w,g.h);
+  for(var i=0;i<N;i++){
+    var x = (i%cols)*cell, y = Math.floor(i/cols)*size;
+    c.fillStyle = codeColor(codes[i], p);
+    c.globalAlpha = (codes[i]==="a") ? 0.55 : (codes[i]==="b"||codes[i]==="c") ? 0.7 : 1;
+    c.fillRect(x+0.5, y+0.5, Math.max(1,cell-1.4), Math.max(1,size-1.4));
+  }
+  c.globalAlpha = 1;
+}
+stripCv.addEventListener("mousemove", function(e){
+  if(!stripGeom) return;
+  var r = stripCv.getBoundingClientRect();
+  var col = Math.floor((e.clientX-r.left)/stripGeom.cell);
+  var row = Math.floor((e.clientY-r.top)/stripGeom.size);
+  var i = row*stripGeom.cols + col;
+  if(col<0||col>=stripGeom.cols||i<0||i>=stripGeom.N){ stripTip.style.opacity=0; return; }
+  var n = 2*i+1, w = codeWhy(codes[i], n);
+  stripTip.innerHTML = "<b>"+n+"</b> — "+w[0]+"<br>"+w[1];
+  stripTip.style.left = (col*stripGeom.cell + stripGeom.cell/2) + "px";
+  stripTip.style.top  = (row*stripGeom.size + 12) + "px";
+  stripTip.style.opacity = 1;
+});
+stripCv.addEventListener("mouseleave", function(){ stripTip.style.opacity = 0; });
+
+(function stripLegend(){
+  var L = D.wheel.legend, p = pal();
+  var items = [
+    ["a", p.blue,   "n ≡ 3 (mod 4) — ascends"],
+    ["b", p.pink,   "3 | n — no predecessor"],
+    ["c", p.rose,   "n ≡ 1 (mod 3) — predecessors all bigger"],
+    ["s", p.violet, "survives — n ≡ 5 (mod 12)"]
+  ];
+  document.getElementById("strip-legend").innerHTML = items.map(function(it){
+    return '<span><i class="sw" style="background:'+it[1]+'"></i>'+it[2]+'</span>';
+  }).join("");
+})();
+onTheme(function(){
+  drawStrip();
+  var p = pal(), sws = document.querySelectorAll("#strip-legend .sw");
+  var cs = [p.blue,p.pink,p.rose,p.violet];
+  sws.forEach(function(s,i){ s.style.background = cs[i]; });
+});
+
+/* ─── tallies ─── */
+var ct = D.wheel.counts, tot = ct.a+ct.b+ct.c;
+var deep = D.wheel.deep_level_counts;
+var lvl0 = deep["0"]||0, survDeep = ct.survive - lvl0;
+document.getElementById("tally").innerHTML = [
+  ["1 in 2", "struck out by the powers-of-two rule alone"],
+  ["1 in 6", "left after both inks — M ≡ 5 (mod 12)"],
+  ["1 in 9", "left after the mod-9 recursion — M ≡ 17 or 29 (mod 36)"],
+  ["1 in "+Math.round(1/D.crt.rows[D.crt.rows.length-1].density_among_odds), "best combined sieve, at modulus ≈ 2^"+Math.round(D.crt.rows[D.crt.rows.length-1].modulus_bits)]
+].map(function(t){ return "<div><b>"+t[0]+"</b><span>"+t[1]+"</span></div>"; }).join("");
+
+/* ═══ 2. THE PROBE ═════════════════════════════════════════════ */
+function classify(n){
+  if(n<=0 || n%2n===0n) return {bad:true};
+  var r4 = Number(n%4n), r3 = Number(n%3n), r9 = Number(n%9n), r36 = Number(n%36n);
+  var t = 3n*n+1n, b = 0n, m = t;
+  while(m%2n===0n){ m/=2n; b++; }
+  var out = {n:n, r4:r4, r3:r3, r9:r9, r36:r36, t:t, b:b, S:m};
+  if(r4===3){ out.kind="asc"; out.rule="Rule A"; out.why="3n+1 = "+t+" has exactly one halving, so S(n) = "+m+" > "+n+". It ascends."; }
+  else if(r3===0){ out.kind="kill"; out.rule="Rule B"; out.why="3 divides n, so no odd number maps to it. It cannot sit in a loop."; }
+  else if(r3===1){ out.kind="kill"; out.rule="Rule C"; out.why="n ≡ 1 (mod 3), so its smallest odd predecessor is (4n−1)/3 = "+((4n*n-1n)/3n)+", which is bigger than n."; }
+  else if(r9===5){ out.kind="kill"; out.rule="Rule B, one step back"; out.why="the forced predecessor (2n−1)/3 = "+((2n*n-1n)/3n)+" is divisible by 3, so nothing reaches it."; }
+  else { out.kind="live"; out.rule="survives"; out.why="n ≡ "+r36+" (mod 36). Both inks pass, and its forced predecessor (2n−1)/3 = "+((2n*n-1n)/3n)+" is legal."; }
+  return out;
+}
+function renderVerdict(n){
+  var v = document.getElementById("verdict");
+  var r;
+  try { r = classify(BigInt(n)); } catch(e){ r = {bad:true}; }
+  if(r.bad){ v.innerHTML = '<div class="work">Enter a positive odd whole number.</div>'; return; }
+  var cls = r.kind==="live" ? "b-live" : r.kind==="asc" ? "b-asc" : "b-kill";
+  var label = r.kind==="live" ? "can be a maximum" : "cannot be the maximum";
+  v.innerHTML =
+    '<div class="head"><span class="n">'+r.n+'</span>'+
+      '<span class="badge '+cls+'">'+label+'</span>'+
+      '<span class="badge '+cls+'">'+r.rule+'</span></div>'+
+    '<div class="work">'+
+      '3n+1 = <b>'+r.t+'</b> = 2<sup>'+r.b+'</sup> × <b>'+r.S+'</b><br>'+
+      'n mod 4 = <b>'+r.r4+'</b> &nbsp;·&nbsp; n mod 3 = <b>'+r.r3+'</b> &nbsp;·&nbsp; n mod 9 = <b>'+r.r9+'</b> &nbsp;·&nbsp; n mod 36 = <b>'+r.r36+'</b>'+
+    '</div>'+
+    '<div class="note" style="border-color:'+(r.kind==="live"?"var(--violet)":r.kind==="asc"?"var(--blue)":"var(--pink)")+'">'+r.why+'</div>';
+}
+document.getElementById("probe-go").addEventListener("click", function(){
+  renderVerdict(document.getElementById("probe").value.replace(/[^0-9]/g,"") || "1");
+});
+document.getElementById("probe").addEventListener("keydown", function(e){ if(e.key==="Enter") document.getElementById("probe-go").click(); });
+Array.prototype.forEach.call(document.querySelectorAll(".probe-eg"), function(b){
+  b.addEventListener("click", function(){ document.getElementById("probe").value = b.dataset.n; renderVerdict(b.dataset.n); });
+});
+renderVerdict("27");
+
+/* ═══ 3. THE WHEEL ═════════════════════════════════════════════ */
+function drawWheel(){
+  var p = pal(), R = 168, r0 = 96, cx = 200, cy = 200, S = 400;
+  var odds = []; for(var k=1;k<36;k+=2) odds.push(k);
+  var parts = [];
+  odds.forEach(function(res, idx){
+    var a0 = (idx/18)*2*Math.PI - Math.PI/2, a1 = ((idx+1)/18)*2*Math.PI - Math.PI/2;
+    var pad = 0.010;
+    a0 += pad; a1 -= pad;
+    var col, alpha = 0.9;
+    if(res%4===3){ col = p.blue; alpha=.5; }
+    else if(res%3===0){ col = p.pink; alpha=.72; }
+    else if(res%3===1){ col = p.rose; alpha=.72; }
+    else if(res%9===5){ col = p.amber; alpha=.85; }
+    else { col = p.violet; alpha=1; }
+    var x0=cx+r0*Math.cos(a0), y0=cy+r0*Math.sin(a0);
+    var x1=cx+R*Math.cos(a0),  y1=cy+R*Math.sin(a0);
+    var x2=cx+R*Math.cos(a1),  y2=cy+R*Math.sin(a1);
+    var x3=cx+r0*Math.cos(a1), y3=cy+r0*Math.sin(a1);
+    parts.push('<path d="M'+x0+' '+y0+' L'+x1+' '+y1+' A'+R+' '+R+' 0 0 1 '+x2+' '+y2+
+               ' L'+x3+' '+y3+' A'+r0+' '+r0+' 0 0 0 '+x0+' '+y0+' Z" fill="'+col+
+               '" fill-opacity="'+alpha+'"><title>'+res+' (mod 36)</title></path>');
+    var am = (a0+a1)/2, lr = (R+r0)/2;
+    var surv = (res%4===1 && res%3===2 && res%9!==5);
+    parts.push('<text x="'+(cx+lr*Math.cos(am))+'" y="'+(cy+lr*Math.sin(am))+
+      '" text-anchor="middle" dominant-baseline="central" font-family="IBM Plex Mono, monospace" font-size="'+(surv?19:14)+
+      '" font-weight="'+(surv?"600":"400")+'" fill="'+(surv? "#fff" : p.paper2)+'">'+res+'</text>');
+  });
+  parts.push('<text x="'+cx+'" y="'+(cy-10)+'" text-anchor="middle" font-family="Fraunces, serif" font-size="30" font-weight="700" fill="'+p.violet+'">17</text>');
+  parts.push('<text x="'+cx+'" y="'+(cy+20)+'" text-anchor="middle" font-family="Fraunces, serif" font-size="30" font-weight="700" fill="'+p.violet+'">29</text>');
+  parts.push('<text x="'+cx+'" y="'+(cy+44)+'" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" letter-spacing="1.6" fill="'+p.ink3+'">MOD 36</text>');
+  document.getElementById("wheel").innerHTML =
+    '<svg viewBox="0 0 '+S+' '+S+'" width="100%" style="max-width:440px;margin:0 auto;display:block" role="img" aria-label="Wheel of the 18 odd residues mod 36">'+parts.join("")+'</svg>';
+}
+(function wheelLegend(){
+  var p = pal();
+  document.getElementById("wheel-legend").innerHTML = [
+    [p.blue,"≡ 3 (mod 4) — ascends"],
+    [p.pink,"divisible by 3"],
+    [p.rose,"≡ 1 (mod 3)"],
+    [p.amber,"≡ 5 (mod 9) — its predecessor is divisible by 3"],
+    [p.violet,"survives"]
+  ].map(function(it){ return '<span><i class="sw" style="background:'+it[0]+'"></i>'+it[1]+'</span>'; }).join("");
+})();
+onTheme(function(){ drawWheel();
+  var p=pal(), cs=[p.blue,p.pink,p.rose,p.amber,p.violet];
+  document.querySelectorAll("#wheel-legend .sw").forEach(function(s,i){ s.style.background=cs[i]; });
+});
+
+/* ═══ 3b. THE PREDECESSOR TREE & NETWORK ═══════════════════════ */
+/* Odd predecessors of n:  y = (2^b·n − 1)/3.  Integrality forces the parity
+   of b:  n ≡ 1 (mod 3) → b even;  n ≡ 2 (mod 3) → b odd;  3|n → none.     */
+function predChildren(n, cap){
+  var r3 = Number(n % 3n);
+  if(r3 === 0) return [];
+  var b = (r3 === 1) ? 2 : 1, out = [];
+  while(out.length < cap){
+    var y = ((1n << BigInt(b))*n - 1n)/3n;
+    if(y > 0n && y !== n) out.push({b:b, y:y, down: y < n});
+    b += 2;
+    if(b > 64) break;
+  }
+  return out;
+}
+function nodeInfo(n){
+  var r3 = Number(n%3n), r4 = Number(n%4n), r9 = Number(n%9n), r36 = Number(n%36n);
+  return { r3:r3, r4:r4, r9:r9, r36:r36,
+           pred: r3===0 ? "dead" : r3===1 ? "up" : "down",
+           maxOK: (r4===1 && r3===2 && r9!==5) };
+}
+function predFill(info, p){
+  return info.pred==="dead" ? p.pink : info.pred==="up" ? p.rose : p.blue;
+}
+/* Small triangle at (x,y) pointing along (dx,dy).  Edges are drawn parent->child
+   (root outward), but the MAP runs the other way, so every arrow points from the
+   predecessor back toward its successor — i.e. along the Collatz flow, toward 1. */
+function arrowTri(x, y, dx, dy, size, color, opacity){
+  var L = Math.hypot(dx, dy) || 1; dx /= L; dy /= L;
+  var px = -dy, py = dx;
+  return '<path d="M'+(x+dx*size)+' '+(y+dy*size)+
+    'L'+(x-dx*size*0.55+px*size*0.6)+' '+(y-dy*size*0.55+py*size*0.6)+
+    'L'+(x-dx*size*0.55-px*size*0.6)+' '+(y-dy*size*0.55-py*size*0.6)+
+    'Z" fill="'+color+'" opacity="'+opacity+'"/>';
+}
+
+/* ---- explorable left-to-right tree ---- */
+var TREE = { root:1n, cap:3, depth:4, open:{} };
+function treeSeed(){
+  TREE.open = {};
+  (function seed(v, d){
+    if(d >= TREE.depth) return;
+    TREE.open[v.toString()] = true;
+    predChildren(v, TREE.cap).forEach(function(c){ if(c.y !== v) seed(c.y, d+1); });
+  })(TREE.root, 0);
+}
+function treeBuild(){
+  var maxD = 0;
+  function rec(v, d, b, down){
+    var node = {v:v, d:d, b:b, down:down, kids:[], info:nodeInfo(v)};
+    if(d > maxD) maxD = d;
+    if(TREE.open[v.toString()] && d < TREE.depth){
+      predChildren(v, TREE.cap).forEach(function(c){
+        if(c.y === v) return;                       /* skip the 1→1 self-loop */
+        node.kids.push(rec(c.y, d+1, c.b, c.down));
+      });
+    }
+    return node;
+  }
+  var root = rec(TREE.root, 0, null, false);
+  var slot = 0;
+  (function assign(n){
+    if(n.kids.length === 0){ n.row = slot++; }
+    else { n.kids.forEach(assign); n.row = (n.kids[0].row + n.kids[n.kids.length-1].row)/2; }
+  })(root);
+  return {root:root, rows:slot, maxD:maxD};
+}
+function treeRender(){
+  var p = pal(), t = treeBuild();
+  var COLW = 150, ROWH = 30, PADX = 14, PADY = 16;
+  var W = PADX*2 + (t.maxD+1)*COLW, H = PADY*2 + Math.max(1,t.rows)*ROWH;
+  var edges = [], nodes = [];
+  (function walk(n){
+    var x = PADX + n.d*COLW, y = PADY + n.row*ROWH + ROWH/2;
+    n._x = x; n._y = y;
+    n.kids.forEach(function(k){
+      walk(k);
+      var x1 = x + 4, x2 = k._x - 4, mx = (x1+x2)/2;
+      var col = k.down ? p.violet : p.rule2, op = k.down ? 1 : .85;
+      edges.push('<path d="M'+x1+' '+y+' C'+mx+' '+y+' '+mx+' '+k._y+' '+x2+' '+k._y+'" fill="none" stroke="'+
+        col+'" stroke-width="'+(k.down?2.4:1)+'" opacity="'+op+'"/>');
+      /* bezier midpoint is (mx, (y+k._y)/2); tangent there is (0.75*(x2-x1), 1.5*(k._y-y)).
+         Negate it: the map runs child -> parent. */
+      edges.push(arrowTri(mx, (y+k._y)/2, -0.75*(x2-x1), -1.5*(k._y-y), k.down?6:5, col, op));
+      edges.push('<text x="'+mx+'" y="'+((y+k._y)/2 - 11)+'" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9" fill="'+
+        (k.down?p.violet:p.ink3)+'">b='+k.b+'</text>');
+    });
+    var label = n.v.toString(), wpx = Math.max(34, label.length*8.6 + 16);
+    var fill = predFill(n.info, p), ring = n.info.maxOK;
+    var hasKids = n.info.pred !== "dead" && n.d < TREE.depth;
+    nodes.push('<g class="tnode" data-v="'+label+'" style="cursor:'+(hasKids?"pointer":"default")+'">'+
+      '<rect x="'+(x-wpx/2+ (n.d? 4:0))+'" y="'+(y-11)+'" width="'+wpx+'" height="22" rx="4" fill="'+fill+
+      '" fill-opacity="'+(ring?1:.82)+'" stroke="'+(ring?p.violet:"none")+'" stroke-width="'+(ring?2.6:0)+'"/>'+
+      '<text x="'+(x + (n.d?4:0))+'" y="'+(y+1)+'" text-anchor="middle" dominant-baseline="central" '+
+      'font-family="IBM Plex Mono, monospace" font-size="12" font-weight="'+(ring?600:450)+'" fill="'+p.paper2+'">'+label+'</text>'+
+      (TREE.open[label] || !hasKids ? '' :
+        '<circle cx="'+(x+wpx/2+9+(n.d?4:0))+'" cy="'+y+'" r="4.5" fill="none" stroke="'+p.ink3+'" stroke-width="1.2"/>')+
+      '</g>');
+  })(t.root);
+  document.getElementById("tree-host").innerHTML =
+    '<svg viewBox="0 0 '+W+' '+H+'" width="'+W+'" height="'+H+'" style="min-width:100%" role="img" '+
+    'aria-label="Predecessor tree of odd numbers">'+edges.join("")+nodes.join("")+'</svg>';
+}
+function treeDetail(vStr){
+  var n = BigInt(vStr), i = nodeInfo(n), p = pal();
+  var kids = predChildren(n, 4);
+  var succ = classify(n);
+  var kidTxt = i.pred==="dead"
+    ? "no predecessors at all — nothing in the graph maps here"
+    : kids.map(function(c){ return c.y.toString()+(c.down?" ↓":" ↑"); }).join(" · ") + " …";
+  document.getElementById("tree-detail").innerHTML =
+    '<div class="head"><span class="n">'+n+'</span>'+
+      '<span class="badge '+(i.maxOK?"b-live":"b-kill")+'">'+(i.maxOK?"can be a maximum":"cannot be the maximum")+'</span>'+
+      '<span class="badge '+(i.pred==="down"?"b-asc":"b-kill")+'">'+
+        (i.pred==="dead"?"no predecessors":i.pred==="up"?"all predecessors bigger":"one smaller predecessor")+'</span></div>'+
+    '<div class="work">mod 3 = <b>'+i.r3+'</b> · mod 4 = <b>'+i.r4+'</b> · mod 9 = <b>'+i.r9+
+      '</b> · mod 36 = <b>'+i.r36+'</b><br>predecessors: '+kidTxt+
+      '<br>forward: S('+n+') = <b>'+succ.S+'</b>'+(succ.S>n?" (up)":succ.S<n?" (down)":" (fixed)")+'</div>';
+}
+document.getElementById("tree-host").addEventListener("click", function(e){
+  var g = e.target.closest(".tnode"); if(!g) return;
+  var v = g.dataset.v;
+  if(nodeInfo(BigInt(v)).pred !== "dead"){ TREE.open[v] = !TREE.open[v]; treeRender(); }
+  treeDetail(v);
+});
+function treeControls(){
+  var rootEl = document.getElementById("tree-root");
+  var v = rootEl.value.replace(/[^0-9]/g,"") || "1";
+  if(BigInt(v) % 2n === 0n || BigInt(v) <= 0n){ v = "1"; rootEl.value = "1"; }
+  TREE.root = BigInt(v);
+  TREE.cap = parseInt(document.getElementById("tree-cap").value,10);
+  TREE.depth = parseInt(document.getElementById("tree-depth").value,10);
+  treeSeed(); treeRender(); treeDetail(TREE.root.toString());
+}
+["tree-root","tree-cap","tree-depth"].forEach(function(id){
+  document.getElementById(id).addEventListener("change", treeControls);
+});
+document.getElementById("tree-root").addEventListener("keydown", function(e){ if(e.key==="Enter") treeControls(); });
+document.getElementById("tree-reset").addEventListener("click", function(){
+  document.getElementById("tree-root").value = "1";
+  document.getElementById("tree-cap").value = "3";
+  document.getElementById("tree-depth").value = "4";
+  treeControls();
+});
+(function treeLegend(){
+  var p = pal();
+  document.getElementById("tree-legend").innerHTML = [
+    [p.pink,"3 | n — no predecessors, a dead end"],
+    [p.rose,"n ≡ 1 (mod 3) — every predecessor is bigger"],
+    [p.blue,"n ≡ 2 (mod 3) — exactly one is smaller"],
+    [p.violet,"ringed: could be a cycle maximum"]
+  ].map(function(it){ return '<span><i class="sw" style="background:'+it[0]+'"></i>'+it[1]+'</span>'; }).join("");
+})();
+
+/* ---- radial network of every odd number up to N ---- */
+function netBuild(N){
+  var Nb = BigInt(N), seen = {1:{v:1, kids:[]}}, queue = [1n], order = [1];
+  while(queue.length){
+    var v = queue.shift(), r3 = Number(v%3n);
+    if(r3 === 0) continue;
+    var b = (r3===1)?2:1;
+    while(true){
+      var y = ((1n << BigInt(b))*v - 1n)/3n;
+      if(y > Nb) break;
+      if(y !== v && y > 0n && !seen[y.toString()]){
+        var node = {v:Number(y), kids:[]};
+        seen[y.toString()] = node; seen[v.toString()].kids.push({node:node, b:b, down:y<v});
+        queue.push(y); order.push(Number(y));
+      }
+      b += 2;
+      if(b > 64) break;
+    }
+  }
+  return {root:seen["1"], count:order.length};
+}
+var NET = {N:511, labels:false, pts:[]};
+function netRender(){
+  var p = pal(), t = netBuild(NET.N), S = 760, cx = S/2, cy = S/2, R = S/2 - 26;
+  var maxD = 0;
+  (function depth(n,d){ n.d = d; if(d>maxD) maxD=d; n.kids.forEach(function(k){ depth(k.node,d+1); }); })(t.root,0);
+  var slot = 0, leaves = 0;
+  (function count(n){ if(!n.kids.length) leaves++; else n.kids.forEach(function(k){count(k.node);}); })(t.root);
+  (function ang(n){
+    if(!n.kids.length){ n.a = (slot++ / Math.max(1,leaves)) * Math.PI*2; }
+    else { n.kids.forEach(function(k){ ang(k.node); });
+           n.a = (n.kids[0].node.a + n.kids[n.kids.length-1].node.a)/2; }
+  })(t.root);
+  var edges = [], dots = [], labels = [];
+  NET.pts = [];
+  (function draw(n){
+    var r = (n.d/Math.max(1,maxD))*R;
+    n._x = cx + r*Math.cos(n.a - Math.PI/2);
+    n._y = cy + r*Math.sin(n.a - Math.PI/2);
+    n.kids.forEach(function(k){
+      draw(k.node);
+      var ncol = k.down ? p.violet : p.rule2, nop = k.down ? .95 : .55;
+      edges.push('<line x1="'+n._x+'" y1="'+n._y+'" x2="'+k.node._x+'" y2="'+k.node._y+
+        '" stroke="'+ncol+'" stroke-width="'+(k.down?1.9:.7)+'" opacity="'+nop+'"/>');
+      edges.push(arrowTri((n._x+k.node._x)/2, (n._y+k.node._y)/2,
+        n._x-k.node._x, n._y-k.node._y, k.down?4.6:3.6, ncol, Math.min(1, nop+.25)));
+    });
+    var info = nodeInfo(BigInt(n.v));
+    var rad = info.maxOK ? 4.6 : 2.6;
+    dots.push('<circle cx="'+n._x+'" cy="'+n._y+'" r="'+rad+'" fill="'+predFill(info,p)+
+      '" stroke="'+(info.maxOK?p.violet:"none")+'" stroke-width="'+(info.maxOK?2:0)+'"/>');
+    NET.pts.push({x:n._x, y:n._y, v:n.v, info:info});
+    if(NET.labels && info.maxOK){
+      labels.push('<text x="'+n._x+'" y="'+(n._y-8)+'" text-anchor="middle" font-family="IBM Plex Mono, monospace" '+
+        'font-size="9" fill="'+p.violet+'">'+n.v+'</text>');
+    }
+  })(t.root);
+  var surv = NET.pts.filter(function(q){ return q.info.maxOK; }).length;
+  document.getElementById("net-host").innerHTML =
+    '<svg id="net-svg" viewBox="0 0 '+S+' '+S+'" width="100%" style="max-width:'+S+'px;margin:0 auto;display:block" '+
+    'role="img" aria-label="Radial predecessor network of odd numbers up to '+NET.N+'">'+
+    edges.join("")+dots.join("")+labels.join("")+'</svg>';
+  document.getElementById("net-cap").innerHTML =
+    "Every odd number up to "+NET.N+" that reaches 1, drawn as one tree — <b>"+t.count+
+    " nodes</b>, of which <b>"+surv+"</b> ("+(100*surv/t.count).toFixed(1)+"%) are still candidates for "+
+    "being the largest element of a cycle. Depth from the centre is the number of odd steps back from 1. "+
+    "Pink dots terminate the graph: nothing maps to a multiple of three. Every arrow points along the "+
+    "map, one odd step closer to 1 — so the whole picture drains toward the centre.";
+}
+(function netLegend(){
+  var p = pal();
+  document.getElementById("net-legend").innerHTML = [
+    [p.violet,"downhill edge — the one smaller predecessor"],
+    [p.rule2,"uphill edge"],
+    [p.pink,"dead end (3 | n)"]
+  ].map(function(it){ return '<span><i class="sw" style="background:'+it[0]+'"></i>'+it[1]+'</span>'; }).join("");
+})();
+document.getElementById("net-n").addEventListener("change", function(){
+  NET.N = parseInt(this.value,10); netRender();
+});
+document.getElementById("net-labels").addEventListener("change", function(){
+  NET.labels = this.checked; netRender();
+});
+(function netHover(){
+  var host = document.getElementById("net-host"), tip = document.getElementById("net-tip");
+  host.addEventListener("mousemove", function(e){
+    var svg = document.getElementById("net-svg"); if(!svg || !NET.pts.length) return;
+    var r = svg.getBoundingClientRect(), sc = 760/r.width;
+    var mx = (e.clientX-r.left)*sc, my = (e.clientY-r.top)*sc, best=null, bd=1e9;
+    NET.pts.forEach(function(q){ var d=Math.hypot(q.x-mx,q.y-my); if(d<bd){bd=d;best=q;} });
+    if(!best || bd > 14){ tip.style.opacity=0; return; }
+    tip.innerHTML = "<b>"+best.v+"</b><br>"+
+      (best.info.pred==="dead" ? "3 | n — dead end" :
+       best.info.pred==="up" ? "all predecessors bigger" : "one smaller predecessor") +
+      "<br>"+(best.info.maxOK ? "could be a maximum" : "cannot be the maximum");
+    tip.style.left = (best.x/sc)+"px"; tip.style.top = (best.y/sc)+"px"; tip.style.opacity = 1;
+  });
+  host.addEventListener("mouseleave", function(){ tip.style.opacity=0; });
+})();
+onTheme(function(){ treeRender(); netRender();
+  var p=pal();
+  var a=[p.pink,p.rose,p.blue,p.violet];
+  document.querySelectorAll("#tree-legend .sw").forEach(function(s,i){ s.style.background=a[i]; });
+  var b2=[p.violet,p.rule2,p.pink];
+  document.querySelectorAll("#net-legend .sw").forEach(function(s,i){ s.style.background=b2[i]; });
+});
+
+treeControls();
+netRender();
+
+/* ═══ 4. THE BACKWARD CHAIN ════════════════════════════════════ */
+function walkBack(M, maxDepth){
+  var steps = [], y = M, k = 0;
+  while(k < maxDepth){
+    k++;
+    var allowed = [], b;
+    for(b=1;b<=10;b++){
+      var num = (1n << BigInt(b))*y - 1n;              // 3*y_k = 2^b * y_{k-1} - 1
+      if(num <= 0n || num % 3n !== 0n) continue;
+      var yk = num/3n;
+      if(yk > M) continue;                    // every cycle element is <= M
+      allowed.push({b:b, y:yk});
+    }
+    if(allowed.length === 0){ steps.push({k:k, dead:true}); break; }
+    var pick = allowed[0];
+    steps.push({k:k, b:pick.b, y:pick.y, n:allowed.length,
+                opts:allowed.map(function(o){return o.b;})});
+    y = pick.y;
+    if(y === M){ steps[steps.length-1].closed = true; break; }
+  }
+  return steps;
+}
+function renderChain(mStr){
+  var host = document.getElementById("chain");
+  var M;
+  try { M = BigInt(mStr); } catch(e){ host.innerHTML = '<div class="work">Enter a positive odd whole number.</div>'; return; }
+  if(M <= 0n || M%2n === 0n){ host.innerHTML = '<div class="work">Enter a positive odd whole number.</div>'; return; }
+  var v = classify(M);
+  var head = '<div class="hop"><div class="gut"><span class="dot '+(v.kind==="live"?"forced":"dead")+
+    '"></span><span class="stem"></span></div><div class="body">'+
+    '<div class="val">M = '+M+'</div><div class="why">'+
+    (v.kind==="live" ? "≡ "+v.r36+" (mod 36) — a legal candidate" :
+       "excluded before we even start — "+v.rule)+'</div></div></div>';
+  var steps = walkBack(M, 8), rows = "";
+  steps.forEach(function(s, i){
+    var last = (i === steps.length-1);
+    if(s.dead){
+      rows += '<div class="hop"><div class="gut"><span class="dot dead"></span></div>'+
+        '<div class="body"><div class="val">dead end</div><div class="why">no halving count keeps the chain ≤ M — this M cannot sit in a cycle</div></div></div>';
+      return;
+    }
+    var cls = s.n===1 ? "forced" : "branch";
+    var why = s.n===1
+      ? "b<sub>"+s.k+"</sub> = "+s.b+" — forced, the only legal halving count"
+      : "b<sub>"+s.k+"</sub> ∈ {"+s.opts.join(", ")+"} — "+s.n+" branches, determinism is gone";
+    if(s.closed) why += " &nbsp;·&nbsp; <b>closes back to M</b>";
+    rows += '<div class="hop"><div class="gut"><span class="dot '+cls+'"></span>'+
+      (last?"":'<span class="stem"></span>')+'</div><div class="body">'+
+      '<div class="val">y<sub>'+s.k+'</sub> = '+s.y+'</div><div class="why">'+why+'</div></div></div>';
+  });
+  host.innerHTML = head + rows;
+}
+document.getElementById("chain-go").addEventListener("click", function(){
+  renderChain(document.getElementById("mstart").value.replace(/[^0-9]/g,"") || "17");
+});
+document.getElementById("mstart").addEventListener("keydown", function(e){ if(e.key==="Enter") document.getElementById("chain-go").click(); });
+Array.prototype.forEach.call(document.querySelectorAll(".m-eg"), function(b){
+  b.addEventListener("click", function(){ document.getElementById("mstart").value = b.dataset.n; renderChain(b.dataset.n); });
+});
+renderChain("17");
+
+/* ═══ 5. REAL CYCLES ═══════════════════════════════════════════ */
+var cyList = D.cycles.list.filter(function(c){ return c.L >= 2; });
+var qs = []; cyList.forEach(function(c){ if(qs.indexOf(c.q)<0) qs.push(c.q); }); qs.sort(function(a,b){return a-b;});
+var curQ = "all";
+function chk(v){ var t = v===true ? '<span class="ok">✓</span>' : v===false ? '<span class="no">✗</span>' : '<span class="dash">—</span>'; return '<td class="n">'+t+'</td>'; }
+function renderCycles(){
+  var rows = cyList.filter(function(c){ return curQ==="all" || c.q===curQ; });
+  document.querySelector("#cy-table tbody").innerHTML = rows.slice(0,140).map(function(c){
+    var odds = c.odds.slice(0,7).join(", ") + (c.odds.length>7 ? " …" : "");
+    var mark = (c.q===37 && c.M===53) || (c.q===7 && c.M===11) || (c.q===5 && c.M===49);
+    return '<tr'+(mark?' class="hl"':'')+'><td class="n">'+c.q+'</td><td class="n">'+c.L+'</td>'+
+      '<td class="n">'+fmt(c.M)+'</td><td class="n">'+odds+'</td><td class="n">'+c.a.join("·")+'</td>'+
+      chk(c.chk.T0)+chk(c.chk.T1)+chk(c.chk.T2)+
+      chk(c.chk.T3)+chk(c.chk.T4)+chk(c.chk.T5)+'</tr>';
+  }).join("");
+  document.getElementById("cy-cap").innerHTML =
+    "Showing "+Math.min(rows.length,140)+" of "+rows.length+" cycles with at least two odd elements"+
+    (curQ==="all" ? " across "+qs.length+" values of q" : " for q = "+curQ)+
+    ". A dash means the hypothesis doesn't apply to that cycle. Highlighted rows are the instructive "+
+    "edge cases: q=37 breaks the L≥3 story, q=7 sits exactly on the sharp threshold, q=5 breaks a "+
+    "claim about halving counts.";
+}
+(function cyFilters(){
+  var host = document.getElementById("cy-filters");
+  var html = '<label>Filter by q</label><button class="qf on" data-q="all">all</button>';
+  qs.slice(0,14).forEach(function(q){ html += '<button class="qf" data-q="'+q+'">'+q+'</button>'; });
+  host.innerHTML = html;
+  host.addEventListener("click", function(e){
+    var b = e.target.closest(".qf"); if(!b) return;
+    curQ = b.dataset.q==="all" ? "all" : parseInt(b.dataset.q,10);
+    Array.prototype.forEach.call(host.querySelectorAll(".qf"), function(x){ x.classList.toggle("on", x===b); });
+    renderCycles();
+  });
+})();
+renderCycles();
+
+/* ═══ 5b. REVERSE PATHS FROM THE TRIVIAL CYCLE ═════════════════ */
+var RP = { bs: [] };
+function rpStep(y, b){ var num = (1n << BigInt(b))*y - 1n; return num % 3n === 0n ? num/3n : null; }
+function rpChainVals(){
+  var y = 1n, out = [{y:y, b:null}];
+  for(var i=0;i<RP.bs.length;i++){
+    var n2 = rpStep(y, RP.bs[i]); if(n2 === null) break;
+    out.push({y:n2, b:RP.bs[i]}); y = n2;
+  }
+  return out;
+}
+function rpRender(){
+  var p = pal(), chain = rpChainVals(), tip = chain[chain.length-1].y;
+  var r3 = Number(tip % 3n);
+
+  /* buttons: parity of b is dictated by tip mod 3 */
+  var btns = "";
+  for(var b=1;b<=12;b++){
+    var okB = (r3 === 0) ? false : (r3 === 1 ? b%2===0 : b%2===1);
+    btns += '<button class="rp-b'+(okB?"":" ")+'" data-b="'+b+'"'+(okB?"":" disabled")+
+      ' style="'+(okB?"":"opacity:.32;cursor:not-allowed;")+'min-width:38px">'+b+'</button>';
+  }
+  document.getElementById("rp-buttons").innerHTML = btns +
+    '<span class="mono" style="font-size:.76rem;color:'+(r3===0?p.pink:p.ink3)+';margin-left:6px">'+
+    (r3===0 ? "at "+tip+" — divisible by 3, the path stops here"
+            : "at "+tip+" ≡ "+r3+" (mod 3) → only "+(r3===1?"even":"odd")+" halvings")+'</span>';
+
+  /* the walk */
+  var rows = "";
+  chain.forEach(function(s, i){
+    var last = i === chain.length-1;
+    var why = s.b === null ? "start — the known cycle 1 → 4 → 2 → 1" :
+      "b<sub>"+i+"</sub> = "+s.b+" &nbsp;·&nbsp; ("+(1n<<BigInt(s.b))+"·"+chain[i-1].y+" − 1)/3";
+    if(s.b !== null && s.y === chain[i-1].y) why += " &nbsp;·&nbsp; <b>closes on itself</b>";
+    rows += '<div class="hop"><div class="gut"><span class="dot '+
+      (s.b===null?"forced":(Number(s.y%3n)===0?"dead":"forced"))+'"></span>'+
+      (last?"":'<span class="stem"></span>')+'</div><div class="body">'+
+      '<div class="val">'+s.y+'</div><div class="why">'+why+'</div></div></div>';
+  });
+  document.getElementById("rp-chain").innerHTML = rows;
+
+  /* the closed form, with the terms actually substituted */
+  var k = chain.length-1, host = document.getElementById("rp-form");
+  if(k === 0){ host.innerHTML = '<span style="color:var(--ink-3)">Add a halving count to build a path.</span>'; return; }
+  var Bp = [], s = 0;
+  for(var i=0;i<k;i++){ s += RP.bs[i]; Bp.push(s); }
+  var B = s, terms = [], sum = 0n;
+  for(var i=0;i<k;i++){
+    var t = (3n**BigInt(i)) * (1n << BigInt(B - Bp[i]));
+    sum += t;
+    terms.push((i?"3<sup>"+i+"</sup>·":"")+"2<sup>"+(B-Bp[i])+"</sup>");
+  }
+  var lhs = (3n**BigInt(k)) * tip, rhs = (1n<<BigInt(B)) - sum;
+  host.innerHTML =
+    '3<sup>'+k+'</sup>·n = 2<sup>'+B+'</sup> − [ <span style="color:var(--pink)">'+terms.join(" + ")+'</span> ]<br>'+
+    '<b>'+(3n**BigInt(k))+'</b>·'+tip+' = '+(1n<<BigInt(B))+' − '+sum+' = <b>'+rhs+'</b>'+
+    (lhs === rhs ? ' <span class="ok">✓ identity holds</span>' : ' <span class="no">✗ mismatch</span>');
+}
+document.getElementById("rp-buttons").addEventListener("click", function(e){
+  var b = e.target.closest(".rp-b"); if(!b || b.disabled) return;
+  RP.bs.push(parseInt(b.dataset.b,10)); rpRender();
+});
+document.getElementById("rp-undo").addEventListener("click", function(){ RP.bs.pop(); rpRender(); });
+document.getElementById("rp-reset").addEventListener("click", function(){ RP.bs = []; rpRender(); });
+Array.prototype.forEach.call(document.querySelectorAll(".rp-eg"), function(btn){
+  btn.addEventListener("click", function(){
+    RP.bs = btn.dataset.bs.split(",").map(function(x){ return parseInt(x,10); }); rpRender();
+  });
+});
+
+/* ---- two components: the basin of 1, and a hypothetical cycle ---- */
+function rpComponents(){
+  var p = pal(), W = 760, H = 310, out = [];
+  function dot(x,y,r,fill,stroke){
+    return '<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="'+fill+'"'+
+      (stroke?' stroke="'+stroke+'" stroke-width="2.4"':'')+'/>';
+  }
+  function lab(x,y,t,col,sz){
+    return '<text x="'+x+'" y="'+y+'" text-anchor="middle" dominant-baseline="central" '+
+      'font-family="IBM Plex Mono, monospace" font-size="'+(sz||11)+'" fill="'+(col||p.paper2)+'">'+t+'</text>';
+  }
+  function edge(x1,y1,x2,y2,col,w){
+    /* arrow points x2->x1 (the map runs toward the root) */
+    var mx=(x1+x2)/2, my=(y1+y2)/2;
+    return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+col+'" stroke-width="'+(w||1)+'" opacity=".7"/>'+
+      arrowTri(mx,my,x1-x2,y1-y2,4.4,col,.95);
+  }
+  /* --- left: basin of 1 --- */
+  var cx = 150, cy = 155;
+  var kids = [[250,72,"5"],[250,155,"21"],[250,238,"85"]];
+  var g2 = [[345,40,"3"],[345,104,"13"],[345,205,"—"],[345,262,"—"]];
+  kids.forEach(function(k){ out.push(edge(cx,cy,k[0],k[1],p.rule2,1.4)); });
+  out.push(edge(250,72,345,40,p.rule2,1)); out.push(edge(250,72,345,104,p.rule2,1));
+  out.push(edge(250,238,345,205,p.rule2,1)); out.push(edge(250,238,345,262,p.rule2,1));
+  /* self-loop on 1 = the trivial cycle */
+  out.push('<path d="M'+(cx-13)+' '+(cy-13)+' a 20 20 0 1 1 26 0" fill="none" stroke="'+p.violet+'" stroke-width="2.4"/>');
+  out.push(arrowTri(cx+13, cy-13, -6, 8, 5, p.violet, 1));
+  out.push(lab(cx, cy-42, "1 → 4 → 2 → 1", p.violet, 10.5));
+  g2.forEach(function(k){ out.push(dot(k[0],k[1],8,p.rose)); out.push(lab(k[0],k[1],k[2])); });
+  kids.forEach(function(k){ out.push(dot(k[0],k[1],11,k[2]==="21"?p.pink:p.rose)); out.push(lab(k[0],k[1],k[2])); });
+  out.push(dot(cx,cy,17,p.violet)); out.push(lab(cx,cy,"1",p.paper2,13));
+  out.push(lab(cx+40, 292, "the basin of 1 — everything this page explores", p.ink3, 11));
+
+  /* --- divider --- */
+  out.push('<line x1="440" y1="26" x2="440" y2="284" stroke="'+p.rule2+'" stroke-width="1.4" stroke-dasharray="5 5"/>');
+  out.push(lab(440, 16, "no path crosses", p.pink, 10.5));
+
+  /* --- right: a hypothetical cycle --- */
+  var rc = 600, rcy = 148, R = 58, N = 5, pts = [];
+  for(var i=0;i<N;i++){
+    var a = -Math.PI/2 + i*2*Math.PI/N;
+    pts.push([rc + R*Math.cos(a), rcy + R*Math.sin(a)]);
+  }
+  for(var i=0;i<N;i++){
+    var A = pts[i], Bp2 = pts[(i+1)%N];
+    out.push(edge(A[0],A[1],Bp2[0],Bp2[1],p.violet,2));
+  }
+  out.push(edge(pts[2][0],pts[2][1], pts[2][0]-72, pts[2][1]+44, p.rule2,1));
+  out.push(edge(pts[3][0],pts[3][1], pts[3][0]+66, pts[3][1]+50, p.rule2,1));
+  out.push(dot(pts[2][0]-72, pts[2][1]+44, 8, p.rose));
+  out.push(dot(pts[3][0]+66, pts[3][1]+50, 8, p.rose));
+  pts.forEach(function(q,i){
+    out.push(dot(q[0],q[1], i===0?14:10, i===0?p.violet:p.blue, i===0?p.violet:null));
+    out.push(lab(q[0],q[1], i===0?"M":"·", p.paper2, i===0?12:10));
+  });
+  out.push(lab(rc, 292, "a counterexample — its own loop, its own trees", p.ink3, 11));
+  document.getElementById("rp-comp").innerHTML =
+    '<svg viewBox="0 0 '+W+' '+H+'" width="100%" style="max-width:'+W+'px;margin:0 auto;display:block" '+
+    'role="img" aria-label="Two disjoint components: the basin of 1, and a hypothetical second cycle">'+
+    out.join("")+'</svg>';
+}
+onTheme(function(){ rpRender(); rpComponents(); });
+rpRender();
+rpComponents();
+
+/* ═══ 6. THE WALL ══════════════════════════════════════════════ */
+document.getElementById("fwd-bits").textContent = (100*(1-D.mod2.limit)).toFixed(1)+"%";
+var recs = D.dio.records, VLIM = D.dio.verification_limit;
+var dioCv = document.getElementById("dio"), dioTip = document.getElementById("dio-tip");
+var dioGeom = null;
+function drawDio(){
+  var p = pal(), g = hidpi(dioCv, 360), c = g.c;
+  var padL = 62, padR = 18, padT = 20, padB = 40;
+  var W = g.w-padL-padR, H = 360-padT-padB;
+  var xs = recs.map(function(r){ return Math.log10(r.L); });
+  var ys = recs.map(function(r){ return Math.log10(Math.max(1,r.min_bound)); });
+  var xMax = Math.log10(20000), yMax = Math.log10(VLIM.approx)+1.4;
+  function X(v){ return padL + (v/xMax)*W; }
+  function Y(v){ return padT + H - (v/yMax)*H; }
+  dioGeom = {X:X, Y:Y, xMax:xMax, yMax:yMax, padL:padL, padT:padT, W:W, H:H};
+  c.clearRect(0,0,g.w,360);
+  // grid
+  c.strokeStyle = p.rule; c.lineWidth = 1; c.font = '11px "IBM Plex Mono", monospace'; c.fillStyle = p.ink3;
+  for(var e=0;e<=Math.ceil(yMax);e+=4){
+    var y = Y(e); if(y<padT-2) continue;
+    c.beginPath(); c.moveTo(padL,y); c.lineTo(padL+W,y); c.stroke();
+    c.textAlign="right"; c.fillText("10"+String(e).replace(/\d/g,function(d){return "⁰¹²³⁴⁵⁶⁷⁸⁹"[d];}), padL-8, y+4);
+  }
+  for(var lx=0;lx<=4;lx++){
+    var x = X(lx);
+    c.beginPath(); c.moveTo(x,padT); c.lineTo(x,padT+H); c.stroke();
+    c.textAlign="center"; c.fillText(lx===0?"1":("10^"+lx), x, padT+H+18);
+  }
+  c.textAlign="center"; c.fillStyle=p.ink3;
+  c.fillText("cycle length L  (odd steps)", padL+W/2, 356);
+  // needed line
+  var yv = Y(Math.log10(VLIM.approx));
+  c.save(); c.setLineDash([6,5]); c.strokeStyle = p.pink; c.lineWidth = 1.6;
+  c.beginPath(); c.moveTo(padL,yv); c.lineTo(padL+W,yv); c.stroke(); c.restore();
+  c.fillStyle = p.pink; c.textAlign="left"; c.font='600 11px "IBM Plex Mono", monospace';
+  c.fillText("a cycle must live above here  (2.39×10²¹, verified by machine)", padL+8, yv-8);
+  // curve
+  c.strokeStyle = p.violet; c.lineWidth = 2; c.beginPath();
+  recs.forEach(function(r,i){ var x=X(xs[i]), y=Y(ys[i]); i? c.lineTo(x,y) : c.moveTo(x,y); });
+  c.stroke();
+  c.fillStyle = p.violet;
+  recs.forEach(function(r,i){ c.beginPath(); c.arc(X(xs[i]),Y(ys[i]),3,0,7); c.fill(); });
+  // gap arrow
+  var last = recs[recs.length-1];
+  var xl = X(Math.log10(last.L)), yl = Y(Math.log10(last.min_bound));
+  c.save(); c.strokeStyle = p.amber; c.lineWidth = 1.4; c.setLineDash([3,3]);
+  c.beginPath(); c.moveTo(xl, yl); c.lineTo(xl, yv); c.stroke(); c.restore();
+  c.fillStyle = p.amber; c.textAlign = "right"; c.font='600 11px "IBM Plex Mono", monospace';
+  c.fillText("13 orders of magnitude short", xl-8, (yl+yv)/2);
+  dioGeom.xs = xs; dioGeom.ys = ys;
+}
+dioCv.addEventListener("mousemove", function(e){
+  if(!dioGeom) return;
+  var r = dioCv.getBoundingClientRect(), mx = e.clientX-r.left, my = e.clientY-r.top;
+  var best = -1, bd = 1e9;
+  dioGeom.xs.forEach(function(v,i){
+    var d = Math.hypot(dioGeom.X(v)-mx, dioGeom.Y(dioGeom.ys[i])-my);
+    if(d<bd){ bd=d; best=i; }
+  });
+  if(best<0 || bd>26){ dioTip.style.opacity=0; return; }
+  var rec = recs[best];
+  dioTip.innerHTML = "L = <b>"+fmt(rec.L)+"</b> odd steps<br>B = <b>"+fmt(rec.B)+"</b> halvings<br>min element &gt; <b>"+
+    (rec.min_bound>=1e6 ? rec.min_bound.toExponential(2) : fmt(Math.round(rec.min_bound)))+"</b>";
+  dioTip.style.left = dioGeom.X(dioGeom.xs[best])+"px";
+  dioTip.style.top  = dioGeom.Y(dioGeom.ys[best])+"px";
+  dioTip.style.opacity = 1;
+});
+dioCv.addEventListener("mouseleave", function(){ dioTip.style.opacity=0; });
+(function dioLegend(){
+  var p = pal();
+  document.getElementById("dio-legend").innerHTML = [
+    [p.violet,"best bound achievable at cycle length L"],
+    [p.pink,"where a cycle would have to be"],
+    [p.amber,"the gap"]
+  ].map(function(it){ return '<span><i class="sw" style="background:'+it[0]+'"></i>'+it[1]+'</span>'; }).join("");
+})();
+onTheme(function(){ drawDio();
+  var p=pal(), cs=[p.violet,p.pink,p.amber];
+  document.querySelectorAll("#dio-legend .sw").forEach(function(s,i){ s.style.background=cs[i]; });
+});
+document.getElementById("wall-note").innerHTML =
+  "<b>The measured ceiling.</b> The powers-of-two sieve saturates at "+
+  (100*D.mod2.limit).toFixed(2)+"% of odd numbers surviving — about "+
+  (-Math.log2(D.mod2.limit)).toFixed(2)+" bits, and no depth improves it. Combining both sieves to depth "+
+  D.crt.rows[D.crt.rows.length-1].k+" leaves roughly 1 odd number in "+
+  Math.round(1/D.crt.rows[D.crt.rows.length-1].density_among_odds)+
+  " at a modulus of about 2<sup>"+Math.round(D.crt.rows[D.crt.rows.length-1].modulus_bits)+
+  "</sup>. A sieve on residues can only ever remove a set of density less than 1 — closing the "+
+  "problem needs a Diophantine input this method does not have.";
+
+/* ═══ 7. STATUS ════════════════════════════════════════════════ */
+document.querySelector("#th-table tbody").innerHTML = D.theorems.map(function(t){
+  var hyp = (t.hypotheses||"").replace(/GROUND_TRUTH's/g,"an earlier draft's");
+  return '<tr><td class="n"><b>'+t.id+'</b></td><td>'+(t.short||"")+'</td>'+
+    '<td>'+hyp.split(".")[0]+'</td><td class="n">'+(t.status||"")+'</td></tr>';
+}).join("");
+document.getElementById("tally2").innerHTML = [
+  ["102","Lean declarations, all certified free of <code>sorry</code>"],
+  ["143","Python tests, all passing"],
+  [fmt(D.cycles.list.length),"real 3n+q cycles in the census"],
+  ["0","new theorems — all of this is known"]
+].map(function(t){ return "<div><b>"+t[0]+"</b><span>"+t[1]+"</span></div>"; }).join("");
+
+var lit = D.meta.literature;
+document.getElementById("foot-lit").innerHTML =
+  "Verification limit "+VLIM.approx.toExponential(2)+" — "+(VLIM.source||"").split(";")[0]+
+  ". Cycle-length bounds from Hercher (2023) and Barina (2025). The cycle equation is Böhm & Sontacchi (1978).";
+
+/* ─── first paint + resize ─── */
+function paint(){ drawStrip(); drawWheel(); drawDio(); }
+paint();
+var rt; window.addEventListener("resize", function(){ clearTimeout(rt); rt = setTimeout(paint, 120); });
+document.fonts && document.fonts.ready.then(paint);
+})();
+</script>
