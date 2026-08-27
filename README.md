@@ -169,9 +169,11 @@ docs/CERTIFY.md         intersecting the sieve with the path to 1: three complet
                         tests, and which is actually cheapest
 docs/WHY_NOT.md         why a congruence sieve can never finish, with -1 as an
                         explicit witness
+docs/STRUCTURE.md       what the maximum tells you: L <= |R(O)|, the slow ascent,
+                        and >= 41.5% single halvings
 python/                 collatz_maxodd — cycle search, sieves, backward tree,
                         cycle equation, death-depth tail, 3n+q census, certification from
-                        either end, 3-adic witness; 203 tests
+                        either end, 3-adic witness, cycle structure; 211 tests
 lean/                   Collatz — Mathlib-free Lean 4 development, 0 sorry,
                         0 axioms beyond propext/Quot.sound, 134 audited decls
 web/                    data.json (140 KB) + DATA.md — precomputed visualization
