@@ -148,3 +148,64 @@ i.e. `B/L` must approximate `log₂3` to within about `2×10⁻²²`. That is th
 Diophantine wall as everywhere else on this page, reached from a new direction.
 The pairing packages the obstruction more symmetrically; it does not weaken it.
 
+---
+
+## Certifying infinitely many numbers at once
+
+Every test above settles one `M` at a time, so no finite amount of work covers a
+range. But `d(M)` has a property that changes this: **above a computable
+threshold it depends only on `M mod 3^k`**.
+
+The exact size test on a backward prefix is `M(2^{B_j} − 3^j) ≤ c_j`; the
+magnitude-free one is `2^{B_j} ≤ 3^j`. They differ only when `2^{B_j} > 3^j` *and*
+`M ≤ c_j/(2^{B_j} − 3^j)`. So above
+
+```
+T_k  =  max over j ≤ k, over B with 2^B > 3^j,  of  c_j^max / (2^B − 3^j)
+```
+
+the two agree. `c_j` is largest when the early hops are smallest (`b_i = 1` for
+`i < j`), giving a closed form — no enumeration:
+
+```
+c_j^max  =  q · ( 2^(B−j+1) · (3^(j−1) − 2^(j−1)) + 3^(j−1) )
+```
+
+This reproduces the project's independently computed `running_max`
+(1, 1, 9, 9, 86, …, 538 at `k = 13`) **exactly**, and unlike that computation it
+is fast enough to run to `k = 120`.
+
+> **Certificate.** Fix `k`. If the magnitude-free backward tree from a residue
+> `r mod 3^k` dies before depth `k`, then **every** odd `M ≡ r (mod 3^k)` with
+> `M > T_k` has `d(M) < k`, hence is not the maximum of a nontrivial cycle.
+
+One finite computation, infinitely many numbers.
+
+| k | modulus | alive (`a_k`) | certified | valid for `M >` |
+|---|---|---|---|---|
+| 3 | 27 | 3 | 88.9 % | 9 |
+| 5 | 243 | 10 | 95.9 % | 86 |
+| 7 | 2 187 | 50 | 97.7 % | 86 |
+| 9 | 19 683 | 254 | 98.7 % | 86 |
+| 24 | 3^24 | 182 840 849 | **99.935 %** | 57 528 |
+
+The alive counts are `a_k` again — reached here by a third independent route,
+after the full-period scan and the 3-adic tree DFS.
+
+### Which constraint actually binds
+
+`T_k` grows roughly like `(3/2)^k`, but slowly enough that it is **not** the
+limit: `T₁₁₈ = 1.87×10²¹` still sits below the verified bound `2.39×10²¹`, while
+`T₁₁₉` exceeds it. So the threshold would permit certification to depth ~118.
+
+What stops us is `a_k`, the cost of computing which classes are dead: `a₂₄` is
+already `1.8×10⁸` nodes, and it grows like `2.84^k`. **The binding constraint is
+computational, not the threshold.**
+
+### And why it can never finish
+
+`a_k > 0` for every `k` — some class always survives. That is not an accident of
+the computation: by the equivalence theorem, certifying *every* class would prove
+the conjecture. The coverage rises towards 1 and never reaches it, which is the
+same wall in yet another disguise.
+

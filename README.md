@@ -169,7 +169,7 @@ docs/CERTIFY.md         intersecting the sieve with the path to 1: three complet
                         tests, and which is actually cheapest
 python/                 collatz_maxodd — cycle search, sieves, backward tree,
                         cycle equation, death-depth tail, 3n+q census, certification from
-                        either end; 193 tests
+                        either end; 198 tests
 lean/                   Collatz — Mathlib-free Lean 4 development, 0 sorry,
                         0 axioms beyond propext/Quot.sound, 134 audited decls
 web/                    data.json (140 KB) + DATA.md — precomputed visualization

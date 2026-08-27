@@ -43,7 +43,8 @@ from __future__ import annotations
 from .sieve import surviving_residues_mod2, surviving_residues_mod3
 
 __all__ = ["forward_to_one", "forward_exceeds", "backward_depth",
-           "residue_table", "certify_range"]
+           "residue_table", "certify_range",
+           "class_threshold", "class_is_certified", "class_coverage"]
 
 _CAP = 500
 
@@ -144,3 +145,89 @@ def certify_range(lo: int, hi: int, q: int = 1, depth: int = 4, a: int = 10,
     return {"ok": True, "tested": tested, "survivors": survivors,
             "sieve_kept": survivors / tested if tested else 0.0,
             "backward_work": work, "max_depth": worst[1], "argmax": worst[0]}
+
+# ---------------------------------------------------------------------------
+# Certifying a whole residue class -- infinitely many M in one computation
+# ---------------------------------------------------------------------------
+#
+# The exact size test on a backward prefix is  M (2^{B_j} - 3^j) <= c_j ; the
+# magnitude-free one is  2^{B_j} <= 3^j.  They differ only when 2^{B_j} > 3^j
+# and  M <= c_j / (2^{B_j} - 3^j).  Above the largest such M the two agree, so
+# d(M) depends ONLY on M mod 3^k -- and a residue class whose backward tree
+# dies before depth k certifies every M in it at once.
+
+
+def _c_max(q: int, j: int, B: int) -> int:
+    """Largest ``c_j`` over prefixes with total halvings ``B``.
+
+    ``c_j`` grows when the early hops are small, so it is maximised by
+    ``b_i = 1`` for ``i < j``, giving this closed form.
+    """
+    return q * (2 ** (B - j + 1) * (3 ** (j - 1) - 2 ** (j - 1)) + 3 ** (j - 1))
+
+
+def class_threshold(k: int, q: int = 1, extra: int = 40) -> int:
+    """``T_k``: above this, the exact size test collapses to the magnitude-free one.
+
+    Maximising over all ``(j, B)`` rather than only over admissible prefixes can
+    only overestimate ``T_k``, which is safe -- a larger threshold still yields a
+    valid certificate.  Reproduces the project's independently computed
+    ``running_max`` (1, 1, 9, 9, 86, ..., 538 at ``k = 13``) exactly.
+    """
+    if k < 1:
+        raise ValueError("k must be >= 1")
+    best = 0
+    for j in range(1, k + 1):
+        p3 = 3 ** j
+        B = p3.bit_length()
+        while (1 << B) <= p3:
+            B += 1
+        for b in range(B, B + extra):
+            v = _c_max(q, j, b) // ((1 << b) - p3)
+            if v > best:
+                best = v
+    return best
+
+
+def _free_depth(M: int, k: int, q: int = 1) -> int:
+    """Magnitude-free backward depth: keeps only ``2^{B_j} <= 3^j``, capped at ``k``."""
+    best, stack = 0, [(M, 0, 0)]
+    while stack:
+        y, d, B = stack.pop()
+        if d > best:
+            best = d
+        if d >= k:
+            return k
+        if y % 3 == 0:
+            continue
+        b = 2 if (y % 3) == (q % 3) else 1
+        while True:
+            if (1 << (B + b)) > 3 ** (d + 1):
+                break
+            num = (1 << b) * y - q
+            if num > 0 and num % 3 == 0:
+                stack.append((num // 3, d + 1, B + b))
+            b += 2
+    return best
+
+
+def class_is_certified(r: int, k: int, q: int = 1, base: int = 10 ** 24) -> bool:
+    """Is every odd ``M = r (mod 3^k)`` above :func:`class_threshold` refuted?
+
+    True when the class's magnitude-free backward tree dies before depth ``k``.
+    One finite computation then covers infinitely many ``M``.
+    """
+    mod = 3 ** k
+    M = base - (base % mod) + (r % mod)
+    if M % 2 == 0:
+        M += mod                      # mod is odd, so this restores oddness
+    return _free_depth(M, k, q) < k
+
+
+def class_coverage(k: int, q: int = 1) -> dict:
+    """How much of ``Z/3^k`` is certified at depth ``k``, and above what bound."""
+    mod = 3 ** k
+    alive = sum(1 for r in range(mod) if not class_is_certified(r, k, q))
+    return {"k": k, "modulus": mod, "alive": alive, "dead": mod - alive,
+            "certified_fraction": (mod - alive) / mod,
+            "threshold": class_threshold(k, q)}

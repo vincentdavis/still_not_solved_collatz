@@ -68,3 +68,61 @@ def test_residue_table_is_a_proper_subset():
     for M in range(3, 20000, 2):
         if (M % m3) in s3 and (M % m2) in s2:
             assert M % 3 != 0 and M % 2 == 1
+
+
+# ---------------------------------------------------------------------------
+# Certifying whole residue classes
+# ---------------------------------------------------------------------------
+
+# The project's independently computed running_max (docs/GROUND_TRUTH.md 4a).
+KNOWN_THRESHOLDS = {1: 1, 2: 1, 3: 9, 4: 9, 5: 86, 6: 86, 7: 86, 8: 86,
+                    9: 86, 10: 381, 11: 381, 12: 381, 13: 538}
+
+# a_k, from docs/DEATH_DEPTH.md -- reproduced here by a third route.
+A_K = [1, 2, 3, 6, 10, 22, 50, 104, 254]
+
+
+def test_closed_form_threshold_matches_the_projects_computation():
+    from collatz_maxodd.certify import class_threshold
+    for k, v in KNOWN_THRESHOLDS.items():
+        assert class_threshold(k) == v, (k, class_threshold(k), v)
+
+
+def test_alive_classes_reproduce_a_k():
+    """A third independent route to the same sequence."""
+    from collatz_maxodd.certify import class_coverage
+    for k in range(1, 8):
+        assert class_coverage(k)["alive"] == A_K[k - 1], k
+
+
+def test_dead_classes_really_certify_real_numbers():
+    """Every odd M above T_k in a DEAD class must have exact d(M) < k."""
+    from collatz_maxodd.certify import class_is_certified, class_threshold
+    from collatz_maxodd.deathdepth import death_depth
+    for k in (3, 5, 6):
+        mod, T = 3 ** k, class_threshold(k)
+        dead = [r for r in range(mod) if class_is_certified(r, k)]
+        assert dead, k
+        for r in dead[:40]:
+            for t in range(3):
+                M = 10 ** 9 + t * 2 * mod
+                M = M - (M % mod) + r
+                if M % 2 == 0:
+                    M += mod
+                assert M > T
+                assert death_depth(M) < k, (k, r, M, death_depth(M))
+
+
+def test_alive_classes_are_non_empty_so_the_certificate_never_finishes():
+    """a_k > 0 for every k -- the sieve can never certify everything, which is
+    exactly what the equivalence theorem says must happen."""
+    from collatz_maxodd.certify import class_coverage
+    for k in range(1, 8):
+        assert class_coverage(k)["alive"] > 0
+
+
+def test_coverage_increases_but_stays_below_one():
+    from collatz_maxodd.certify import class_coverage
+    fr = [class_coverage(k)["certified_fraction"] for k in range(1, 8)]
+    assert all(a < b for a, b in zip(fr, fr[1:]))
+    assert fr[-1] < 1.0
