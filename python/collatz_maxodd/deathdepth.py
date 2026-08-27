@@ -35,15 +35,37 @@ PRIOR ART / NOVELTY.  The backward tree and its growth constant are standard
 (checked 2026-08-26, full sequence and prefixes).  That is weak evidence it has
 not been tabulated -- NOT evidence that anything here is new mathematics.
 
-CONJECTURE (not proved, not measured to convergence).  The ratios
-``a_k / a_{k-1}`` appear to approach the backward-tree growth constant
-``lambda = a^a / (a-1)^(a-1)`` with ``a = log2 3`` (``lambda ~ 2.83951``), giving
+ASYMPTOTICS -- UNRESOLVED.  Write ``N_k`` for the number of admissible halving
+vectors (``backtree.count_admissible_halving_vectors``).  Each vector pins one
+residue so ``a_k <= N_k``, and ``N_k ~ C lambda^k k^(-3/2)`` with
 
-    P(d >= k) ~ C * (lambda/3)^k * k^(-3/2),    lambda/3 ~ 0.94650
+    lambda = a^a/(a-1)^(a-1),  a = log2 3,  lambda = 2.8395137305
 
-At ``k = 14`` the observed ratio is only ``2.54``, so this is a well-motivated
-extrapolation, not a result.  An earlier fit of ``0.705`` over ``k = 3..10`` was
-simply pre-asymptotic and is wrong.
+CONFIRMED here to six significant figures by running that O(k^2) DP to k = 8000
+(relative error 8e-6 on a joint fit for both lambda and the power).
+
+NOT settled: whether ``a_k`` shares that rate.  ``a_k/N_k`` declines, and over
+the computed range k <= 24 two models fit indistinguishably:
+
+    polynomial   a_k/N_k ~ C k^(-0.74)   -> lambda_a = lambda,  rate 0.9465
+    geometric    a_k/N_k ~ C (0.946)^k   -> lambda_a = 2.6874,  rate 0.8958
+
+Neither leads stably -- the ranking FLIPS with one more term:
+
+    through k = 23   polynomial ahead (R^2 0.941 vs 0.928, OOS 6.5% vs 7.6%)
+    through k = 24   geometric  ahead (R^2 0.937 vs 0.934, OOS 7.1% vs 11.0%)
+
+That reversal on a single data point is the honest result: the computed range
+cannot separate them.  Separating them needs the model gap to clear the residual Sturmian
+oscillation of +/-14%, which happens near k = 33 -- about 7e11 tree nodes and
+two weeks of compute.  Not attempted.
+
+So the tail rate is BRACKETED, 0.897 <= rate <= 0.947, and NOT confirmed.  An
+earlier fit of 0.705 over k = 3..10 was pre-asymptotic and is wrong.
+
+Note also: if the rate is the conjectured lambda/3 then the polynomial factor is
+k^(-2.2), NOT the k^(-3/2) an earlier draft recorded, because
+``a_k ~ N_k k^(-0.70) ~ lambda^k k^(-3/2-0.70)``.
 """
 
 from __future__ import annotations
@@ -51,7 +73,13 @@ from __future__ import annotations
 from collections import Counter
 from typing import Iterator
 
-__all__ = ["death_depth", "death_depth_congruence_only", "exact_tail", "tail_ratios"]
+__all__ = [
+    "death_depth",
+    "death_depth_congruence_only",
+    "exact_tail",
+    "surviving_residue_count",
+    "tail_ratios",
+]
 
 _CAP = 900
 
@@ -150,3 +178,52 @@ def tail_ratios(a: list[int]) -> Iterator[float]:
     """``a_k / a_{k-1}`` -- conjectured to approach ``2.83951``."""
     for prev, cur in zip(a, a[1:]):
         yield cur / prev
+
+
+def surviving_residue_count(K: int) -> list[int]:
+    """``a_k`` for ``k = 1..K`` by DFS over the 3-adic tree of surviving residues.
+
+    Visits ``a_k`` nodes at depth ``k`` rather than ``3^k``, so it reaches far
+    deeper than :func:`exact_tail` (which scans a whole period).  The two agree
+    exactly where they overlap.
+
+    A node is ``(j, m, chains)`` with ``m = M mod 3^j`` and ``chains`` the live
+    ``(B_j, c_j)`` pairs.  Extending ``M`` by a 3-adic digit ``t`` gives
+    ``m' = m + 3^j t``; for each chain ``y_j = (2^B m' - c)/3^j mod 3``, where
+    ``0`` kills that chain and otherwise the parity of ``b`` is forced, with
+    ``b`` running over that parity subject to ``B + b <= floor((j+1) log2 3)``.
+
+    WHY THERE IS NO FINITE TRANSFER MATRIX FOR ``a_k``.  The state governing a
+    node's future is the *set* of ``(B_j, y_j mod 3)`` over its live chains.
+    ``B_j`` ranges over about ``0.585 j`` values, so the number of reachable
+    states grows like ``2^(1.76 j)`` -- unbounded.  ``N_k`` escapes this because
+    its state is the single integer ``B_j``, which is exactly why
+    ``backtree.count_admissible_halving_vectors`` gets an ``O(k^2)`` DP and this
+    does not.
+    """
+    if K < 1:
+        raise ValueError("K must be >= 1")
+    pow3 = [3 ** j for j in range(K + 2)]
+    cap = [(3 ** j).bit_length() - 1 for j in range(K + 2)]  # exact floor(j log2 3)
+    counts = [0] * (K + 1)
+    stack: list[tuple[int, int, tuple[tuple[int, int], ...]]] = [(0, 0, ((0, 0),))]
+    while stack:
+        j, m, chains = stack.pop()
+        if j == K:
+            continue
+        p3, lim = pow3[j], cap[j + 1]
+        for t in (0, 1, 2):
+            mp = m + p3 * t
+            new: list[tuple[int, int]] = []
+            for B, c in chains:
+                u = (((1 << B) * mp - c) // p3) % 3
+                if u == 0:
+                    continue
+                b = 2 if u == 1 else 1          # need (-1)^b * u == 1 (mod 3)
+                while B + b <= lim:
+                    new.append((B + b, (1 << b) * c + p3))
+                    b += 2
+            if new:
+                counts[j + 1] += 1
+                stack.append((j + 1, mp, tuple(new)))
+    return counts[1:]

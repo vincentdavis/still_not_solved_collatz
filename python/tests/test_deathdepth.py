@@ -63,3 +63,30 @@ def test_rejects_even_and_nonpositive():
     for bad in (0, -3, 4):
         with pytest.raises(ValueError):
             death_depth(bad)
+
+
+# a_k from the 3-adic tree DFS; agrees with the full-period scan where they overlap.
+A_K_DEEP = [1, 2, 3, 6, 10, 22, 50, 104, 254, 538, 1302, 3202, 7553, 19206,
+            44732, 113034]
+
+
+def test_surviving_residue_count_matches_period_scan():
+    from collatz_maxodd.deathdepth import surviving_residue_count
+    assert surviving_residue_count(9) == A_K[:9] == exact_tail(9)
+
+
+def test_surviving_residue_count_deep():
+    from collatz_maxodd.deathdepth import surviving_residue_count
+    assert surviving_residue_count(16) == A_K_DEEP
+
+
+def test_a_k_never_exceeds_the_vector_count():
+    """Each admissible vector pins one residue, so a_k <= N_k -- with equality
+    only while no M has two distinct chains (k <= 3)."""
+    from collatz_maxodd.backtree import count_admissible_halving_vectors
+    from collatz_maxodd.deathdepth import surviving_residue_count
+    a = surviving_residue_count(14)
+    N = [count_admissible_halving_vectors(k) for k in range(1, 15)]
+    assert all(x <= y for x, y in zip(a, N))
+    assert a[:3] == N[:3]
+    assert all(x < y for x, y in zip(a[3:], N[3:]))

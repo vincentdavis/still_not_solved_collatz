@@ -50,29 +50,74 @@ that magnitude-free model, and it agrees with the exact computation on every
 large `M` tested. Measured tails at `10^6`, `10^9`, `10^12`, `10^18` agree to
 six decimals.
 
-## The asymptotics — a conjecture, not a measurement
+## The asymptotics — attempted, and still unresolved
 
-The ratios `a_k / a_{k−1}` climb slowly and oscillate:
+Two different counts matter:
 
-    2.00  1.50  2.00  1.67  2.20  2.27  2.08  2.44  2.12  2.42  2.46  2.36  2.54
+- **`N_k`** — the number of admissible halving vectors `(b₁…b_k)` with `b_j ≥ 1`
+  and `B_j ≤ ⌊j·log₂3⌋`. Its state is the scalar `B_j`, so it has a genuine
+  **O(k²) transfer-matrix DP** (`backtree.count_admissible_halving_vectors`).
+- **`a_k`** — the number of surviving *residues*. Each vector pins one residue,
+  but one `M` can carry several chains, so `a_k ≤ N_k` with equality only for
+  `k ≤ 3`.
 
-They appear to be heading for the backward-tree growth constant already used in
-[`backtree`](../python/collatz_maxodd/backtree.py),
+### Confirmed: the tree constant
 
-    λ = aᵃ / (a−1)^(a−1)  with  a = log₂3  ,   λ ≈ 2.83951
+`N_k ~ C·λ^k·k^(−3/2)` with
 
-which would give
+    λ = aᵃ/(a−1)^(a−1),  a = log₂3,  λ = 2.8395137305
 
-    P(d ≥ k)  ≈  C · (λ/3)^k · k^(−3/2) ,      λ/3 ≈ 0.94650
+Verified to **six significant figures** by running the DP to `k = 8000`:
+long-baseline estimates give relative error `1.4×10⁻⁵`, a joint fit for both
+`λ` and the power gives `8.4×10⁻⁶` (recovered power `−1.46` vs `−1.5`).
 
-**Not established.** At `k = 14` the ratio is only 2.54, and a `k^(−3/2)` fit
-over `k = 12…30` returns ρ ≈ 0.909, about 4 % below the predicted 0.9465. The
-conditional rate `r_k = P(d≥k+1)/P(d≥k)` is still rising at `k = 30` (≈ 0.89).
-Consistent with the conjecture; not a confirmation of it.
+### Not confirmed: whether `a_k` shares that rate
 
-⚠️ **A correction.** An earlier fit of `λ ≈ 0.705` over `k = 3…10` was simply
-pre-asymptotic and is **wrong**. The tail is substantially heavier than that
-suggested.
+`a_k` was computed **exactly to k = 23** by DFS over the 3-adic tree of
+surviving residues (`deathdepth.surviving_residue_count`), which visits `a_k`
+nodes instead of `3^k`:
+
+    1, 2, 3, 6, 10, 22, 50, 104, 254, 538, 1302, 3202, 7553, 19206, 44732,
+    113034, 262243, 660954, 1693714, 4204015, 10995110, 26812105, 69626820
+
+(`a_21 = 10 995 110` independently reproduces the "classes mod 3²¹" figure
+`GROUND_TRUTH.md` § 4a obtained by a different route.)
+
+`a_k` was extended to **k = 24** (`a_24 = 182 840 849`). `a_k/N_k` declines
+from 1 to 0.29, and two models fit it **indistinguishably**:
+
+| model | form | ⇒ `λ_a` | ⇒ tail rate |
+|---|---|---|---|
+| polynomial | `a_k/N_k ~ C·k^(−0.74)` | `λ` = 2.8395 | **0.9465** |
+| geometric | `a_k/N_k ~ C·(0.946)^k` | 2.6874 | **0.8958** |
+
+Neither leads stably. **The ranking reverses on a single extra term:**
+
+| data through | in-sample R² | out-of-sample mean err | ahead |
+|---|---|---|---|
+| `k = 23` | 0.941 vs 0.928 | 6.5 % vs 7.6 % | polynomial |
+| `k = 24` | 0.937 vs 0.934 | 7.1 % vs 11.0 % | **geometric** |
+
+Out-of-sample (fitted on `k ≤ 20`, scoring 21–24) the models split two wins
+each. That reversal *is* the result: the computed range cannot separate them.
+
+### Why it could not be settled
+
+There is **no finite transfer matrix for `a_k`**. The state governing a node's
+future is the *set* of `(B_j, y_j mod 3)` over its live chains; `B_j` ranges over
+about `0.585·j` values, so the state space grows like `2^(1.76 j)`. `N_k` escapes
+this because its state is the single number `B_j`.
+
+And enumeration runs out. The gap between the two model predictions is 8 % at
+`k = 23` and grows ~3 %/step, while the residual Sturmian oscillation in
+`a_k/N_k` is ±14 %. The gap clears three times the oscillation near **`k = 33`**
+— roughly `7×10¹¹` tree nodes, about **two weeks** of compute. Not attempted.
+
+**Bracketed result:** `0.897 ≤ tail rate ≤ 0.947`.
+
+⚠️ **A second correction.** Even if the rate is the conjectured `λ/3`, the
+polynomial factor is `k^(−2.2)`, **not** the `k^(−3/2)` recorded earlier —
+since `a_k ~ N_k·k^(−0.70) ~ λ^k·k^(−3/2−0.70)`.
 
 ## What it does not show
 
