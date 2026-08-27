@@ -163,8 +163,10 @@ docs/GROUND_TRUTH.md    the audited spec: notation, every claim with its exact
                         hypotheses, the refuted claims, formalization status
 docs/DEATH_DEPTH.md     d(M), the depth at which the sieve kills M: its exact
                         tail a_k/3^k, and why that is the cycle problem again
+docs/CENSUS.md          the 3n+q cycle census: the heuristic is not calibrated,
+                        why, and why that does not transfer to q = 1
 python/                 collatz_maxodd — cycle search, sieves, backward tree,
-                        cycle equation, death-depth tail; 155 tests verifying T0–T8 empirically
+                        cycle equation, death-depth tail, 3n+q census; 173 tests
 lean/                   Collatz — Mathlib-free Lean 4 development, 0 sorry,
                         0 axioms beyond propext/Quot.sound, 118 audited decls
 web/                    data.json (140 KB) + DATA.md — precomputed visualization
