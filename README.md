@@ -167,9 +167,11 @@ docs/CENSUS.md          the 3n+q cycle census: the heuristic is not calibrated,
                         why, and why that does not transfer to q = 1
 docs/CERTIFY.md         intersecting the sieve with the path to 1: three complete
                         tests, and which is actually cheapest
+docs/WHY_NOT.md         why a congruence sieve can never finish, with -1 as an
+                        explicit witness
 python/                 collatz_maxodd — cycle search, sieves, backward tree,
                         cycle equation, death-depth tail, 3n+q census, certification from
-                        either end; 198 tests
+                        either end, 3-adic witness; 203 tests
 lean/                   Collatz — Mathlib-free Lean 4 development, 0 sorry,
                         0 axioms beyond propext/Quot.sound, 134 audited decls
 web/                    data.json (140 KB) + DATA.md — precomputed visualization
