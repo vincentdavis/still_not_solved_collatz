@@ -32,6 +32,7 @@
 import Collatz.Bridge
 import Collatz.Examples
 import Collatz.Equivalence
+import Collatz.Length
 
 namespace Collatz
 
@@ -229,5 +230,27 @@ Expected values come from the independent Python implementation. -/
 #guard Siter 7 1 11 = 5
 #guard Siter 7 2 11 = 11
 #guard (List.range 6).all (fun n => Siter 7 (2 * n) 11 == 11)
+
+
+/-! ## 7. The cycle-length bound's machinery, on the real `q = 5` cycle.
+
+`cycle5` is `{49, 31, 19}` with `L = 3`.  Expected values below come from the
+independent Python implementation, not from Lean. -/
+
+-- backward hops 49 <- 31 <- 19 <- 49 use b = 1, 1, 3 (v2 of 98, 62, 152), so B = 5
+#guard (List.range 4).map (fun k => cycle5.bb (k + 1)) = [1, 1, 3, 1]
+#guard (List.range 4).map (fun k => cycle5.sumB k) = [0, 1, 2, 5]
+
+-- the two products, and the exact identity  prodG = 2^B * prodFrom 0
+#guard cycle5.prodFrom 0 3 = 49 * 31 * 19
+#guard cycle5.prodG 3 = 152 * 62 * 98
+#guard cycle5.prodG 3 = 2 ^ cycle5.sumB 3 * cycle5.prodFrom 0 3
+
+-- the squeeze, with m = 19:  3m * 2^B <= 3^L * (3m + 2Lq)
+#guard 3 * 19 * 2 ^ cycle5.sumB 3 = 1824
+#guard 3 ^ 3 * (3 * 19 + 2 * 3 * 5) = 2349
+
+-- the Baker input at kappa = 3, c = 5 is TIGHT here (equality)
+#guard 3 ^ 3 * 3 ^ 3 + 5 * 3 ^ 3 = 2 ^ cycle5.sumB 3 * 3 ^ 3
 
 end Collatz

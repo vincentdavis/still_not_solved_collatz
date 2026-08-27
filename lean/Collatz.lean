@@ -13,6 +13,7 @@
 import Collatz.Odd
 import Collatz.Core
 import Collatz.Cycle
+import Collatz.Length
 import Collatz.Pigeonhole
 import Collatz.Equivalence
 import Collatz.Bridge

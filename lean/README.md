@@ -386,3 +386,58 @@ Barina 2025).
 * *"we need only look two even hops back"* — **correct for `q = 1`, `M ≥ 2`**
   (`Cycle.T5`), but the justification is a size inequality, not a cycle-length
   argument; the general threshold is `M > 11q/7`.
+
+---
+
+## `Collatz/Length.lean` — a cycle-length lower bound
+
+The published cycle-length bounds (Steiner 1977, Simons–de Weger 2005, Hercher
+2023) all route through **Baker's theorem** on linear forms in logarithms, which
+bounds how close `2^B / 3^L` can get to 1. Lean 4 core has no real numbers, let
+alone Baker. So the Baker input is taken as an explicit **hypothesis**, stated
+in ℕ, and everything downstream of it is proved:
+
+```
+hbaker :  3^L * L^κ + c * 3^L  ≤  2^B * L^κ         -- i.e. 2^B/3^L ≥ 1 + c/L^κ
+   ⟹     3 * m * c  ≤  2 * q * L^(κ+1)              -- `Cycle.length_bound`
+```
+
+with `m` the cycle minimum. Contrapositively: if every `n < m` is known to reach
+the fixed point, any cycle satisfies `L^(κ+1) ≥ 3mc/(2q)`.
+
+**No analysis is needed.** The usual derivation takes logarithms of
+`2^B = ∏ (3 + 1/x_j)`. Here the same content is carried by two elementary facts:
+
+| | |
+|---|---|
+| `Cycle.prodG_eq` | the exact integer identity `∏ (3x_j + q) = 2^B · ∏ x_j` |
+| `pow_succ_le` | `(N+q)^L · N ≤ N^L · (N + 2Lq)` when `2Lq ≤ N` — the ℕ stand-in for `(1+q/N)^L ≤ 1 + 2Lq/N` |
+
+Both are plain inductions. Together they give `Cycle.squeeze`:
+`3m · 2^B ≤ 3^L · (3m + 2Lq)`.
+
+### Non-vacuity
+
+The hypotheses are satisfiable by a cycle that **actually exists**.
+`cycle5 : Cycle 5` is `{49, 31, 19}`, with `L = 3`, `B = 5`, minimum `19`. Its
+Baker input holds at `κ = 3, c = 5` — and holds *with equality*:
+
+```
+3^3 · 3^3 + 5 · 3^3  =  729 + 135  =  864  =  32 · 27  =  2^B · L^κ
+```
+
+so `c = 5` is exactly sharp there. `cycle5_length_bound` then reads
+`3·19·5 ≤ 2·5·3^4`, i.e. `285 ≤ 810` — a true statement about a real cycle, not
+a hypothetical one.
+
+### What this is not
+
+The bound is **weaker than the published ones**, which use genuine effective
+irrationality measures for `log₂3` (Rhin and successors). Instantiating
+`length_bound` with a published `(κ, c)` would give a real numeric bound, but
+this repo does **not** verify any such constant — that is exactly the part left
+as a hypothesis. The value here is that everything *after* the Baker input is
+machine-checked and choice-free.
+
+NOVELTY: none. This is the classical Crandall-style squeeze, rearranged to avoid ℝ.
+

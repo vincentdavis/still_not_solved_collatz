@@ -25,6 +25,7 @@
   There is a machine check of the same thing in `lean/check.sh`.
 -/
 import Collatz.Guards
+import Collatz.Length
 
 /-! ## Definitions (`Collatz/Odd.lean`) -/
 #print axioms Collatz.v2
@@ -161,3 +162,25 @@ classical choice, so these stay at `[propext, Quot.sound]` like the rest. -/
 #print axioms Collatz.Cycle.toBackChain
 #print axioms Collatz.q7_has_periodic_point
 #print axioms Collatz.Cycle.periodic_of_max_gt_one
+
+/-! ## Cycle-length bound (`Collatz/Length.lean`).
+
+The Baker input is a HYPOTHESIS of `length_bound`, not an axiom: it appears
+in the theorem's statement, so it cannot hide in the certificate below. -/
+
+#print axioms Collatz.Cycle.prodFrom
+#print axioms Collatz.Cycle.prodG
+#print axioms Collatz.Cycle.sumB
+#print axioms Collatz.Cycle.prodFrom_pos
+#print axioms Collatz.Cycle.prodG_eq
+#print axioms Collatz.Cycle.prodFrom_shift
+#print axioms Collatz.Cycle.prodFrom_one_eq_zero
+#print axioms Collatz.Cycle.prod_squeeze
+#print axioms Collatz.Cycle.pow_le_of_min
+#print axioms Collatz.pow_succ_le
+#print axioms Collatz.Cycle.squeeze
+#print axioms Collatz.Cycle.length_bound
+#print axioms Collatz.Cycle.length_bound_q1
+#print axioms Collatz.cycle5_sumB
+#print axioms Collatz.cycle5_min
+#print axioms Collatz.cycle5_length_bound

@@ -168,7 +168,7 @@ docs/CENSUS.md          the 3n+q cycle census: the heuristic is not calibrated,
 python/                 collatz_maxodd — cycle search, sieves, backward tree,
                         cycle equation, death-depth tail, 3n+q census; 173 tests
 lean/                   Collatz — Mathlib-free Lean 4 development, 0 sorry,
-                        0 axioms beyond propext/Quot.sound, 118 audited decls
+                        0 axioms beyond propext/Quot.sound, 134 audited decls
 web/                    data.json (140 KB) + DATA.md — precomputed visualization
                         data (wheel, backward tree, sieve layers, real cycles,
                         Diophantine table), plus index.html — the published interactive note,
