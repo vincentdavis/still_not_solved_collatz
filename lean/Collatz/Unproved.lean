@@ -113,4 +113,44 @@
   `T5_gen`, `T5_bb_gen`, `T6`, `T7`) carry the evidential load: those DO have
   witnesses (`three5 : Cycle 5`, `two7 : Cycle 7`), so the derivation machinery
   is demonstrably not broken.  `Cycle 1` itself is inhabited by `one` = {1}.
+
+  ---------------------------------------------------------------------------
+  4.  KÖNIG'S LEMMA — the missing link in Collatz/Equivalence.lean
+  ---------------------------------------------------------------------------
+  Formalized: `BackChain q M` (an INFINITE bounded backward chain) implies a
+  periodic point of `S_q` at or below `M`, and for `q = 1, M > 1` a NONTRIVIAL
+  one.  That is `BackChain.exists_periodic` / `exists_nontrivial_periodic`.
+
+  NOT formalized:
+      (M survives the backward sieve at every finite depth k)
+        =>  (an infinite backward chain bounded by M exists)
+
+  i.e. the step from "chains of every finite length" to "one infinite chain".
+  This is KÖNIG'S LEMMA applied to the tree of backward chains from M.  Two
+  pieces would be needed:
+
+    (a) that the tree is finitely branching — true, and elementary: a
+        predecessor y of x satisfies 3y + q = 2^b x, so y <= M bounds
+        2^b <= (3M + q)/x, hence only finitely many b are admissible;
+
+    (b) König's lemma itself, which for a finitely-branching tree needs
+        DEPENDENT CHOICE.  It is not provable in the choice-free fragment the
+        rest of this project lives in, and adding it would put `Classical.choice`
+        into the axiom certificate of Collatz/Audit.lean.
+
+  This is a deliberate boundary, not an oversight.  The mathematically
+  substantive half — pigeonhole plus the fact that `1` cannot occur in a
+  q = 1 chain above 1 — is fully proved and choice-free.  What is assumed
+  away is a standard compactness step.
+
+  Consequence for how the result should be read: what is machine-checked is
+
+      infinite bounded backward chain  <=>  cycle
+
+  and NOT the slightly stronger, more quotable
+
+      survives every finite depth      <=>  cycle
+
+  which needs (a) + (b) on top.
+
 -/

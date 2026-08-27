@@ -140,3 +140,24 @@ import Collatz.Guards
 #print axioms Collatz.one
 #print axioms Collatz.two7
 #print axioms Collatz.three5
+
+/-! ## Pigeonhole and the sieve/cycle equivalence (`Collatz/Equivalence.lean`).
+
+`exists_repeat` is proved by an explicit recursive search rather than by
+classical choice, so these stay at `[propext, Quot.sound]` like the rest. -/
+
+#print axioms Collatz.hasEq
+#print axioms Collatz.Siter
+#print axioms Collatz.BackChain
+#print axioms Collatz.hasEq_true
+#print axioms Collatz.hasEq_false
+#print axioms Collatz.exists_repeat
+#print axioms Collatz.S_one_eq_one
+#print axioms Collatz.BackChain.iter
+#print axioms Collatz.BackChain.exists_periodic
+#print axioms Collatz.BackChain.eq_one_of_mem
+#print axioms Collatz.BackChain.ne_one
+#print axioms Collatz.BackChain.exists_nontrivial_periodic
+#print axioms Collatz.Cycle.toBackChain
+#print axioms Collatz.q7_has_periodic_point
+#print axioms Collatz.Cycle.periodic_of_max_gt_one

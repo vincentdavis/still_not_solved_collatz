@@ -31,6 +31,7 @@
 -/
 import Collatz.Bridge
 import Collatz.Examples
+import Collatz.Equivalence
 
 namespace Collatz
 
@@ -212,5 +213,21 @@ conclusion is right: 11 is excluded by T1, because `11 ≡ 3 (mod 4)`. -/
 #guard cycle7.bb 2 = 3
 #guard 7 * 11 = 11 * 7
 #guard ¬ (11 * 7 < 7 * 11)
+
+
+/-! ## 6. `Siter` — the iteration used by the sieve/cycle equivalence.
+
+Expected values come from the independent Python implementation. -/
+
+-- 7 → 11 → 17 → 13 → 5 → 1
+#guard (List.range 6).map (fun n => Siter 1 n 7) = [7, 11, 17, 13, 5, 1]
+
+-- the trivial cycle is fixed by every iterate
+#guard (List.range 8).all (fun n => Siter 1 n 1 == 1)
+
+-- the real q = 7 cycle 11 → 5 → 11 has period 2
+#guard Siter 7 1 11 = 5
+#guard Siter 7 2 11 = 11
+#guard (List.range 6).all (fun n => Siter 7 (2 * n) 11 == 11)
 
 end Collatz
