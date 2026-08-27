@@ -408,3 +408,44 @@ evidence only): an explicit published `M ≡ 5 (mod 12)` for the maximum, and an
 explicit published mod-`3^j` recursion of the T4 form. Both are trivially
 derivable from cited folklore, so the honest framing is "elementary consequences
 of standard facts, collected here", not "new".
+
+---
+
+## 6. The sieve *is* the cycle problem  (added after the original audit)
+
+Formalized in `lean/Collatz/Equivalence.lean`; see also `docs/DEATH_DEPTH.md`.
+
+A **backward chain** bounded by `M` is an infinite sequence `M = y₀, y₁, …` of
+odd numbers with `S_q(y_{j+1}) = y_j` and every `y_j ≤ M`. Surviving the
+backward sieve at depth `k` means such a chain exists out to length `k`.
+
+| direction | statement | Lean |
+|---|---|---|
+| easy | a cycle is a backward chain bounded by its own maximum | `Cycle.toBackChain` |
+| hard | any bounded chain forces a periodic point of `S_q` at or below `M` | `BackChain.exists_periodic` |
+| `q=1` | for `M > 1` that periodic point is `≠ 1`, i.e. a genuinely nontrivial cycle | `BackChain.exists_nontrivial_periodic` |
+
+The hard direction is pigeonhole (finitely many odd values `≤ M`, infinitely many
+terms) plus the observation that `1` cannot occur in a `q = 1` chain above 1,
+since `S₁ 1 = 1` would drag `M` down to 1.
+
+**Consequence.** Proving the sieve kills every `M` at some finite depth is not an
+approach to the conjecture — it is logically the same statement. Define
+`d(M)` = the largest `k` with a chain of length `k`; a counterexample is exactly
+an odd `M > 1` with `d(M) = ∞`.
+
+**NOT formalized** (`Collatz/Unproved.lean` § 4): the step from "chains of every
+finite length" to "one infinite chain", i.e. König's lemma. It needs dependent
+choice and would put `Classical.choice` into the axiom certificate. So the
+machine-checked claim is *infinite bounded chain ⟺ cycle*, not the stronger
+*survives every finite depth ⟺ cycle*.
+
+**Non-vacuity.** For `q = 1` the hypothesis is what the conjecture denies, so that
+corollary would be vacuous if Collatz is true. The general-`q` theorem is not:
+`q7_has_periodic_point` instantiates it on the real cycle `11 → 5 → 11`.
+
+**Quantitatively** (`docs/DEATH_DEPTH.md`): `P(d ≥ k) = a_k / 3^k` exactly, with
+`a_k = 1, 2, 3, 6, 10, 22, 50, 104, 254, 538, 1302, 3202, 7553, 19206`; `d(M)`
+depends only on `M mod 3^k`; the tail rate is conjectured — not shown — to
+approach `λ/3 ≈ 0.9465`.
+
