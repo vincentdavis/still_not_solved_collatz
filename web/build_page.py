@@ -7,6 +7,7 @@ import json, pathlib, sys
 
 HERE = pathlib.Path(__file__).resolve().parent
 data = json.loads((HERE / "data.json").read_text())
+equiv = json.loads((HERE / "equiv.json").read_text())
 
 N_STRIP = 2000          # odds 1..3999 drawn in the hero strip
 w, sl, cy, di = data["wheel"], data["sieve_layers"], data["cycles"], data["diophantine"]
@@ -57,6 +58,7 @@ slim = {
         "verdict": di["verdict"],
     },
     "traj": data["trajectories"]["list"],
+    "equiv": equiv,
     "verification": {
         "fwd": {k: data["verification"]["forward_2adic"][k]
                 for k in ("M_checked", "M_kept", "observed_density", "predicted_limit")},

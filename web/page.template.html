@@ -546,6 +546,72 @@ footer{border-top:1px solid var(--rule);padding-top:28px;font-size:.84rem;color:
   <div class="note kill" id="wall-note"></div>
 </section>
 
+<!-- ══ EQUIVALENCE ═══════════════════════════════════════════════ -->
+<section>
+  <div class="eyebrow">The structural reason</div>
+  <h2>The backward sieve isn't an approximation. It's the problem.</h2>
+  <div class="prose stack">
+    <p>Both sieves look alike — pick a depth, cut some residues, repeat. But ask what happens to a
+    number that is <em>never</em> eliminated, at any depth, and they come apart completely. One
+    question is vacuous. The other is the Collatz conjecture.</p>
+  </div>
+
+  <figure>
+    <div class="frame" id="eq-panels"></div>
+    <figcaption>What it means to survive forever. Left: a large, ordinary set. Right: exactly the
+    counterexamples.</figcaption>
+  </figure>
+
+  <div class="prose stack">
+    <h3>Why the right-hand column is an equivalence</h3>
+    <p>Suppose some odd <code>M &gt; 1</code> survives the backward sieve at every depth. Then:</p>
+  </div>
+
+  <div class="chain" id="eq-proof"></div>
+
+  <div class="note kill"><b>So killing every <code>M</code> at some finite depth is not a strategy for
+  proving the conjecture — it is logically the same statement.</b> There is no partial credit hiding
+  in the sieve, and no depth at which it starts doing something the conjecture doesn't already say.</div>
+
+  <div class="prose stack">
+    <h3>How deep numbers actually survive</h3>
+    <p>Write <code>d(M)</code> for the longest backward chain from <code>M</code> that stays at or
+    below <code>M</code> — the depth at which the sieve finally kills it. The theorem says a
+    counterexample is exactly an <code>M</code> with <code>d(M) = ∞</code>. Every <code>M</code>
+    tested has been finite, but the tail is long and shows no sign of a uniform bound.</p>
+  </div>
+
+  <figure>
+    <div class="frame">
+      <div id="eq-depth" class="scroll"></div>
+      <div class="tip" id="eq-tip"></div>
+    </div>
+    <figcaption id="eq-depth-cap"></figcaption>
+  </figure>
+
+  <div class="note warn" id="eq-deepest"></div>
+
+  <div class="prose stack">
+    <h3>What is machine-checked</h3>
+    <p>The substantive half of the equivalence is formalized in Lean 4, without Mathlib and without
+    the axiom of choice.</p>
+  </div>
+
+  <div class="frame stack" id="eq-lean"></div>
+
+  <div class="prose stack">
+    <h3>And the reason congruences can never finish</h3>
+    <p>Each sieve condition is a finite union of residue classes — a <b>closed set</b> in the
+    profinite integers. A nested sequence of nonempty closed sets in a compact space always has
+    nonempty intersection. So no matter how deep you push it, <b>congruence conditions will always
+    admit 2-adic and 3-adic solutions</b>.</p>
+    <p>An adic solution is not an integer. Telling the two apart is precisely what congruences cannot
+    do — and precisely why every real cycle bound in the literature routes through Baker's theorem on
+    linear forms in logarithms, which this page never touches.</p>
+  </div>
+</section>
+
+
 <!-- ══ STATUS ════════════════════════════════════════════════════ -->
 <section>
   <div class="eyebrow">Bookkeeping</div>
@@ -1351,6 +1417,148 @@ document.getElementById("wall-note").innerHTML =
   " at a modulus of about 2<sup>"+Math.round(D.crt.rows[D.crt.rows.length-1].modulus_bits)+
   "</sup>. A sieve on residues can only ever remove a set of density less than 1 — closing the "+
   "problem needs a Diophantine input this method does not have.";
+
+/* ═══ 6b. THE EQUIVALENCE ══════════════════════════════════════ */
+var EQ = D.equiv;
+
+/* --- two limit sets side by side --- */
+(function eqPanels(){
+  var f = EQ.forward, b = EQ.backward;
+  document.getElementById("eq-panels").innerHTML =
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:0">'+
+      '<div style="padding:4px 20px 4px 0;border-right:1px solid var(--rule)">'+
+        '<div class="eyebrow" style="color:var(--blue)">powers of two · forward</div>'+
+        '<div class="mono" style="font-size:1.9rem;font-weight:600;color:var(--blue);line-height:1.2;margin:10px 0 4px">'+
+          (100*f.density).toFixed(1)+'%</div>'+
+        '<div style="font-size:.86rem;color:var(--ink-2);line-height:1.55">of odd numbers survive every depth. '+
+          'Surviving forever just means <b>the orbit of M never rises above M</b> — M is the peak of its own trajectory.</div>'+
+        '<div class="work" style="margin-top:10px;font-size:.8rem">'+f.first.slice(0,8).join(", ")+', …</div>'+
+        '<div class="note" style="border-color:var(--blue);margin-top:12px;font-size:.86rem">'+
+          '<b>Every one of them reaches 1.</b> The limit set is full of perfectly ordinary numbers, '+
+          'so surviving forever proves nothing at all.</div>'+
+      '</div>'+
+      '<div style="padding:4px 0 4px 20px">'+
+        '<div class="eyebrow" style="color:var(--violet)">powers of three · backward</div>'+
+        '<div class="mono" style="font-size:1.9rem;font-weight:600;color:var(--violet);line-height:1.2;margin:10px 0 4px">'+
+          'the counterexamples</div>'+
+        '<div style="font-size:.86rem;color:var(--ink-2);line-height:1.55">Surviving forever means '+
+          '<b>an infinite backward chain that never rises above M</b>. Nothing ordinary can do that.</div>'+
+        '<div class="work" style="margin-top:10px;font-size:.8rem">tested to M &lt; '+
+          fmt(EQ.backward.max_M)+': none</div>'+
+        '<div class="note kill" style="margin-top:12px;font-size:.86rem">'+
+          '<b>This set is empty exactly when no nontrivial cycle exists.</b> It is not an approximation '+
+          'to the conjecture — it is the conjecture.</div>'+
+      '</div>'+
+    '</div>';
+})();
+
+/* --- the three-step argument --- */
+(function eqProof(){
+  var steps = [
+    ["Chains of every length ⇒ one infinite chain",
+     "the tree of backward chains under M is finitely branching, because a predecessor y of x obeys 3y+1 = 2^b·x, so y ≤ M caps b. König's lemma then gives an infinite path.",
+     "branch"],
+    ["An infinite chain must repeat",
+     "every element is an odd number in [1, M] — finitely many values, infinitely many terms. Pigeonhole forces y(i) = y(j) for some i < j, and read forward that is a closed orbit. A cycle.",
+     "forced"],
+    ["The cycle cannot be the trivial one",
+     "if 1 appeared in the chain then, since S(1) = 1, everything after it is 1 too — dragging M itself down to 1. So for M > 1 the cycle it produces is genuinely nontrivial.",
+     "forced"]
+  ];
+  document.getElementById("eq-proof").innerHTML = steps.map(function(s, i){
+    var last = i === steps.length-1;
+    return '<div class="hop"><div class="gut"><span class="dot '+s[2]+'"></span>'+
+      (last?"":'<span class="stem"></span>')+'</div><div class="body">'+
+      '<div class="val" style="font-size:.98rem">'+s[0]+'</div>'+
+      '<div class="why" style="font-family:var(--f-body);font-size:.86rem;color:var(--ink-2)">'+s[1]+'</div></div></div>';
+  }).join("");
+})();
+
+/* --- death-depth distribution --- */
+var EQD = Object.keys(EQ.backward.distribution).map(function(k){
+  return {d: +k, n: EQ.backward.distribution[k]};
+}).sort(function(a,b){ return a.d-b.d; });
+function eqDepth(){
+  var p = pal(), W = 760, H = 250, padL = 40, padB = 34, padT = 14, padR = 10;
+  var maxD = EQD[EQD.length-1].d, maxN = Math.max.apply(null, EQD.map(function(r){return r.n;}));
+  var innerW = W-padL-padR, innerH = H-padT-padB;
+  var bw = innerW/(maxD+1);
+  var L = function(n){ return Math.log10(n+1)/Math.log10(maxN+1); };
+  var bars = "", ticks = "";
+  EQD.forEach(function(r){
+    var h = L(r.n)*innerH, x = padL + r.d*bw, y = padT+innerH-h;
+    bars += '<rect x="'+(x+bw*0.13)+'" y="'+y+'" width="'+(bw*0.74)+'" height="'+Math.max(1.2,h)+
+      '" fill="'+(r.d>=20?p.violet:r.d>=5?p.rose:p.blue)+'" fill-opacity="'+(r.d>=20?1:.8)+
+      '" data-d="'+r.d+'" data-n="'+r.n+'" class="eqbar"><title>d = '+r.d+' : '+r.n+' numbers</title></rect>';
+  });
+  [0,10,20,30,40,48].forEach(function(t){
+    ticks += '<text x="'+(padL+t*bw+bw/2)+'" y="'+(H-14)+'" text-anchor="middle" '+
+      'font-family="IBM Plex Mono, monospace" font-size="10" fill="'+p.ink3+'">'+t+'</text>';
+  });
+  [1,10,100,1000,6666].forEach(function(v){
+    var y = padT+innerH-L(v)*innerH;
+    ticks += '<line x1="'+padL+'" y1="'+y+'" x2="'+(W-padR)+'" y2="'+y+'" stroke="'+p.rule+'" stroke-width="1"/>'+
+      '<text x="'+(padL-6)+'" y="'+(y+3)+'" text-anchor="end" font-family="IBM Plex Mono, monospace" '+
+      'font-size="9" fill="'+p.ink3+'">'+v+'</text>';
+  });
+  ticks += '<text x="'+(padL+innerW/2)+'" y="'+H+'" text-anchor="middle" font-family="IBM Plex Mono, monospace" '+
+    'font-size="10" fill="'+p.ink3+'">d(M) — depth at which the sieve kills M</text>';
+  document.getElementById("eq-depth").innerHTML =
+    '<svg viewBox="0 0 '+W+' '+H+'" width="100%" style="min-width:520px" role="img" '+
+    'aria-label="Distribution of the depth at which the backward sieve eliminates each M">'+
+    ticks+bars+'</svg>';
+}
+document.getElementById("eq-depth-cap").innerHTML =
+  "Counts on a log scale, for every odd <code>M</code> below "+fmt(EQ.backward.max_M)+
+  ". Two thirds die instantly at depth 0. The deepest survivor is <b>M = "+fmt(EQ.backward.argmax)+
+  "</b> at depth <b>"+EQ.backward.max_depth+"</b>. None reached the cutoff of "+EQ.backward.cap+
+  ", which is what an infinite chain would have looked like.";
+(function deepest(){
+  var d = EQ.backward.deepest.slice(0,4).map(function(r){
+    return "<b>"+fmt(r.M)+"</b> (depth "+r.depth+")";
+  }).join(" · ");
+  var top = EQ.backward.deepest[0];
+  document.getElementById("eq-deepest").innerHTML =
+    "<b>The deep survivors.</b> "+d+". Their chains descend a long way before stalling — "+
+    fmt(top.M)+" begins <span class='mono'>"+top.chain.slice(0,7).join(" ← ")+" ← …</span> "+
+    "Each is in the surviving residue class, as it must be. Bounding <code>d(M)</code> uniformly "+
+    "would prove the conjecture; that is the whole difficulty, moved somewhere else.";
+})();
+
+/* --- Lean status --- */
+(function eqLean(){
+  var L = EQ.lean;
+  document.getElementById("eq-lean").innerHTML =
+    '<div class="row" style="justify-content:space-between;align-items:baseline">'+
+      '<span class="mono" style="font-size:.82rem;color:var(--ink-3)">'+L.file+'</span>'+
+      '<span class="badge b-live">'+L.declarations_audited+' declarations · '+L.axioms+'</span></div>'+
+    '<div class="stack-s">'+ L.proved.map(function(t){
+      var parts = t.split(" — ");
+      return '<div style="display:flex;gap:10px;align-items:baseline"><span class="ok">✓</span>'+
+        '<span><code>'+parts[0]+'</code> <span style="color:var(--ink-2)">— '+(parts[1]||"")+'</span></span></div>';
+    }).join("") + '</div>'+
+    '<div class="note warn" style="font-size:.88rem"><b>Not proved, deliberately.</b> '+L.not_proved+
+      ' Adding it would put <code>Classical.choice</code> into the axiom certificate, so the '+
+      'machine-checked statement is <em>infinite bounded chain ⟺ cycle</em>, not the stronger '+
+      '<em>survives every finite depth ⟺ cycle</em>.</div>'+
+    '<div class="note" style="font-size:.88rem"><b>Not vacuous.</b> '+L.nonvacuity+
+      ' — a real cycle satisfying the hypothesis, so the theorem is not merely true-by-emptiness.</div>';
+})();
+
+(function eqHover(){
+  var host = document.getElementById("eq-depth"), tip = document.getElementById("eq-tip");
+  host.addEventListener("mousemove", function(e){
+    var b = e.target.closest(".eqbar");
+    if(!b){ tip.style.opacity = 0; return; }
+    var r = host.getBoundingClientRect();
+    tip.innerHTML = "d(M) = <b>"+b.dataset.d+"</b><br>"+fmt(+b.dataset.n)+" numbers";
+    tip.style.left = (e.clientX-r.left)+"px"; tip.style.top = (e.clientY-r.top-6)+"px";
+    tip.style.opacity = 1;
+  });
+  host.addEventListener("mouseleave", function(){ tip.style.opacity = 0; });
+})();
+onTheme(eqDepth);
+eqDepth();
 
 /* ═══ 7. STATUS ════════════════════════════════════════════════ */
 document.querySelector("#th-table tbody").innerHTML = D.theorems.map(function(t){
