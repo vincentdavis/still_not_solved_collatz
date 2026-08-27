@@ -108,10 +108,12 @@ future is the *set* of `(B_j, y_j mod 3)` over its live chains; `B_j` ranges ove
 about `0.585·j` values, so the state space grows like `2^(1.76 j)`. `N_k` escapes
 this because its state is the single number `B_j`.
 
-And enumeration runs out. The gap between the two model predictions is 8 % at
-`k = 23` and grows ~3 %/step, while the residual Sturmian oscillation in
-`a_k/N_k` is ±14 %. The gap clears three times the oscillation near **`k = 33`**
-— roughly `7×10¹¹` tree nodes, about **two weeks** of compute. Not attempted.
+And enumeration runs out. At `k = 24` the two model predictions differ by only
+**9.6 %**, while the residual Sturmian oscillation in `a_k/N_k` is **±18.5 %**.
+The separation grows ~3 %/step, so it clears three times the oscillation only
+near **`k = 36`** — roughly `2×10¹³` tree nodes, on the order of **a year** of
+compute. Not attempted. (These figures come from
+`python/tools/gen_asym_data.py`, which computes them rather than assuming them.)
 
 **Bracketed result:** `0.897 ≤ tail rate ≤ 0.947`.
 

@@ -612,6 +612,76 @@ footer{border-top:1px solid var(--rule);padding-top:28px;font-size:.84rem;color:
 </section>
 
 
+<!-- ══ ASYMPTOTICS ═══════════════════════════════════════════════ -->
+<section>
+  <div class="eyebrow">A negative result</div>
+  <h2>One constant we could pin down, and one we could not</h2>
+  <div class="prose stack">
+    <p>The death depth falls off geometrically, so the obvious next question is: at
+    <em>what rate</em>? There is a natural candidate — the growth constant of the backward tree
+    itself, divided by 3. Chasing it turned into a clean lesson about when a counting problem is
+    tractable and when it isn't.</p>
+    <p>Two different counts are involved, and only one of them is easy.</p>
+  </div>
+
+  <figure>
+    <div class="frame" id="as-panels"></div>
+    <figcaption>Both count the same objects from different sides. One has a state you can put in a
+    matrix; the other does not.</figcaption>
+  </figure>
+
+  <div class="prose stack">
+    <h3>The tail rate: two models, and a coin flip</h3>
+    <p>Since each halving vector pins exactly one residue but a single <code>M</code> can carry
+    several chains, <code>a_k ≤ N_k</code> — and the ratio decays. <em>How</em> it decays is the
+    whole question: decay by a constant factor per step means a slower growth rate for
+    <code>a_k</code>; decay by a power of <code>k</code> leaves the rate untouched.</p>
+  </div>
+
+  <figure>
+    <div class="frame">
+      <canvas id="as-plot" height="330" aria-label="The two candidate models for a_k over N_k, and where they separate"></canvas>
+      <div class="tip" id="as-tip"></div>
+    </div>
+    <div class="legend" id="as-legend"></div>
+    <figcaption id="as-cap"></figcaption>
+  </figure>
+
+  <div class="prose stack">
+    <p>Both fit. Neither wins. And the ranking <b>reverses on a single extra term</b> — which is
+    the honest result of the whole exercise:</p>
+  </div>
+
+  <div class="frame scroll">
+    <table id="as-flip"><thead><tr>
+      <th>data through</th><th>in-sample R², polynomial</th><th>in-sample R², geometric</th><th>ahead</th>
+    </tr></thead><tbody></tbody></table>
+  </div>
+
+  <div class="frame scroll">
+    <table id="as-oos"><thead><tr>
+      <th>k</th><th>actual a_k</th><th>geometric error</th><th>polynomial error</th><th>winner</th>
+    </tr></thead><tbody></tbody></table>
+  </div>
+
+  <div class="note warn" id="as-bracket"></div>
+
+  <div class="prose stack">
+    <h3>Why enumeration stops here</h3>
+    <p>The two models do separate eventually — but slowly, and they have to out-run the wobble
+    that the continued fraction of <code>log₂3</code> puts into every count in this problem.</p>
+  </div>
+
+  <div class="note kill" id="as-limit"></div>
+
+  <div class="prose stack">
+    <p>So this section reports a <b>bracket, not a value</b>. That is a real outcome: the
+    conjecture is not refuted, it is simply out of computational reach by this route, and the
+    reason is structural rather than a matter of patience.</p>
+  </div>
+</section>
+
+
 <!-- ══ STATUS ════════════════════════════════════════════════════ -->
 <section>
   <div class="eyebrow">Bookkeeping</div>
@@ -1559,6 +1629,160 @@ document.getElementById("eq-depth-cap").innerHTML =
 })();
 onTheme(eqDepth);
 eqDepth();
+
+/* ═══ 7b. ASYMPTOTICS — the constant we could not pin down ══════ */
+var AS = D.asym;
+
+(function asPanels(){
+  var lc = AS.lambda_confirmed;
+  document.getElementById("as-panels").innerHTML =
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:0">'+
+      '<div style="padding:4px 20px 4px 0;border-right:1px solid var(--rule)">'+
+        '<div class="eyebrow" style="color:var(--blue)">N<sub>k</sub> · halving vectors</div>'+
+        '<div class="mono" style="font-size:1.55rem;font-weight:600;color:var(--blue);line-height:1.2;margin:10px 0 4px">'+
+          AS.lambda.toFixed(7)+'</div>'+
+        '<div style="font-size:.86rem;color:var(--ink-2);line-height:1.55">The state is the single '+
+          'number <code>B_k</code>, so it fits in a matrix — an <code>O(k²)</code> recurrence.</div>'+
+        '<div class="note" style="border-color:var(--blue);margin-top:12px;font-size:.86rem">'+
+          '<b>Confirmed to '+lc.digits+' significant figures</b> by running the recurrence to '+
+          '<code>k = '+fmt(lc.k_max)+'</code> — relative error '+lc.rel_err_joint_fit.toExponential(1)+
+          ', recovered power '+lc.power_recovered+' against '+lc.power_expected+'.</div>'+
+      '</div>'+
+      '<div style="padding:4px 0 4px 20px">'+
+        '<div class="eyebrow" style="color:var(--violet)">a<sub>k</sub> · surviving residues</div>'+
+        '<div class="mono" style="font-size:1.55rem;font-weight:600;color:var(--violet);line-height:1.2;margin:10px 0 4px">'+
+          AS.bracket[0].toFixed(3)+' … '+AS.bracket[1].toFixed(3)+'</div>'+
+        '<div style="font-size:.86rem;color:var(--ink-2);line-height:1.55">This is the one the '+
+          'conjecture is about — and it has <b>no finite state</b> to put in a matrix.</div>'+
+        '<div class="note kill" style="margin-top:12px;font-size:.86rem">'+
+          '<b>Bracketed, not determined.</b> '+AS.no_transfer_matrix+'.</div>'+
+      '</div>'+
+    '</div>';
+})();
+
+/* --- the separation plot --- */
+var asCv = document.getElementById("as-plot"), asTip = document.getElementById("as-tip");
+var asGeom = null;
+function asPlot(){
+  var p = pal(), g = hidpi(asCv, 330), c = g.c;
+  var padL = 52, padR = 16, padT = 16, padB = 40;
+  var W = g.w - padL - padR, H = 330 - padT - padB;
+  var kmin = 6, kmax = AS.k_model;
+  var vals = AS.curves.map(function(r){ return r.poly; })
+    .concat(AS.curves.map(function(r){ return r.geo; }))
+    .concat(AS.a_k.slice(5));
+  var lo = Math.log10(Math.min.apply(null, vals)), hi = Math.log10(Math.max.apply(null, vals));
+  function X(k){ return padL + (k - kmin) / (kmax - kmin) * W; }
+  function Y(v){ return padT + H - (Math.log10(v) - lo) / (hi - lo) * H; }
+  asGeom = {X:X, Y:Y, kmin:kmin, kmax:kmax};
+  c.clearRect(0, 0, g.w, 330);
+  c.strokeStyle = p.rule; c.lineWidth = 1;
+  c.font = '10px "IBM Plex Mono", monospace'; c.fillStyle = p.ink3;
+  for(var e = Math.ceil(lo); e <= hi; e += 2){
+    var y = Y(Math.pow(10, e));
+    c.beginPath(); c.moveTo(padL, y); c.lineTo(padL + W, y); c.stroke();
+    c.textAlign = "right"; c.fillText("10" + String(e).replace(/\d/g, function(d){ return "⁰¹²³⁴⁵⁶⁷⁸⁹"[d]; }), padL - 7, y + 3);
+  }
+  for(var k = 10; k <= kmax; k += 5){
+    c.textAlign = "center"; c.fillText(k, X(k), 330 - 22);
+  }
+  c.textAlign = "center"; c.fillText("depth k", padL + W / 2, 330 - 6);
+
+  /* shaded region beyond the data */
+  c.save(); c.fillStyle = p.ink3; c.globalAlpha = .07;
+  c.fillRect(X(AS.k_data), padT, X(kmax) - X(AS.k_data), H); c.restore();
+  c.save(); c.setLineDash([4,4]); c.strokeStyle = p.ink3; c.lineWidth = 1.2;
+  c.beginPath(); c.moveTo(X(AS.k_data), padT); c.lineTo(X(AS.k_data), padT + H); c.stroke(); c.restore();
+  c.fillStyle = p.ink3; c.textAlign = "left"; c.font = '600 10px "IBM Plex Mono", monospace';
+  c.fillText("computed to k=" + AS.k_data, X(AS.k_data) + 6, padT + 12);
+
+  function curve(key, col, dash){
+    c.save(); c.strokeStyle = col; c.lineWidth = 2; if(dash) c.setLineDash(dash);
+    c.beginPath();
+    AS.curves.forEach(function(r, i){ var x = X(r.k), y = Y(r[key]); i ? c.lineTo(x, y) : c.moveTo(x, y); });
+    c.stroke(); c.restore();
+  }
+  curve("poly", p.violet, null);
+  curve("geo", p.blue, [6, 4]);
+
+  c.fillStyle = p.pink;
+  AS.a_k.forEach(function(v, i){
+    var k = i + 1; if(k < kmin) return;
+    c.beginPath(); c.arc(X(k), Y(v), 3.2, 0, 7); c.fill();
+  });
+  /* where they finally separate */
+  if(AS.k_decide && AS.k_decide <= kmax){
+    c.save(); c.strokeStyle = p.amber; c.lineWidth = 1.4; c.setLineDash([3,3]);
+    c.beginPath(); c.moveTo(X(AS.k_decide), padT); c.lineTo(X(AS.k_decide), padT + H); c.stroke(); c.restore();
+    c.fillStyle = p.amber; c.textAlign = "right"; c.font = '600 10px "IBM Plex Mono", monospace';
+    c.fillText("decidable at k=" + AS.k_decide, X(AS.k_decide) - 6, padT + 12);
+  }
+}
+asCv.addEventListener("mousemove", function(e){
+  if(!asGeom) return;
+  var r = asCv.getBoundingClientRect();
+  var k = Math.round(asGeom.kmin + (e.clientX - r.left - 52) / (asCv.clientWidth - 68) * (asGeom.kmax - asGeom.kmin));
+  var row = AS.curves.filter(function(q){ return q.k === k; })[0];
+  if(!row){ asTip.style.opacity = 0; return; }
+  var act = AS.a_k[k-1];
+  asTip.innerHTML = "k = <b>" + k + "</b><br>" +
+    (act ? "actual a<sub>k</sub> = <b>" + fmt(act) + "</b><br>" : "") +
+    "polynomial " + fmt(row.poly) + "<br>geometric " + fmt(row.geo) +
+    "<br>gap " + (100 * (row.poly / row.geo - 1)).toFixed(0) + "%";
+  asTip.style.left = asGeom.X(k) + "px"; asTip.style.top = (asGeom.Y(row.poly) - 4) + "px";
+  asTip.style.opacity = 1;
+});
+asCv.addEventListener("mouseleave", function(){ asTip.style.opacity = 0; });
+(function asLegend(){
+  var p = pal();
+  document.getElementById("as-legend").innerHTML = [
+    [p.pink, "a_k, computed exactly"],
+    [p.violet, "polynomial model — rate " + AS.models.polynomial.rate],
+    [p.blue, "geometric model — rate " + AS.models.geometric.rate],
+    [p.amber, "where they finally separate"]
+  ].map(function(it){ return '<span><i class="sw" style="background:'+it[0]+'"></i>'+it[1]+'</span>'; }).join("");
+})();
+document.getElementById("as-cap").innerHTML =
+  "The exact values of <code>a_k</code> run out at <code>k = " + AS.k_data + "</code> (<code>a_" +
+  AS.k_data + " = " + fmt(AS.a_k[AS.k_data - 1]) + "</code>). Both fitted models pass through them; " +
+  "they only diverge visibly well beyond where the computation can reach.";
+
+/* --- the flip --- */
+document.querySelector("#as-flip tbody").innerHTML = [
+  {t: 23, p: AS.models.polynomial.r2_at23, g: AS.models.geometric.r2_at23},
+  {t: 24, p: AS.models.polynomial.r2,      g: AS.models.geometric.r2}
+].map(function(r){
+  var win = r.p > r.g ? "polynomial" : "geometric";
+  return '<tr><td class="n">k = ' + r.t + '</td><td class="n">' + r.p.toFixed(4) +
+    '</td><td class="n">' + r.g.toFixed(4) + '</td><td class="n"><b style="color:var(--' +
+    (win === "polynomial" ? "violet" : "blue") + ')">' + win + '</b></td></tr>';
+}).join("");
+
+document.querySelector("#as-oos tbody").innerHTML = AS.oos.map(function(o){
+  var gw = Math.abs(o.geo_err) < Math.abs(o.poly_err);
+  return '<tr><td class="n">' + o.k + '</td><td class="n">' + fmt(o.actual) +
+    '</td><td class="n">' + o.geo_err.toFixed(2) + '%</td><td class="n">' + o.poly_err.toFixed(2) +
+    '%</td><td class="n"><b style="color:var(--' + (gw ? "blue" : "violet") + ')">' +
+    (gw ? "geometric" : "polynomial") + '</b></td></tr>';
+}).join("");
+
+document.getElementById("as-bracket").innerHTML =
+  "<b>Out-of-sample they split two wins each</b> (models fitted on <code>k ≤ 20</code>, scoring " +
+  "21–" + AS.k_data + "), mean error " + AS.oos_mean.geo + "% geometric against " + AS.oos_mean.poly +
+  "% polynomial. The result is a bracket: the tail rate lies between <b>" + AS.bracket[0] +
+  "</b> and <b>" + AS.bracket[1] + "</b>, and the conjectured value " + AS.bracket[1] +
+  " sits at the top of it — supported, not confirmed.";
+
+document.getElementById("as-limit").innerHTML =
+  "<b>The wobble beats the signal.</b> At <code>k = " + AS.k_data + "</code> the two models' " +
+  "predictions differ by just <b>" + AS.separation_now_pct + "%</b>, while the residual oscillation — " +
+  "the Sturmian rhythm of <code>⌊k·log₂3⌋</code> that runs through every count here — is <b>±" +
+  AS.oscillation_pct + "%</b>. The separation grows only about 3% per step, so it clears three times " +
+  "the oscillation near <b>k = " + AS.k_decide + "</b>: roughly <b>" + AS.nodes_at_k_decide +
+  "</b> tree nodes, " + AS.compute_at_k_decide + " of computation. Not attempted.";
+
+onTheme(asPlot);
+asPlot();
 
 /* ═══ 7. STATUS ════════════════════════════════════════════════ */
 document.querySelector("#th-table tbody").innerHTML = D.theorems.map(function(t){
