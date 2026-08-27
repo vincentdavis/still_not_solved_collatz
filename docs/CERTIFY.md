@@ -80,3 +80,71 @@ would be refuting a true statement.
 None claimed. Restricting a cycle search by residue is standard practice; the
 backward formulation is just the equivalence theorem read as an algorithm. The
 measurement is what is recorded here.
+
+---
+
+## Both ends: the minimum, and pairing it with the maximum
+
+Everything above constrains the **maximum**. The minimum obeys an exact mirror
+image, derived the same way (`collatz_maxodd/bounds.py`).
+
+Let `m` be the minimum. `S_q(m) ≥ m` forces `2^b ≤ 3 + q/m < 4`, so `b = 1` — the
+minimum ascends by a single halving, and `(3m+q)/2` must land odd, i.e.
+`3m + q ≡ 2 (mod 4)`. A predecessor `y ≥ m` forces `2^a ≥ 3 + q/m`, so `a ≥ 2`.
+
+| end | hop in | hop out | residue (q = 1) |
+|---|---|---|---|
+| maximum | 1 halving | ≥ 2 | `M ≡ 1 (mod 4)`, `≡ 5 (mod 12)` |
+| minimum | ≥ 2 | 1 halving | `m ≡ 3 (mod 4)`, `≡ 7 or 11 (mod 12)` |
+
+**0 violations** over every primitive cycle in the census.
+
+### The sandwich
+
+From `2^B = ∏(3 + q/x_j)` with `m ≤ x_j ≤ M`, and writing `d = B − L·log₂3 > 0`,
+`K = 1/(3 ln 2)`:
+
+```
+(3 + q/M)^L ≤ 2^B ≤ (3 + q/m)^L        ⟹        m  ≤  K·q·L / d  ≤  M
+```
+
+So a **scale computed from `(q, L, B)` alone must land inside the cycle's range**.
+0 violations over the census. `q = 47` illustrates it well: five distinct cycles
+share `L = 4, B = 7`, hence one scale `136.95` — and every one of them straddles it.
+
+| q | L | B | min m | scale | max M |
+|---|---|---|---|---|---|
+| 5 | 3 | 5 | 19 | 29.43 | 49 |
+| 5 | 3 | 5 | 23 | 29.43 | 37 |
+| 47 | 4 | 7 | 65 | 136.95 | 331 |
+| 47 | 4 | 7 | 101 | 136.95 | 175 |
+
+### Certifying from either end
+
+Every cycle has both a minimum and a maximum, so refuting either kills it. That
+gives two independent certificates for the same claim, "no cycle lies entirely
+below X":
+
+| side | test | complete because |
+|---|---|---|
+| min | `e(m)` — forward steps until the orbit drops below `m` | a minimum cannot descend |
+| max | `d(M)` — exhaust the backward tree | the equivalence theorem |
+
+Over 200 000 odd numbers from `10⁷`: min side **698 192** work units, max side
+**414 293** — the **max side is 1.7× cheaper**. Exactly half of all odd numbers
+are refuted as minima in a single step, which is precisely the `m ≡ 1 (mod 4)`
+half that descends — the min test and the residue rule agreeing exactly.
+
+### Does the pairing rule out pairs?
+
+No — and it is worth being clear why. Combining `m ≤ K·q·L/d ≤ M` with the
+verified range `m > 2.39×10²¹` gives
+
+```
+d  ≤  K·L / 2.39×10²¹  ≈  2.01×10⁻²² · L
+```
+
+i.e. `B/L` must approximate `log₂3` to within about `2×10⁻²²`. That is the same
+Diophantine wall as everywhere else on this page, reached from a new direction.
+The pairing packages the obstruction more symmetrically; it does not weaken it.
+
