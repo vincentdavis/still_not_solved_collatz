@@ -839,6 +839,98 @@ footer{border-top:1px solid var(--rule);padding-top:28px;font-size:.84rem;color:
 </section>
 
 
+<!-- ══ BOTH ENDS ═════════════════════════════════════════════════ -->
+<section>
+  <div class="eyebrow">The other end</div>
+  <h2>A cycle has a smallest element too</h2>
+  <div class="prose stack">
+    <p>Everything so far has been about the largest odd number. But a finite loop has a
+    <em>smallest</em> one as well, and the same one-line arguments run at that end — giving an
+    exact mirror image.</p>
+    <p>At the minimum <code>m</code>, the next step can't go down, so <code>2^b ≤ 3 + q/m &lt; 4</code>
+    and <code>b = 1</code>: the minimum ascends by a single halving. Coming in, a predecessor must be
+    at least <code>m</code>, which forces <code>a ≥ 2</code>. Precisely the reverse of the maximum.</p>
+  </div>
+
+  <div class="frame scroll">
+    <table id="bd-mirror"><thead><tr>
+      <th>end</th><th>hop in</th><th>hop out</th><th>residue (q = 1)</th>
+    </tr></thead><tbody></tbody></table>
+  </div>
+
+  <div class="note" id="bd-mirror-note"></div>
+
+  <div class="prose stack">
+    <h3>Pairing the two ends</h3>
+    <p>Since <code>2^B = ∏ (3 + q/x_j)</code> and every element lies between <code>m</code> and
+    <code>M</code>, the product is squeezed from both sides. Writing
+    <code>d = B − L·log₂3</code>, the two bounds collapse into one statement:</p>
+  </div>
+
+  <div class="frame" style="text-align:center;padding:26px 18px">
+    <div class="mono" style="font-size:clamp(.86rem,2.1vw,1.1rem);line-height:2;color:var(--ink)">
+      m &nbsp;≤&nbsp; <span style="color:var(--violet)">q·L / (3 ln2 · d)</span> &nbsp;≤&nbsp; M
+    </div>
+    <div style="font-size:.78rem;color:var(--ink-3);margin-top:8px" id="bd-sand-note"></div>
+  </div>
+
+  <div class="frame scroll">
+    <table id="bd-sand"><thead><tr>
+      <th>q</th><th>L</th><th>B</th><th>min m</th><th>scale</th><th>max M</th><th>inside?</th>
+    </tr></thead><tbody></tbody></table>
+  </div>
+
+  <div class="note" style="border-color:var(--violet)" id="bd-family"></div>
+
+  <div class="prose stack">
+    <h3>So you can certify from whichever end is cheaper</h3>
+    <p>Every cycle has both ends, so refuting either one kills it. That gives two independent
+    certificates for the same claim — and they don't cost the same.</p>
+  </div>
+
+  <div class="tally" id="bd-ends"></div>
+  <div class="note" id="bd-ends-note"></div>
+
+  <div class="note warn" id="bd-nopairs"></div>
+</section>
+
+<!-- ══ CLASS CERTIFICATE ═════════════════════════════════════════ -->
+<section>
+  <div class="eyebrow">Infinitely many at once</div>
+  <h2>Certifying a whole residue class</h2>
+  <div class="prose stack">
+    <p>Every test on this page so far settles one number at a time, so no finite amount of work
+    covers a range. One property changes that: above a computable threshold,
+    <code>d(M)</code> depends <b>only on <code>M mod 3^k</code></b>.</p>
+    <p>The exact size test and the magnitude-free one differ only when
+    <code>2^{B_j} &gt; 3^j</code> <em>and</em> <code>M</code> is small enough to squeak under
+    <code>c_j/(2^{B_j} − 3^j)</code>. Above the largest such <code>M</code> they agree — and
+    <code>c_j</code> is largest when the early hops are smallest, which gives a closed form, so the
+    threshold needs no search at all.</p>
+  </div>
+
+  <div class="note" style="border-color:var(--violet)" id="bd-cert"></div>
+
+  <figure>
+    <div class="frame scroll">
+      <table id="bd-cov"><thead><tr>
+        <th>k</th><th>modulus 3^k</th><th>alive (a_k)</th><th>certified</th><th>valid for M ></th>
+      </tr></thead><tbody></tbody></table>
+    </div>
+    <figcaption id="bd-cov-cap"></figcaption>
+  </figure>
+
+  <div class="prose stack">
+    <h3>Which constraint actually binds</h3>
+    <p>I expected the threshold to be the limit. It isn't.</p>
+  </div>
+
+  <div class="frame stack" id="bd-bind"></div>
+
+  <div class="note kill" id="bd-never"></div>
+</section>
+
+
 <!-- ══ STATUS ════════════════════════════════════════════════════ -->
 <section>
   <div class="eyebrow">Bookkeeping</div>
@@ -2180,6 +2272,104 @@ document.getElementById("ln-caveat").innerHTML =
   "<b>What this is not.</b> The bound is " + LN.caveat + ". Novelty: none — it is the classical " +
   "Crandall-style squeeze, rearranged to avoid <code>ℝ</code>. What is gained is that everything " +
   "<em>after</em> the Baker input is machine-checked and free of the axiom of choice.";
+
+/* ═══ 7e. BOTH ENDS, AND THE CLASS CERTIFICATE ═════════════════ */
+var BD = D.bounds;
+
+document.querySelector("#bd-mirror tbody").innerHTML = BD.mirror.map(function(r){
+  var hi = r.end === "minimum";
+  return '<tr'+(hi?' class="hl"':'')+'><td class="n"><b>'+r.end+'</b></td>'+
+    '<td class="n">'+r.hop_in+'</td><td class="n">'+r.hop_out+'</td>'+
+    '<td class="n">'+r.residue+'</td></tr>';
+}).join("");
+document.getElementById("bd-mirror-note").innerHTML =
+  "Checked on every primitive cycle in the census: <b>"+BD.cycles_checked+
+  " cycles, "+BD.violations+" violations</b>. For <code>q = 1</code> a minimum must be "+
+  "<code>≡ "+BD.min_residues_q1.join(" or ")+" (mod 12)</code>, against the maximum's "+
+  "<code>≡ 5 (mod 12)</code> — the two ends occupy disjoint residue classes.";
+
+document.getElementById("bd-sand-note").innerHTML =
+  "a number built from <code>(q, L, B)</code> alone must land inside the cycle — "+
+  BD.violations+" violations over "+BD.cycles_checked+" cycles";
+
+document.querySelector("#bd-sand tbody").innerHTML = BD.sandwich_examples.map(function(r){
+  var ok = r.m <= r.S && r.S <= r.M;
+  return '<tr><td class="n">'+r.q+'</td><td class="n">'+r.L+'</td><td class="n">'+r.B+'</td>'+
+    '<td class="n">'+fmt(r.m)+'</td><td class="n"><b style="color:var(--violet)">'+r.S+'</b></td>'+
+    '<td class="n">'+fmt(r.M)+'</td><td class="n">'+(ok?'<span class="ok">✓</span>':'<span class="no">✗</span>')+'</td></tr>';
+}).join("");
+
+(function fam(){
+  var F = BD.family_q47;
+  document.getElementById("bd-family").innerHTML =
+    "<b>The clearest evidence.</b> <code>q = 47</code> has <b>"+F.n+" distinct cycles</b> sharing "+
+    "<code>L = "+F.L+", B = "+F.B+"</code> — so they share one scale, <b>"+F.scale+"</b>. Their ranges are "+
+    F.ranges.map(function(r){ return "["+r[0]+", "+r[1]+"]"; }).join(", ")+
+    " — four different cycles, every one of them straddling the same number.";
+})();
+
+(function ends(){
+  var E = BD.ends;
+  document.getElementById("bd-ends").innerHTML = [
+    [fmt(E.min_work), "work units from the <b>minimum</b> side — forward until the orbit drops below m"],
+    [fmt(E.max_work), "work units from the <b>maximum</b> side — exhaust the backward tree"],
+    [E.max_cheaper_by + "×", "cheaper to certify from the maximum"],
+    [(100*E.one_step_fraction).toFixed(0) + "%", "of odd numbers refuted as minima in a single step"]
+  ].map(function(t){ return "<div><b>"+t[0]+"</b><span>"+t[1]+"</span></div>"; }).join("");
+  document.getElementById("bd-ends-note").innerHTML =
+    "Measured over "+fmt(E.window)+" odd numbers from "+fmt(E.from)+". That last figure is a "+
+    "check worth noticing: the numbers refuted in one step are exactly the <code>m ≡ 1 (mod 4)</code> "+
+    "half that descends — so the forward test and the residue rule agree to the digit, from "+
+    "completely different directions.";
+})();
+
+document.getElementById("bd-nopairs").innerHTML =
+  "<b>But it does not rule out pairs.</b> Combining <code>m ≤ scale ≤ M</code> with the verified "+
+  "range <code>m &gt; "+BD.verified.toExponential(2)+"</code> gives <code>d ≤ "+
+  BD.diophantine_wall.toExponential(2)+" · L</code> — <code>B/L</code> must approximate "+
+  "<code>log₂3</code> to about <code>2×10⁻²²</code>. The same Diophantine wall as everywhere else "+
+  "on this page, reached from a new direction. The pairing makes the obstruction more symmetric; "+
+  "it does not weaken it.";
+
+/* --- class certificate --- */
+document.getElementById("bd-cert").innerHTML =
+  "<b>Certificate.</b> Fix <code>k</code>. If the magnitude-free backward tree from a residue "+
+  "<code>r mod 3<sup>k</sup></code> dies before depth <code>k</code>, then <b>every</b> odd "+
+  "<code>M ≡ r (mod 3<sup>k</sup>)</code> above the threshold has <code>d(M) &lt; k</code> — hence is not a "+
+  "cycle maximum. One finite computation, infinitely many numbers.";
+
+document.querySelector("#bd-cov tbody").innerHTML = BD.classes.map(function(c){
+  return '<tr'+(c.stored?' class="hl"':'')+'><td class="n">'+c.k+'</td>'+
+    '<td class="n">'+(c.modulus > 1e9 ? "3^"+c.k : fmt(c.modulus))+'</td>'+
+    '<td class="n">'+fmt(c.alive)+'</td>'+
+    '<td class="n"><b>'+c.certified.toFixed(3)+'%</b></td>'+
+    '<td class="n">'+fmt(c.threshold)+'</td></tr>';
+}).join("");
+document.getElementById("bd-cov-cap").innerHTML =
+  "The alive counts are <code>a_k</code> — the same sequence "+BD.a_k.slice(0,8).join(", ")+
+  ", … reached here by a <b>third independent route</b>, after the full-period scan and the "+
+  "3-adic tree search. Three separate programs agreeing exactly.";
+
+(function bind(){
+  var g = BD.threshold_growth, K = BD.k_max_under_verified;
+  var t118 = g.filter(function(x){ return x.k === K; })[0];
+  var t119 = g.filter(function(x){ return x.k === K + 1; })[0];
+  document.getElementById("bd-bind").innerHTML =
+    '<div class="work" style="font-size:.9rem">'+
+      'T<sub>'+K+'</sub> = <b>'+t118.T.toExponential(3)+'</b> &nbsp;≤&nbsp; verified bound '+
+      BD.verified.toExponential(3)+' &nbsp;&lt;&nbsp; T<sub>'+(K+1)+'</sub> = <b>'+
+      t119.T.toExponential(3)+'</b></div>'+
+    '<div class="note" style="border-color:var(--blue);font-size:.9rem">'+
+      '<b>The threshold would permit depth '+K+'.</b> What stops us is <code>a_k</code> — the cost '+
+      'of finding which classes are dead. <code>a₂₄</code> is already '+fmt(182840849)+' nodes and '+
+      'grows like <code>2.84<sup>k</sup></code>. <b>The binding constraint is computational, not arithmetic.</b></div>';
+})();
+
+document.getElementById("bd-never").innerHTML =
+  "<b>And it can never finish.</b> <code>a_k &gt; 0</code> for every <code>k</code> — some class "+
+  "always survives. That is not an accident of the computation: by the equivalence theorem, "+
+  "certifying <em>every</em> class would prove the conjecture. Coverage climbs toward 100% and "+
+  "never arrives. The same wall, in its fifth disguise.";
 
 /* ═══ 7. STATUS ════════════════════════════════════════════════ */
 document.querySelector("#th-table tbody").innerHTML = D.theorems.map(function(t){
