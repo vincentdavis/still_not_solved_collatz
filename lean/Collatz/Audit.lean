@@ -29,6 +29,7 @@ import Collatz.Length
 import Collatz.Minimum
 import Collatz.Reach
 import Collatz.Periodic
+import Collatz.Halving
 
 /-! ## Definitions (`Collatz/Odd.lean`) -/
 #print axioms Collatz.v2
@@ -336,3 +337,23 @@ only; still no Mathlib, still no `ℝ`, still no choice. -/
 #print axioms Collatz.const_two_exists
 #print axioms Collatz.cycle5_is_periodic
 #print axioms Collatz.cycle7_is_periodic
+
+/-! ## The 41.5 % figure (`Collatz/Halving.lean`).
+
+No real numbers: the statement is an inequality between whole numbers, and the
+place `log₂ 3` used to sit is now `cert`, a `decide` on two 96-digit integers
+that depends on NO axioms at all.  The one analytic input is quarantined as the
+explicit hypothesis `hlarge`. -/
+
+#print axioms Collatz.twoPow317
+#print axioms Collatz.cert
+#print axioms Collatz.twoPow317_pos
+#print axioms Collatz.twoPow317_pow
+#print axioms Collatz.cert_m_mono
+#print axioms Collatz.cert_m_base
+#print axioms Collatz.cert_m
+#print axioms Collatz.Cycle.BB_le_of_min
+#print axioms Collatz.Cycle.single_halving_percent
+#print axioms Collatz.Cycle.single_halving_percent_m
+#print axioms Collatz.Cycle.percent_arithmetic
+#print axioms Collatz.Cycle.needs_the_size_hypothesis

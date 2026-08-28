@@ -1017,6 +1017,7 @@ footer{border-top:1px solid var(--rule);padding-top:28px;font-size:.84rem;color:
   </div>
 
   <div class="note" style="border-color:var(--violet)" id="st-headline"></div>
+  <div class="note" style="border-color:var(--violet)" id="st-lean-note"></div>
   <div class="note warn" id="st-notdo"></div>
 </section>
 
@@ -2710,6 +2711,30 @@ document.getElementById("st-headline").innerHTML =
   "cycle must be single halvings</b> — equivalently, at least that share of its odd elements are "+
   "<code>≡ 3 (mod 4)</code>. A concrete structural fact about an object nobody has ever seen.";
 
+document.getElementById("st-lean-note").innerHTML =
+  "<b>Machine-checked — and the recorded reason it could not be was wrong.</b> The blocker said this " +
+  "needed real arithmetic on <code>log₂3</code>, which core Lean has no <code>ℝ</code> for. But the " +
+  "<em>derivation</em> mentions <code>log₂3</code>; the <em>statement</em> does not. " +
+  "&ldquo;At least 41.5%&rdquo; is <code>1000·u ≥ 415·L</code> — whole numbers. What it needs is a " +
+  "rational strictly between <code>log₂3</code> and the cutoff <code>1.585</code>, and one integer " +
+  "fact certifying it:" +
+  "<div class='mono' style='text-align:center;padding:14px 0;font-size:.95em'>" +
+  "log<sub>2</sub>3 &nbsp;&lt;&nbsp; <span style='color:var(--violet)'>317/200</span> &nbsp;≤&nbsp; 1.585" +
+  "&nbsp;&nbsp;&nbsp;⟺&nbsp;&nbsp;&nbsp; 3<sup>200</sup> &lt; 2<sup>317</sup></div>" +
+  "<code>Collatz.cert</code> decides that outright and <b>depends on no axioms at all</b> — one line, " +
+  "two 96-digit integers, and that is the whole of the &ldquo;real arithmetic&rdquo;. The rest is " +
+  "<code>2000 − 1585 = 415</code>." +
+  "<br><br><code>317/200</code> is forced rather than chosen: it is the <em>only</em> fraction with " +
+  "denominator at most 200 lying in <code>(log₂3, 1.585]</code>. The bound has to be above " +
+  "<code>log₂3</code>, or the cycle equation contradicts it, and at most 1.585, or it misses 41.5%. " +
+  "The nearest convergent <code>65/41</code> overshoots the cutoff and yields only 41.46%." +
+  "<br><br><b>Nothing is left assumed.</b> The single input is <code>m &gt; 12825</code> — the " +
+  "cycle's smallest element — and it is <em>discharged</em>, not quarantined: decided at 12825 on two " +
+  "918-digit integers, then extended upward because <code>3 + 1/m</code> decreases. For " +
+  "<code>q = 1</code> the verified search supplies it with seventeen orders of magnitude to spare. " +
+  "It is also load-bearing rather than decorative — the trivial cycle <code>{1}</code> makes the " +
+  "conclusion <em>false</em>, so the hypothesis cannot simply be dropped.";
+
 document.getElementById("st-notdo").innerHTML =
   "<b>What this does not do.</b> None of it forces a cycle out of existence. The length bound is "+
   "only as strong as the published lower bound on <code>L</code> you compare it against; the other "+
@@ -2842,9 +2867,8 @@ document.getElementById("ln-sandwich").innerHTML =
 
 /* ─── u >= 2L - B is machine-checked; the 41.5% step is not ─── */
 document.getElementById("st-lean").innerHTML =
-  "✓ <code>Cycle.single_halving_count</code> — the integer inequality is machine-checked. " +
-  "Turning it into the 41.5% figure needs real arithmetic on <code>log₂3</code>, and core Lean has " +
-  "no <code>ℝ</code>, so that last step is not.";
+  "✓ <code>Cycle.single_halving_percent</code> — machine-checked, with no real numbers and nothing " +
+  "assumed beyond <code>m &gt; 12825</code>, which the verified search supplies outright.";
 
 /* ─── the verification table ─── */
 (function vstatus(){

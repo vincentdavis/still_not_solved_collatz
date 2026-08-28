@@ -91,9 +91,25 @@ decl = re.compile(r'^\s*(?:private\s+|protected\s+|noncomputable\s+)*'
 ns_open  = re.compile(r'^\s*namespace\s+(\S+)')
 ns_close = re.compile(r'^\s*end\s+(\S+)')
 names, private = set(), set()
+
+
+def strip_comments(src):
+    # same nesting-aware strip as step 2 -- without it a docstring line that
+    # merely BEGINS with "theorem <word>" is read as a declaration.  (Benign:
+    # it can only demand coverage of something that does not exist, never hide
+    # a real gap.  But it fires, so it is fixed here rather than worked around.)
+    out, i, depth, n = [], 0, 0, len(src)
+    while i < n:
+        if src.startswith('/-', i): depth += 1; i += 2; continue
+        if src.startswith('-/', i) and depth: depth -= 1; i += 2; continue
+        out.append('\n' if src[i] == '\n' else (src[i] if depth == 0 else ' '))
+        i += 1
+    return ''.join(out)
+
+
 for f in files:
     ns = []
-    for line in f.read_text().split('\n'):
+    for line in strip_comments(f.read_text()).split('\n'):
         m = ns_open.match(line)
         if m: ns.append(m.group(1)); continue
         m = ns_close.match(line)

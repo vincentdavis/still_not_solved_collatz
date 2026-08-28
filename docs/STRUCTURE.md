@@ -102,6 +102,56 @@ which is why the census shows cycles with `u/L` as low as 0.200, all of them wit
 `B/L` well above `log₂3`. The bound is satisfied in every case; it just bites
 harder when `q/m` is small.)
 
+### Formalized (`lean/Collatz/Halving.lean`)
+
+The recorded blocker was "needs real arithmetic on `log₂3`, and core Lean has no
+`ℝ`". That was wrong, and the mistake is worth keeping: the *derivation*
+mentions `log₂3`, the *statement* does not. "At least 41.5 %" is
+
+```
+1000 * u  >=  415 * L
+```
+
+— an inequality between whole numbers. What it needs is not `ℝ` but a rational
+strictly between `log₂3` and the cutoff `1.585`, plus one integer fact
+certifying it:
+
+```
+log₂3  <  317/200  <=  1.585        <=>        3^200  <  2^317
+```
+
+`Collatz.cert` decides that outright and **depends on no axioms at all** — that
+one line is where the real number used to be. The rest is
+`Cycle.percent_arithmetic`: `200B <= 317L` and `2L <= B + u` give `415L <= 1000u`,
+because `2000 - 1585 = 415`.
+
+`317/200` is forced, not chosen: it is the **unique** fraction with denominator
+at most 200 in the interval `(log₂3, 1.585]`. The bound must be above `log₂3`
+(else `T7` contradicts it) and at most `1.585` (else it misses 41.5 %). The
+nearest convergent of `log₂3`, `65/41 = 1.58537`, overshoots the cutoff and
+yields only 41.46 %.
+
+**Nothing is quarantined.** The only input is `12825 <= m`, and it is discharged
+here rather than assumed: `cert_m_base` decides `(3m+1)^200 <= 2^317 * m^200` at
+`m = 12825` (two 918-digit integers, no axioms), and `cert_m_mono` extends it to
+every larger `m` because `3 + 1/m` decreases. For `q = 1` the hypothesis is then
+supplied by the verified search: any nontrivial cycle has minimum above
+`2.39e21`, seventeen orders of magnitude past the threshold.
+
+The route matters. Going through `Cycle.squeeze` — whose Bernoulli
+linearization is what `length_bound` needs — forces a hypothesis coupling `L` to
+`m`, and an earlier version of this file did exactly that and looked convincing.
+Going through the exact `Cycle.pow_le_of_min` instead removes `L` from the
+hypothesis entirely, which is what the informal derivation above always did.
+
+The hypothesis is load-bearing, not decorative: `Cycle.needs_the_size_hypothesis`
+shows the trivial cycle `{1}` (with `L=1, B=2, u=0`) makes the conclusion
+**false**, so dropping `12825 <= m` would not merely lose the proof.
+
+The formalized constant is a hair conservative on purpose: the true bound is
+`2 - log₂(3 + 1/m) = 0.41503749927884...`, and Lean proves `>= 0.415`. Being
+rational is exactly what makes it provable with no reals at all.
+
 ## What this does not do
 
 None of it constrains a cycle into non-existence. (1) is only as strong as the

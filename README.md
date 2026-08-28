@@ -173,9 +173,9 @@ docs/STRUCTURE.md       what the maximum tells you: L <= |R(O)|, the slow ascent
                         and >= 41.5% single halvings
 python/                 collatz_maxodd — cycle search, sieves, backward tree,
                         cycle equation, death-depth tail, 3n+q census, certification from
-                        either end, 3-adic witness, cycle structure; 228 tests
+                        either end, 3-adic witness, cycle structure; 235 tests
 lean/                   Collatz — Mathlib-free Lean 4 development, 0 sorry,
-                        0 axioms beyond propext/Quot.sound, 262 audited decls
+                        0 axioms beyond propext/Quot.sound, 274 audited decls
 web/                    data.json (140 KB) + DATA.md — precomputed visualization
                         data (wheel, backward tree, sieve layers, real cycles,
                         Diophantine table), plus index.html — the published interactive note,
@@ -191,7 +191,7 @@ standard library; `pytest` is the only dev dependency.
 $ cd python
 $ uv run pytest
 ...
-228 passed in 7.88s
+235 passed in 7.73s
 
 $ uv run python -m collatz_maxodd                  # full report
 $ uv run python -m collatz_maxodd --q-max 499 --bound 20000 --depth 10
@@ -231,8 +231,8 @@ ALL CHECKS PASSED
 warning in Lean. `check.sh` is the real gate, and it has five steps: clean build
 with zero warnings, a source scan for unsoundness escape hatches
 (`sorry`/`axiom`/`native_decide`/`set_option`/`unsafe`/…), a forced-rebuild
-axiom audit (262 declarations: 211 on `[propext, Quot.sound]`, 29 on `[propext]`,
-22 on none; no `sorryAx`, no `Classical.choice`), a coverage check that every
+axiom audit (274 declarations: 219 on `[propext, Quot.sound]`, 29 on `[propext]`,
+26 on none; no `sorryAx`, no `Classical.choice`), a coverage check that every
 named declaration is actually audited, and a Mathlib-free check. It has been
 verified to *fail* on four deliberately injected defects, including a
 build-passing `sorry`.

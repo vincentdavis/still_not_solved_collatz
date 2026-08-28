@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+from fractions import Fraction
 
 import pytest
 
@@ -198,3 +199,106 @@ def test_oddness_is_part_of_membership_not_an_afterthought():
 
     assert without_parity(5, 49, 49) == 12        # vs 10 with the parity test
     assert _lean_countLE(5, 49, 49) == 10
+
+
+# ---------------------------------------------------------------------------
+# The 41.5% figure as lean/Collatz/Halving.lean states it -- with no reals.
+#
+# The statement "at least 41.5% of steps are single halvings" is the INTEGER
+# inequality 1000*u >= 415*L.  What replaces log2(3) is one rational bound,
+# 317/200, certified by the integer fact 3^200 < 2^317.
+# ---------------------------------------------------------------------------
+
+
+def test_the_certificate_replacing_log2_three():
+    """Collatz.cert: 3^200 < 2^317, written 2^256 * 2^61.
+
+    This single integer fact is the whole of the "real arithmetic" the figure
+    was once thought to need.  Lean decides it with NO axioms at all.
+    """
+    assert 3 ** 200 < 2 ** 256 * 2 ** 61
+    assert 2 ** 256 * 2 ** 61 == 2 ** 317        # the split is only for Lean's
+    #                                              256-exponent eval threshold
+    # 317/200 is above log2(3) and at most 1.585, which is what 41.5% needs
+    assert 2 ** 317 > 3 ** 200                   # log2 3 < 317/200
+    assert 1000 * 317 <= 1585 * 200              # 317/200 <= 1.585
+    assert Fraction(415, 1000) <= Fraction(2) - Fraction(317, 200)
+
+
+def test_the_nearest_convergent_is_not_good_enough():
+    """Why 317/200 and not something smaller.
+
+    65/41 is the convergent of log2(3) just above it, and it is cheap -- but it
+    yields only 2 - 65/41 = 41.46%, short of 41.5%.  So the certificate has to
+    be about this large; that is a fact about log2(3), not a choice.
+    """
+    assert 3 ** 41 < 2 ** 65                     # log2 3 < 65/41, and cheaply
+    assert Fraction(2) - Fraction(65, 41) < Fraction(415, 1000)
+    assert float(Fraction(2) - Fraction(65, 41)) == pytest.approx(0.414634, abs=1e-6)
+
+
+def test_percent_arithmetic_is_exactly_what_lean_proves():
+    """Collatz.Cycle.percent_arithmetic: 200B<=317L and 2L<=B+u => 415L<=1000u."""
+    for L in range(1, 60):
+        for B in range(1, 3 * L + 2):
+            if 200 * B > 317 * L:
+                continue
+            for u in range(0, 2 * L + 2):
+                if 2 * L <= B + u:
+                    assert 415 * L <= 1000 * u, (L, B, u)
+
+
+def test_the_size_hypothesis_is_discharged_not_assumed():
+    """Collatz.cert_m: (3m+1)^200 <= 2^317 * m^200 for every m >= 12825.
+
+    This is the ONLY input to the 41.5% theorem, and unlike a Baker-type
+    hypothesis it is proved outright -- `decide` at m = 12825 plus monotonicity.
+    Note it says nothing about L: an earlier version routed through the
+    linearized `squeeze` and picked up a spurious L-vs-m coupling.
+    """
+    def ok(m):
+        return (3 * m + 1) ** 200 <= 2 ** 317 * m ** 200
+
+    assert ok(12825)
+    assert not ok(12824)                      # the threshold is exact
+    for m in (12825, 12826, 10 ** 6, 10 ** 12, 2392312122059207475200):
+        assert ok(m)
+
+
+def test_barina_clears_the_threshold_by_a_wide_margin():
+    """For q=1 the hypothesis is supplied by the verified search.
+
+    Any nontrivial Collatz cycle has minimum > 2.39e21 (Barina 2025), against a
+    requirement of 12825 -- seventeen orders of magnitude of headroom.
+    """
+    barina = 2392312122059207475200
+    assert barina > 12825
+    assert math.log10(barina / 12825) > 17
+    assert (3 * barina + 1) ** 200 <= 2 ** 317 * barina ** 200
+
+
+def test_the_size_hypothesis_is_load_bearing():
+    """Collatz.Cycle.needs_the_size_hypothesis.
+
+    The trivial cycle {1} has L=1, B=2, u=0 and minimum 1, so the conclusion is
+    FALSE for it -- dropping the hypothesis would make the theorem false, not
+    merely unprovable.  (B/L = 2 > 1.585, as it must be for a cycle this small.)
+    """
+    L, B, u, m = 1, 2, 0, 1
+    assert not (415 * L <= 1000 * u)
+    assert m < 12825
+    assert 200 * B > 317 * L
+
+
+def test_lean_bound_is_below_the_true_real_bound():
+    """Lean proves >= 0.415; the true bound is 2 - log2(3 + 1/m).
+
+    The formalized constant is deliberately a hair conservative -- that is what
+    makes it rational, and hence provable without any real numbers at all.
+    """
+    m = 2392312122059207475200
+    true_bound = 2 - math.log2(3 + 1 / m)
+    assert 0.415 <= true_bound
+    assert true_bound == pytest.approx(0.4150374992788438, abs=1e-15)
+    # and 2 - log2(3) is the limiting value quoted on the page
+    assert 2 - math.log2(3) == pytest.approx(0.4150374992788438, abs=1e-15)
