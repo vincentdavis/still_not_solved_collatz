@@ -14,6 +14,7 @@ lean = json.loads((HERE / "lean.json").read_text())
 bounds = json.loads((HERE / "bounds.json").read_text())
 padic = json.loads((HERE / "padic.json").read_text())
 structure = json.loads((HERE / "structure.json").read_text())
+explore = json.loads((HERE / "explore.json").read_text())
 
 N_STRIP = 2000          # odds 1..3999 drawn in the hero strip
 w, sl, cy, di = data["wheel"], data["sieve_layers"], data["cycles"], data["diophantine"]
@@ -71,6 +72,7 @@ slim = {
     "bounds": bounds,
     "padic": padic,
     "structure": structure,
+    "explore": explore,
     "verification": {
         "fwd": {k: data["verification"]["forward_2adic"][k]
                 for k in ("M_checked", "M_kept", "observed_density", "predicted_limit")},

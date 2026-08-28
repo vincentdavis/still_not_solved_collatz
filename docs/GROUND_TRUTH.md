@@ -332,7 +332,7 @@ Two checks run against **real integers**, with no residue arithmetic:
    density 0.286555 vs. the DP limit 0.2863153965; observed mod-`2^a` residue
    sets ⊆ predicted, sizes identical, for `a = 2..14`.
 
-Plus: 240 Python tests over the 2127-cycle census; 1623 real `S_q` cycles
+Plus: 247 Python tests over the 2127-cycle census; 1623 real `S_q` cycles
 (`q < 700`) re-derived independently during the Lean pass with 0 violations;
 `lean/check.sh` verified to *fail* on four deliberately injected defects,
 including a build-passing `sorry`.
@@ -497,6 +497,25 @@ all-ones pattern gives `y = −1`, whose base-3 expansion is all 2s — so its c
 mod `3^k` ends in a 2 at every depth and survives the sieve forever. Hence `a_k ≥ 1` **provably, with a witness**,
 and `−1` is not a natural number. A congruence sieve cannot see sign or
 integrality; that is the whole gap.
+
+### Three explorations (`docs/EXPLORE.md`)
+
+Proposed at the end of the code review; two of the three refuted the guess that
+motivated them.
+
+1. **Where the over-dispersion lives.** Guessed `m ≤ q`; it is concentrated in
+   `m > q` (var/mean 10.1 against 3.6) — the regime that most *resembles*
+   `q = 1`, not the one least like it.
+2. **A certified upper bound on the tail rate.** `a_k` is supermultiplicative
+   and not submultiplicative, so Fekete gives a rigorous **lower** bound
+   (0.7364) and no upper bound at all. **The published bracket
+   `[0.896, 0.947]` is therefore not an interval of proof** — its lower end is
+   a model fit. The rigorous bracket is `[0.736, 0.947]`.
+3. **The Hercher pincer.** `L ≤ |R(O)|` plus Hercher's `L > 1.375×10¹¹` means a
+   cycle maximum needs `|R(O)| > 1.375×10¹¹`. Measured: `|R(M)|` is flat in `M`
+   (median 3–4 from `10⁵` to `10¹⁰`) with a maximum of 289 — nine orders of
+   magnitude of headroom. Same wall, new disguise, but a sharp measurement of
+   how atypical a counterexample must be.
 
 ### Verification status
 

@@ -696,6 +696,7 @@ footer{border-top:1px solid var(--rule);padding-top:28px;font-size:.84rem;color:
   </div>
 
   <div class="note warn" id="as-bracket"></div>
+  <div class="note" style="border-color:var(--violet)" id="as-fekete"></div>
 
   <div class="prose stack">
     <h3>Why enumeration stops here</h3>
@@ -782,6 +783,7 @@ footer{border-top:1px solid var(--rule);padding-top:28px;font-size:.84rem;color:
   </div>
 
   <div class="note warn" id="cen-partial"></div>
+  <div class="note" style="border-color:var(--violet)" id="cen-where"></div>
 
   <div class="prose stack">
     <h3>And that is exactly why <code>q = 1</code> is different</h3>
@@ -1017,6 +1019,7 @@ footer{border-top:1px solid var(--rule);padding-top:28px;font-size:.84rem;color:
 
   <div class="tally" id="st-reach"></div>
   <div class="note" style="border-color:var(--violet)" id="st-reach-lean"></div>
+  <div class="note" style="border-color:var(--violet)" id="st-pincer"></div>
 
   <div class="prose stack">
     <h3>The climb is slow. The fall need not be.</h3>
@@ -3029,6 +3032,65 @@ var lit = D.meta.literature;
 document.getElementById("foot-lit").innerHTML =
   "Verification limit "+VLIM.approx.toExponential(2)+" — "+(VLIM.source||"").split(";")[0]+
   ". Cycle-length bounds from Hercher (2023) and Barina (2025). The cycle equation is Böhm & Sontacchi (1978).";
+
+/* ═══ THREE EXPLORATIONS ═══════════════════════════════════════ */
+var EX = D.explore;
+
+document.getElementById("cen-where").innerHTML =
+  "<b>Where the excess lives — and the guess was backwards.</b> The natural guess is that the " +
+  "unexplained part sits in the <code>m ≤ q</code> cycles, where the <code>+q</code> term dominates " +
+  "and the system is least like Collatz. Split the census and it is the other way round:" +
+  "<div class='mono' style='margin:12px 0;font-size:.86em;line-height:1.9'>" +
+  "all &nbsp;&nbsp;&nbsp;&nbsp;var/mean <b>" + EX.dispersion.all.var_over_mean + "</b><br>" +
+  "<span style='color:var(--violet)'>m &gt; q &nbsp;&nbsp;var/mean <b>" + EX.dispersion.m_gt_q.var_over_mean + "</b></span><br>" +
+  "m ≤ q &nbsp;&nbsp;var/mean <b>" + EX.dispersion.m_le_q.var_over_mean + "</b></div>" +
+  "<code>m &gt; q</code> cycles are <em>rarer</em> — only " + EX.dispersion.m_gt_q.nonzero_q + " of " +
+  EX.dispersion.n_q + " systems have even one — but far more <em>clustered</em>, with a single " +
+  "<code>q</code> carrying " + EX.dispersion.m_gt_q.max + ". So the excess concentrates in the regime " +
+  "that most <em>resembles</em> <code>q = 1</code>, not the one least like it. That is the " +
+  "uncomfortable direction. (Caveat: var/mean is not scale-free and the two means differ a lot, so " +
+  "this is suggestive rather than decisive.)";
+
+document.getElementById("as-fekete").innerHTML =
+  "<b>The bracket is not an interval of proof — and I checked the wrong way round first.</b> " +
+  "The idea was that a relaxation would give a rigorous <em>upper</em> bound and settle the coin " +
+  "flip. The sequence refuses: over all <code>j+k ≤ " + EX.fekete.k_max + "</code>, " +
+  "<code>a<sub>j+k</sub>/(a<sub>j</sub>a<sub>k</sub>)</code> ranges over <b>[" +
+  EX.fekete.min_ratio + ", " + EX.fekete.max_ratio + "]</b> — <b>supermultiplicative</b>, and " +
+  "emphatically not sub. So Fekete gives <code>lim = sup</code>: every term is a rigorous " +
+  "<em>lower</em> bound and the route yields no upper bound at all." +
+  "<br><br>The best rigorous lower bound is <b>" + EX.fekete.best_rigorous_lower_rate + "</b>. " +
+  "So of the bracket above, the upper end is a genuine bound (from <code>a_k ≤ N_k</code>) while " +
+  "the lower end is where the fitted models sit. The <em>rigorous</em> bracket is <b>[" +
+  EX.fekete.best_rigorous_lower_rate + ", " + EX.fekete.published_bracket[1] + "]</b> — much wider. " +
+  "(And supermultiplicativity is observed on " + EX.fekete.k_max + " terms, not proved; the " +
+  "multiplicative size cap suggests a splicing argument, but this page does not have one.)";
+
+(function pincer(){
+  var P = EX.pincer;
+  var rows = P.rows.map(function(r){
+    return '<tr><td class="n">10<sup>'+r.e+'</sup></td><td class="n">'+r.n+'</td>'+
+           '<td class="n"><b>'+r.median+'</b></td><td class="n">'+r.mean+'</td>'+
+           '<td class="n">'+r.p99+'</td><td class="n">'+r.max+'</td></tr>';
+  }).join("");
+  document.getElementById("st-pincer").innerHTML =
+    "<b>Put it together with a published theorem.</b> <code>L ≤ |R(O)|</code> is machine-checked, " +
+    "and Hercher (2023) proves any nontrivial Collatz cycle has more than <code>1.375 × 10¹¹</code> " +
+    "odd elements. So <b>a cycle maximum must have <code>|R(O)| &gt; 1.375 × 10¹¹</code></b>. " +
+    "How big does it actually get?" +
+    "<div class='scroll' style='margin:12px 0'><table style='min-width:380px'><thead><tr>" +
+    "<th>near</th><th>sampled</th><th>median</th><th>mean</th><th>p99</th><th>max</th>" +
+    "</tr></thead><tbody>" + rows + "</tbody></table></div>" +
+    "<b>It does not grow.</b> The median sits at 3–4 across five orders of magnitude, and the " +
+    "largest value seen anywhere is <b>" + P.worst_seen + "</b> — about <b>" +
+    P.headroom.toLocaleString("en-US") + "×</b> below what a cycle needs. That is a different kind " +
+    "of gap from the Diophantine one: a counterexample would have to be nine orders of magnitude " +
+    "off a distribution that is otherwise completely flat in <code>M</code>." +
+    "<br><br><em>What it is not.</em> A cycle maximum has <code>|R(O)| ≥ L</code> by construction, " +
+    "so this is the same wall in another hat — it measures how atypical a counterexample must be, " +
+    "not that one cannot exist. And it costs the same as the depth-based certificate, measured to " +
+    "the node. What it adds is a bound that composes with a published theorem.";
+})();
 
 /* ═══ TABLE OF CONTENTS ════════════════════════════════════════ */
 /* 17 sections and 32 000 px of page: without this, the only way to find
