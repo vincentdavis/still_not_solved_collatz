@@ -31,6 +31,35 @@ Two honest caveats:
   `reachable_set` returns `|R| = 10` in 0.01 ms; `backward_depth` burns its cap
   and returns a non-answer.
 
+### Formalized (`lean/Collatz/Reach.lean`)
+
+The recorded blocker was "needs finite-set machinery, expensive in a
+Mathlib-free development". It needs none. `R(O)` is a set of naturals bounded by
+`O`, so it is counted by a plain recursion over `[0, O]` (`countLT`), and the
+bound follows from the project's own choice-free pigeonhole.
+
+The general statement is `Cycle.length_le_count`: **if every cycle element
+satisfies any decidable `p`, then `L ≤ #{x ≤ M : p x}`.** Rank — how many members
+of `p` lie below a given one — is injective on `p`, so the `L` distinct elements
+(`y_ne_of_lt`) inject into `[0, count)`; a smaller count would collide two of
+them. `R(O)` is one choice of `p` (`Cycle.inR`), giving `Cycle.length_le_reach`
+and, using `L ≤ M`, the parameter-free `Cycle.length_le_reach_M`. Two weaker
+choices come free: `length_le_odd_count` and `length_le_odd_not_three_count`
+(the latter via T0).
+
+**What is not machine-checked.** The inequality is proved for the real map `S`.
+The *value* of the count is not: `S` routes through `oddPart`, which is
+well-founded recursion and therefore sealed to the kernel, and `native_decide`
+is banned by `lean/check.sh`. `#eval` gives 10, 19, 408 and 1 for the cases
+above — matching `reachable_set` exactly — and `test_structure.py` reimplements
+`inR` and checks the agreement over 522 `(q, O)` pairs. So "`L` is at most the
+count" is proved; "the count is 10" is evaluated and cross-checked.
+
+One bug worth recording: the first version omitted the parity test and counted
+12 rather than 10 for `q = 5, O = 49`. Even numbers can feed into `O` under
+`S_q`; they are not in `R(O)`, which lives on the odd numbers the map acts on.
+`test_structure.py` pins that distinction.
+
 ## 2. The ascent is slow; the descent need not be
 
 Split the cycle at its extremes. Going forward from the minimum `m` up to `O`,

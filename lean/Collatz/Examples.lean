@@ -18,6 +18,7 @@
 -/
 import Collatz.Cycle
 import Collatz.Minimum
+import Collatz.Reach
 
 namespace Collatz
 
@@ -280,6 +281,28 @@ theorem min_bb_out_hypothesis_not_necessary :
   have h : cycle7.y 1 = 5 := rfl
   rw [h]
   simp [v2]
+
+/-! ## 6. `L ≤ |R(O)|` on real cycles
+
+The bound of `Collatz/Reach.lean`, applied where cycles exist.  `#eval` puts the
+counts at 10 and 19 (matching `collatz_maxodd.structure.reachable_set`), against
+lengths 3 and 8 — but the kernel cannot reduce `oddPart`, so what is *proved*
+here is the inequality, not the value of its right-hand side. -/
+
+theorem cycle5_length_le_reach :
+    cycle5.L ≤ countLE (Cycle.inR 5 cycle5.M cycle5.M) cycle5.M :=
+  cycle5.length_le_reach_M
+
+theorem cycle7_length_le_reach :
+    cycle7.L ≤ countLE (Cycle.inR 7 cycle7.M cycle7.M) cycle7.M :=
+  cycle7.length_le_reach_M
+
+theorem cycle37_length_le_reach :
+    cycle37.L ≤ countLE (Cycle.inR 37 cycle37.M cycle37.M) cycle37.M :=
+  cycle37.length_le_reach_M
+
+/-- `L ≤ M`, on a real cycle: `3 ≤ 49`. -/
+theorem cycle5_length_le_M : cycle5.L ≤ cycle5.M := cycle5.length_le_M
 
 /-! ### `cycle5` witnesses the ❌ row of docs/GROUND_TRUTH.md
 

@@ -70,7 +70,9 @@ if grep -q "sorryAx" "$LOG" ; then
   echo "FAIL: some declaration depends on sorryAx"; grep "sorryAx" "$LOG"; exit 1
 fi
 if grep -q "Classical.choice" "$LOG" ; then
-  echo "WARN: some declaration depends on Classical.choice"; grep "Classical.choice" "$LOG"
+  echo "FAIL: some declaration depends on Classical.choice"
+  grep "Classical.choice" "$LOG"
+  exit 1
 fi
 N=$(grep -c "Collatz/Audit.lean" "$LOG")
 echo "OK: $N declarations audited; no sorryAx, no Classical.choice"

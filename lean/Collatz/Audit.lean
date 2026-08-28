@@ -27,6 +27,7 @@
 import Collatz.Guards
 import Collatz.Length
 import Collatz.Minimum
+import Collatz.Reach
 
 /-! ## Definitions (`Collatz/Odd.lean`) -/
 #print axioms Collatz.v2
@@ -251,3 +252,32 @@ that fails it and fails the conclusion. -/
 #print axioms Collatz.cycle37_bb_out
 #print axioms Collatz.min_bb_out_needs_its_own_hypothesis
 #print axioms Collatz.min_bb_out_hypothesis_not_necessary
+
+/-! ## `L ≤ |R(O)|` (`Collatz/Reach.lean`).
+
+No finite-set machinery: `R(O)` is bounded by `O`, so it is counted by a
+recursion over `[0, O]` and the bound comes from the project's own choice-free
+pigeonhole. -/
+
+#print axioms Collatz.countLT
+#print axioms Collatz.countLE
+#print axioms Collatz.countLT_succ
+#print axioms Collatz.countLT_mono
+#print axioms Collatz.countLT_lt
+#print axioms Collatz.countLT_inj
+#print axioms Collatz.countLT_lt_countLE
+#print axioms Collatz.countLE_pos_eq
+#print axioms Collatz.Cycle.length_le_count
+#print axioms Collatz.Cycle.length_le_M
+#print axioms Collatz.Cycle.reachIn
+#print axioms Collatz.Cycle.inR
+#print axioms Collatz.Cycle.reach_y
+#print axioms Collatz.Cycle.inR_y
+#print axioms Collatz.Cycle.length_le_reach
+#print axioms Collatz.Cycle.length_le_reach_M
+#print axioms Collatz.Cycle.length_le_odd_count
+#print axioms Collatz.Cycle.length_le_odd_not_three_count
+#print axioms Collatz.cycle5_length_le_reach
+#print axioms Collatz.cycle7_length_le_reach
+#print axioms Collatz.cycle37_length_le_reach
+#print axioms Collatz.cycle5_length_le_M

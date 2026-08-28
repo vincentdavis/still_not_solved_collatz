@@ -979,6 +979,7 @@ footer{border-top:1px solid var(--rule);padding-top:28px;font-size:.84rem;color:
   </figure>
 
   <div class="tally" id="st-reach"></div>
+  <div class="note" style="border-color:var(--violet)" id="st-reach-lean"></div>
 
   <div class="prose stack">
     <h3>The climb is slow. The fall need not be.</h3>
@@ -2666,6 +2667,23 @@ stRender();
     [ST.violations.reach, "cycles in the census that escaped their own R(O)"]
   ].map(function(t){ return "<div><b>"+t[0]+"</b><span>"+t[1]+"</span></div>"; }).join("");
 })();
+
+document.getElementById("st-reach-lean").innerHTML =
+  "<b>Machine-checked.</b> This was the other result carrying a Lean blocker — " +
+  "&ldquo;needs finite-set machinery&rdquo;. It needs none: <code>R(O)</code> is bounded by " +
+  "<code>O</code>, so it can be counted by a plain recursion over <code>[0, O]</code>, and the " +
+  "bound then follows from the same choice-free pigeonhole used for the equivalence theorem. " +
+  "<code>Cycle.length_le_reach</code> is the result; it is a corollary of something more " +
+  "general — <b>if every cycle element satisfies <em>any</em> decidable property, <code>L</code> " +
+  "is at most the number of <code>x ≤ M</code> with that property.</b> Being in " +
+  "<code>R(O)</code> is one such property; being odd and not divisible by 3 are two weaker ones " +
+  "that come free." +
+  "<br><br><b>What is not checked:</b> the <em>value</em> of the count. The map goes through " +
+  "<code>oddPart</code>, which is well-founded recursion and so sealed to Lean's kernel, and " +
+  "this development bans <code>native_decide</code>. So <em>L is at most the count</em> is " +
+  "proved; <em>the count is 10</em> is evaluated, and cross-checked against the Python over 522 " +
+  "cases. Worth stating rather than blurring — it is exactly the kind of line this page's " +
+  "accounting table exists to keep visible.";
 
 document.querySelector("#st-ex tbody").innerHTML = ST.examples.map(function(r){
   return '<tr><td class="n">'+r.q+'</td><td class="n">'+fmt(r.m)+'</td><td class="n">'+fmt(r.M)+
