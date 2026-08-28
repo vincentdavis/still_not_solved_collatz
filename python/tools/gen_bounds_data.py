@@ -10,6 +10,7 @@ import json, math, pathlib, sys, time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
 from collatz_maxodd.bounds import (can_be_min_odd, drops_below,  # noqa: E402
+                                   exact_sandwich_holds, exact_scale,
                                    min_residues_mod12, sandwich_holds, scale)
 from collatz_maxodd.census import primitive_cycles, total_halvings  # noqa: E402
 from collatz_maxodd.syracuse import v2 as _v2  # noqa: E402
@@ -25,7 +26,7 @@ VERIFIED = 2392312122059207475200
 # which only forces b = 1 once q/m < 1.  Cycles with m <= q are outside the
 # hypothesis and really do break it, so they are counted, not silently dropped.
 rows, viol = [], 0
-n_total, n_small, small_break, small_sand = 0, 0, [], 0
+n_total, n_small, small_break, small_sand, exact_break = 0, 0, [], 0, 0
 for q in [q for q in range(1, 600, 2) if q % 3]:
     for L, M, el in primitive_cycles(q, 40 * q):
         n_total += 1
@@ -35,16 +36,22 @@ for q in [q for q in range(1, 600, 2) if q % 3]:
             if not can_be_min_odd(m, q):
                 small_break.append({"q": q, "L": L, "m": m, "M": M,
                                     "b": _v2(3 * m + q)})
-            if not sandwich_holds(q, L, total_halvings(el, q), m, M):
+            Bs = total_halvings(el, q)
+            if not sandwich_holds(q, L, Bs, m, M):
                 small_sand += 1
+            if not exact_sandwich_holds(q, L, Bs, m, M):
+                exact_break += 1
             continue
         B = total_halvings(el, q)
         if not can_be_min_odd(m, q):
             viol += 1
         if not sandwich_holds(q, L, B, m, M):
             viol += 1
+        if not exact_sandwich_holds(q, L, B, m, M):
+            exact_break += 1
         rows.append({"q": q, "L": L, "B": B, "m": m, "M": M,
-                     "S": round(scale(q, L, B), 2)})
+                     "S": round(scale(q, L, B), 2),
+                     "E": round(exact_scale(q, L, B), 2)})
 assert viol == 0, f"{viol} mirror/sandwich violations inside the hypothesis m > q"
 # every failure is outside the hypothesis, and for exactly that reason
 assert all(w["m"] <= w["q"] for w in small_break), "a failure with m > q would refute the mirror"
@@ -88,6 +95,10 @@ out = {
     "scope": {"total": n_total, "in_hypothesis": len(rows), "outside": n_small,
               "outside_breaking": len(small_break),
               "outside_sandwich_breaking": small_sand, "witness": witness},
+    "exact_sandwich": {"checked": n_total, "violations": exact_break,
+                       "linear_violations": small_sand,
+                       "note": "q/(2^(B/L) - 3) needs no hypothesis; "
+                               "qL/(3 ln2 d) is its first-order expansion"},
     "sandwich_examples": sorted(rows, key=lambda r: (r["q"], r["m"]))[:4] + fam[:4],
     "family_q47": {"n": len(fam), "L": 4, "B": 7, "scale": fam[0]["S"],
                    "ranges": [[r["m"], r["M"]] for r in fam]},

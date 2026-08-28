@@ -107,6 +107,26 @@ def scale(q: int, L: int, B: int) -> float:
     return _K * q * L / d
 
 
+def exact_scale(q: int, L: int, B: int) -> float:
+    """``q / (2^(B/L) - 3)`` -- the sandwich WITHOUT the linearization.
+
+    This is what ``pow_le_of_min`` and ``pow_ge_of_max`` prove, solved for the
+    scale:  ``(3 + q/M)^L <= 2^B <= (3 + q/m)^L``, take L-th roots, rearrange.
+    Unlike :func:`scale` it needs no hypothesis at all -- it holds on every
+    primitive cycle in the census, including the ones with ``m <= q`` where the
+    linearized form fails.
+    """
+    denom = 2.0 ** (B / L) - 3.0
+    if denom <= 0:
+        raise ValueError("2^(B/L) must exceed 3 for a cycle")
+    return q / denom
+
+
+def exact_sandwich_holds(q: int, L: int, B: int, m: int, M: int) -> bool:
+    """Is the *exact* scale between the minimum and the maximum?"""
+    return m <= exact_scale(q, L, B) <= M
+
+
 def sandwich_holds(q: int, L: int, B: int, m: int, M: int) -> bool:
     """Is the scale actually between the minimum and the maximum?"""
     return m <= scale(q, L, B) <= M

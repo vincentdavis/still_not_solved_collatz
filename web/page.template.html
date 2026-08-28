@@ -168,6 +168,27 @@ footer{border-top:1px solid var(--rule);padding-top:28px;font-size:.84rem;color:
   section{padding:44px 0}
   th,td{padding:7px 9px}
 }
+/* ── table of contents ─────────────────────────────────────────── */
+#toc-btn{position:fixed;right:18px;bottom:18px;z-index:40;width:44px;height:44px;
+  border-radius:50%;border:1px solid var(--rule-2);background:var(--paper-2);
+  color:var(--ink-2);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 2px 10px rgba(0,0,0,.10);padding:0}
+#toc-btn:hover{color:var(--violet);border-color:var(--violet)}
+#toc-btn svg{width:19px;height:19px;display:block}
+#toc-panel{position:fixed;right:18px;bottom:70px;z-index:40;width:min(310px,calc(100vw - 36px));
+  max-height:min(66vh,560px);overflow-y:auto;background:var(--paper-2);
+  border:1px solid var(--rule-2);border-radius:10px;padding:8px;
+  box-shadow:0 6px 26px rgba(0,0,0,.16);display:none}
+#toc-panel.open{display:block}
+#toc-panel a{display:block;padding:7px 10px;border-radius:6px;text-decoration:none;
+  border-left:2px solid transparent;line-height:1.3}
+#toc-panel a:hover{background:var(--paper)}
+#toc-panel a.on{border-left-color:var(--violet);background:var(--paper)}
+#toc-panel .e{display:block;font-family:var(--f-mono);font-size:.62rem;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--ink-3)}
+#toc-panel .t{display:block;font-size:.83rem;color:var(--ink-2);margin-top:1px}
+#toc-panel a.on .t{color:var(--violet)}
+@media print{#toc-btn,#toc-panel{display:none}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 
@@ -196,8 +217,10 @@ footer{border-top:1px solid var(--rule);padding-top:28px;font-size:.84rem;color:
     <div class="legend" id="strip-legend"></div>
     <figcaption>Every odd number from 1 to 3999, in reading order. Blue is struck out by the
     powers-of-two rule, pink by the powers-of-three rules. Violet survives both — one odd number in
-    six, and the only place a cycle maximum can be. Deeper conditions thin the violet further as the
-    page goes on. Hover any cell.</figcaption>
+    six, and the only place a cycle maximum can be. <b>The violet is shaded by how far each survivor
+    gets</b> before a deeper condition kills it: pale dies at the first 3-adic level, solid survives
+    six or more. Most of the violet is pale, and that gradient is the whole page in one picture —
+    the sieve keeps cutting and never finishes. Hover any cell.</figcaption>
   </figure>
 
   <div class="tally" id="tally"></div>
@@ -376,13 +399,16 @@ footer{border-top:1px solid var(--rule);padding-top:28px;font-size:.84rem;color:
         <button class="m-eg" data-n="29">29</button>
         <button class="m-eg" data-n="53">53</button>
         <button class="m-eg" data-n="101">101</button>
+        <button class="m-eg" data-n="161">161 — branches</button>
         <button class="m-eg" data-n="1000000000000000000000017">10²⁴+17</button>
       </div>
       <div class="chain" id="chain"></div>
     </div>
     <figcaption>Each step lists the halvings <code>b</code> allowed by the exact size test
     <code>M(2^{B_k} − 3^k) ≤ c_k</code> intersected with the parity forced mod 3. One option is a
-    forced step; several is a branch; none is a dead candidate.</figcaption>
+    forced step; several is a branch; none is a dead candidate. <b>At a branch the options are
+    buttons — click one to follow it.</b> That is where the sieve stops being cheap: up to the first
+    branch there is nothing to search, and after it the work multiplies.</figcaption>
   </figure>
 </section>
 
@@ -877,20 +903,30 @@ footer{border-top:1px solid var(--rule);padding-top:28px;font-size:.84rem;color:
   <div class="prose stack">
     <h3>Pairing the two ends</h3>
     <p>Since <code>2^B = ∏ (3 + q/x_j)</code> and every element lies between <code>m</code> and
-    <code>M</code>, the product is squeezed from both sides. Writing
-    <code>d = B − L·log₂3</code>, the two bounds collapse into one statement:</p>
+    <code>M</code>, the product is squeezed from both sides: <code>(3 + q/M)^L ≤ 2^B ≤ (3 + q/m)^L</code>.
+    Take <code>L</code>-th roots and solve for the middle, and the two bounds collapse into one
+    statement — which is worth writing twice, because the version usually quoted is an
+    approximation of it. (<code>d = B − L·log₂3</code>.)</p>
   </div>
 
   <div class="frame" style="text-align:center;padding:26px 18px">
-    <div class="mono" style="font-size:clamp(.86rem,2.1vw,1.1rem);line-height:2;color:var(--ink)">
-      m &nbsp;≤&nbsp; <span style="color:var(--violet)">q·L / (3 ln2 · d)</span> &nbsp;≤&nbsp; M
+    <div style="font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)">exact</div>
+    <div class="mono" style="font-size:clamp(.86rem,2.1vw,1.1rem);line-height:2;color:var(--ink);margin-top:6px">
+      m &nbsp;≤&nbsp; <span style="color:var(--violet)">q / (2<sup>B/L</sup> − 3)</span> &nbsp;≤&nbsp; M
     </div>
-    <div style="font-size:.78rem;color:var(--ink-3);margin-top:8px" id="bd-sand-note"></div>
+    <div style="border-top:1px solid var(--rule);margin:16px auto 0;max-width:340px"></div>
+    <div style="font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-top:14px">first-order expansion</div>
+    <div class="mono" style="font-size:clamp(.86rem,2.1vw,1.1rem);line-height:2;color:var(--ink-2);margin-top:6px">
+      m &nbsp;≤&nbsp; q·L / (3 ln2 · d) &nbsp;≤&nbsp; M
+    </div>
+    <div style="font-size:.78rem;color:var(--ink-3);margin-top:10px" id="bd-sand-note"></div>
   </div>
+
+  <div class="note" style="border-color:var(--violet)" id="bd-sand-exact"></div>
 
   <div class="frame scroll">
     <table id="bd-sand"><thead><tr>
-      <th>q</th><th>L</th><th>B</th><th>min m</th><th>scale</th><th>max M</th><th>inside?</th>
+      <th>q</th><th>L</th><th>B</th><th>min m</th><th>exact scale</th><th>linearized</th><th>max M</th><th>inside?</th>
     </tr></thead><tbody></tbody></table>
   </div>
 
@@ -1144,6 +1180,13 @@ footer{border-top:1px solid var(--rule);padding-top:28px;font-size:.84rem;color:
 
 </div>
 
+<button id="toc-btn" aria-label="Table of contents" aria-expanded="false">
+  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+    <path d="M3 5h14M3 10h14M3 15h9"/>
+  </svg>
+</button>
+<nav id="toc-panel" aria-label="Sections"></nav>
+
 <script id="collatz-data" type="application/json">__COLLATZ_DATA__</script>
 <script>
 (function(){
@@ -1180,6 +1223,15 @@ function codeColor(ch, p){
   if(ch === "c") return p.rose;                    // n = 1 mod 3
   return p.violet;                                 // digit = survivor
 }
+/* Survivors carry their 3-adic depth as the digit itself.  Deeper = more opaque,
+   so the hero already shows what the rest of the page argues: the sieve keeps
+   cutting, and the survivors thin out but never run out. */
+function codeAlpha(ch){
+  if(ch === "a") return 0.5;
+  if(ch === "b" || ch === "c") return 0.68;
+  var d = +ch;                                     // 0..9, the depth passed
+  return 0.34 + Math.min(d, 6) / 6 * 0.66;
+}
 function codeWhy(ch, n){
   if(ch === "a") return ["ascends", n+" ≡ 3 (mod 4)  →  S("+n+") = "+((3*n+1)/2)+" > "+n];
   if(ch === "b") return ["no predecessor", "3 | "+n+"  →  nothing maps to it"];
@@ -1199,7 +1251,7 @@ function drawStrip(){
   for(var i=0;i<N;i++){
     var x = (i%cols)*cell, y = Math.floor(i/cols)*size;
     c.fillStyle = codeColor(codes[i], p);
-    c.globalAlpha = (codes[i]==="a") ? 0.55 : (codes[i]==="b"||codes[i]==="c") ? 0.7 : 1;
+    c.globalAlpha = codeAlpha(codes[i]);
     c.fillRect(x+0.5, y+0.5, Math.max(1,cell-1.4), Math.max(1,size-1.4));
   }
   c.globalAlpha = 1;
@@ -1224,18 +1276,22 @@ stripCv.addEventListener("mouseleave", function(){ stripTip.style.opacity = 0; }
   var items = [
     ["a", p.blue,   "n ≡ 3 (mod 4) — ascends"],
     ["b", p.pink,   "3 | n — no predecessor"],
-    ["c", p.rose,   "n ≡ 1 (mod 3) — predecessors all bigger"],
-    ["s", p.violet, "survives — n ≡ 5 (mod 12)"]
+    ["c", p.rose,   "n ≡ 1 (mod 3) — predecessors all bigger"]
   ];
+  var ramp = [0,1,2,3,4,5,6].map(function(d){
+    return '<i class="sw" style="background:'+p.violet+';opacity:'+(0.34+d/6*0.66)+
+           ';margin-right:0" title="3-adic depth '+d+(d===6?"+":"")+'"></i>';
+  }).join("");
   document.getElementById("strip-legend").innerHTML = items.map(function(it){
     return '<span><i class="sw" style="background:'+it[1]+'"></i>'+it[2]+'</span>';
-  }).join("");
+  }).join("") +
+  '<span style="gap:6px">'+ramp+'<span style="margin-left:6px">survives — shaded by how deep it gets</span></span>';
 })();
 onTheme(function(){
   drawStrip();
   var p = pal(), sws = document.querySelectorAll("#strip-legend .sw");
-  var cs = [p.blue,p.pink,p.rose,p.violet];
-  sws.forEach(function(s,i){ s.style.background = cs[i]; });
+  var cs = [p.blue,p.pink,p.rose];
+  sws.forEach(function(s,i){ s.style.background = (i < cs.length) ? cs[i] : p.violet; });
 });
 
 /* ─── tallies ─── */
@@ -1603,7 +1659,11 @@ treeControls();
 netRender();
 
 /* ═══ 4. THE BACKWARD CHAIN ════════════════════════════════════ */
-function walkBack(M, maxDepth){
+/* CHAIN.picks[k] is which branch the reader chose at step k.  Where the walk is
+   forced there is nothing to choose; where it branches, the options are buttons,
+   so "determinism is gone" is something you do rather than something you read. */
+var CHAIN = { M: null, picks: [] };
+function walkBack(M, maxDepth, picks){
   var steps = [], y = M, k = 0;
   while(k < maxDepth){
     k++;
@@ -1616,8 +1676,10 @@ function walkBack(M, maxDepth){
       allowed.push({b:b, y:yk});
     }
     if(allowed.length === 0){ steps.push({k:k, dead:true}); break; }
-    var pick = allowed[0];
-    steps.push({k:k, b:pick.b, y:pick.y, n:allowed.length,
+    var idx = picks[k-1];
+    if(!(idx >= 0 && idx < allowed.length)) idx = 0;
+    var pick = allowed[idx];
+    steps.push({k:k, b:pick.b, y:pick.y, n:allowed.length, idx:idx,
                 opts:allowed.map(function(o){return o.b;})});
     y = pick.y;
     if(y === M){ steps[steps.length-1].closed = true; break; }
@@ -1629,13 +1691,14 @@ function renderChain(mStr){
   var M;
   try { M = BigInt(mStr); } catch(e){ host.innerHTML = '<div class="work">Enter a positive odd whole number.</div>'; return; }
   if(M <= 0n || M%2n === 0n){ host.innerHTML = '<div class="work">Enter a positive odd whole number.</div>'; return; }
+  CHAIN.M = M;
   var v = classify(M);
   var head = '<div class="hop"><div class="gut"><span class="dot '+(v.kind==="live"?"forced":"dead")+
     '"></span><span class="stem"></span></div><div class="body">'+
     '<div class="val">M = '+M+'</div><div class="why">'+
     (v.kind==="live" ? "≡ "+v.r36+" (mod 36) — a legal candidate" :
        "excluded before we even start — "+v.rule)+'</div></div></div>';
-  var steps = walkBack(M, 8), rows = "";
+  var steps = walkBack(M, 8, CHAIN.picks), rows = "";
   steps.forEach(function(s, i){
     var last = (i === steps.length-1);
     if(s.dead){
@@ -1644,9 +1707,18 @@ function renderChain(mStr){
       return;
     }
     var cls = s.n===1 ? "forced" : "branch";
-    var why = s.n===1
-      ? "b<sub>"+s.k+"</sub> = "+s.b+" — forced, the only legal halving count"
-      : "b<sub>"+s.k+"</sub> ∈ {"+s.opts.join(", ")+"} — "+s.n+" branches, determinism is gone";
+    var why;
+    if(s.n === 1){
+      why = "b<sub>"+s.k+"</sub> = "+s.b+" — forced, the only legal halving count";
+    } else {
+      why = "b<sub>"+s.k+"</sub> ∈ {"+s.opts.join(", ")+"} — "+s.n+
+            " branches, determinism is gone &nbsp;·&nbsp; <span style='color:var(--ink-3)'>pick one:</span> "+
+            s.opts.map(function(bv, j){
+              return '<button class="chain-pick'+(j===s.idx?" on":"")+'" data-k="'+s.k+
+                     '" data-j="'+j+'" style="min-width:32px;padding:1px 7px;margin:0 3px;font-size:.8em'+
+                     (j===s.idx?";border-color:var(--violet);color:var(--violet)":"")+'">'+bv+'</button>';
+            }).join("");
+    }
     if(s.closed) why += " &nbsp;·&nbsp; <b>closes back to M</b>";
     rows += '<div class="hop"><div class="gut"><span class="dot '+cls+'"></span>'+
       (last?"":'<span class="stem"></span>')+'</div><div class="body">'+
@@ -1654,12 +1726,23 @@ function renderChain(mStr){
   });
   host.innerHTML = head + rows;
 }
+document.getElementById("chain").addEventListener("click", function(e){
+  var b = e.target.closest(".chain-pick"); if(!b) return;
+  var k = parseInt(b.dataset.k,10), j = parseInt(b.dataset.j,10);
+  CHAIN.picks = CHAIN.picks.slice(0, k-1);      // choosing here invalidates deeper choices
+  CHAIN.picks[k-1] = j;
+  renderChain(CHAIN.M.toString());
+});
 document.getElementById("chain-go").addEventListener("click", function(){
+  CHAIN.picks = [];
   renderChain(document.getElementById("mstart").value.replace(/[^0-9]/g,"") || "17");
 });
 document.getElementById("mstart").addEventListener("keydown", function(e){ if(e.key==="Enter") document.getElementById("chain-go").click(); });
 Array.prototype.forEach.call(document.querySelectorAll(".m-eg"), function(b){
-  b.addEventListener("click", function(){ document.getElementById("mstart").value = b.dataset.n; renderChain(b.dataset.n); });
+  b.addEventListener("click", function(){
+    CHAIN.picks = [];
+    document.getElementById("mstart").value = b.dataset.n; renderChain(b.dataset.n);
+  });
 });
 renderChain("17");
 
@@ -2527,16 +2610,32 @@ document.getElementById("bd-mirror-lean").innerHTML =
   "hypothesis; it needs its own, and the machine says so.";
 
 document.getElementById("bd-sand-note").innerHTML =
-  "a number built from <code>(q, L, B)</code> alone must land inside the cycle — "+
-  BD.violations+" violations over the "+BD.cycles_checked+" cycles with <code>m &gt; q</code>, "+
-  "and "+BD.scope.outside_sandwich_breaking+" failures among the "+BD.scope.outside+" without it";
+  "both say a number built from <code>(q, L, B)</code> alone must land inside the cycle";
 
 document.querySelector("#bd-sand tbody").innerHTML = BD.sandwich_examples.map(function(r){
-  var ok = r.m <= r.S && r.S <= r.M;
+  var ok = r.m <= r.E && r.E <= r.M;
   return '<tr><td class="n">'+r.q+'</td><td class="n">'+r.L+'</td><td class="n">'+r.B+'</td>'+
-    '<td class="n">'+fmt(r.m)+'</td><td class="n"><b style="color:var(--violet)">'+r.S+'</b></td>'+
+    '<td class="n">'+fmt(r.m)+'</td><td class="n"><b style="color:var(--violet)">'+r.E+'</b></td>'+
+    '<td class="n" style="color:var(--ink-3)">'+r.S+'</td>'+
     '<td class="n">'+fmt(r.M)+'</td><td class="n">'+(ok?'<span class="ok">✓</span>':'<span class="no">✗</span>')+'</td></tr>';
 }).join("");
+
+(function sandExact(){
+  var X = BD.exact_sandwich;
+  document.getElementById("bd-sand-exact").innerHTML =
+    "<b>The exact form needs no hypothesis at all — the approximation does.</b> " +
+    "<code>q/(2<sup>B/L</sup> − 3)</code> lands inside <code>[m, M]</code> on <b>all " + X.checked +
+    "</b> primitive cycles in the sweep, with <b>" + X.violations + "</b> violations. The linearized " +
+    "<code>qL/(3 ln2 · d)</code> fails <b>" + X.linear_violations + "</b> times — and those failures " +
+    "are artefacts of the expansion, not of the mathematics." +
+    "<br><br>That distinction is not cosmetic. The exact form is exactly what " +
+    "<code>Cycle.pow_le_of_min</code> and <code>Cycle.pow_ge_of_max</code> prove, written without " +
+    "division so no real arithmetic is needed: <code>m<sup>L</sup>·2<sup>B</sup> ≤ (3m+q)<sup>L</sup></code> " +
+    "and <code>(3M+q)<sup>L</sup> ≤ M<sup>L</sup>·2<sup>B</sup></code>. Taking the linearized route " +
+    "instead costs a hypothesis — when the 41.5% bound was first formalized it went through the " +
+    "linearized squeeze and picked up a spurious condition coupling <code>L</code> to <code>m</code>, " +
+    "which vanished the moment the proof was rerouted through the exact form.";
+})();
 
 (function fam(){
   var F = BD.family_q47;
@@ -2930,6 +3029,68 @@ var lit = D.meta.literature;
 document.getElementById("foot-lit").innerHTML =
   "Verification limit "+VLIM.approx.toExponential(2)+" — "+(VLIM.source||"").split(";")[0]+
   ". Cycle-length bounds from Hercher (2023) and Barina (2025). The cycle equation is Böhm & Sontacchi (1978).";
+
+/* ═══ TABLE OF CONTENTS ════════════════════════════════════════ */
+/* 17 sections and 32 000 px of page: without this, the only way to find
+   anything is to scroll past everything. */
+(function toc(){
+  var panel = document.getElementById("toc-panel"),
+      btn   = document.getElementById("toc-btn"),
+      secs  = Array.prototype.slice.call(document.querySelectorAll("section"));
+  var items = secs.map(function(sec, i){
+    var eb = sec.querySelector(".eyebrow"),
+        h  = sec.querySelector("h1, h2");
+    if(!sec.id) sec.id = "sec-" + i;
+    return {sec: sec,
+            eyebrow: eb ? eb.textContent.trim() : "Start",
+            title: h ? h.textContent.trim() : ("Section " + (i + 1))};
+  });
+  panel.innerHTML = items.map(function(it){
+    return '<a href="#'+it.sec.id+'" data-id="'+it.sec.id+'">'+
+             '<span class="e">'+it.eyebrow+'</span>'+
+             '<span class="t">'+it.title+'</span></a>';
+  }).join("");
+
+  function setOpen(v){
+    panel.classList.toggle("open", v);
+    btn.setAttribute("aria-expanded", v ? "true" : "false");
+  }
+  btn.addEventListener("click", function(e){
+    e.stopPropagation();
+    setOpen(!panel.classList.contains("open"));
+  });
+  panel.addEventListener("click", function(e){
+    if(e.target.closest("a")) setOpen(false);
+  });
+  document.addEventListener("click", function(e){
+    if(!panel.contains(e.target) && e.target !== btn) setOpen(false);
+  });
+  document.addEventListener("keydown", function(e){
+    if(e.key === "Escape") setOpen(false);
+  });
+
+  /* highlight whichever section the reader is actually in */
+  var links = {};
+  Array.prototype.forEach.call(panel.querySelectorAll("a"), function(a){
+    links[a.dataset.id] = a;
+  });
+  var cur = null;
+  function mark(){
+    var best = items[0], y = window.scrollY + 120;
+    items.forEach(function(it){ if(it.sec.offsetTop <= y) best = it; });
+    if(cur === best.sec.id) return;
+    if(cur && links[cur]) links[cur].classList.remove("on");
+    cur = best.sec.id;
+    if(links[cur]) links[cur].classList.add("on");
+  }
+  var tick = false;
+  window.addEventListener("scroll", function(){
+    if(tick) return;
+    tick = true;
+    requestAnimationFrame(function(){ mark(); tick = false; });
+  }, {passive: true});
+  mark();
+})();
 
 /* ─── first paint + resize ─── */
 function paint(){ drawStrip(); drawWheel(); drawDio(); }
