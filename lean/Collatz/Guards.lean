@@ -239,18 +239,26 @@ independent Python implementation, not from Lean. -/
 
 -- backward hops 49 <- 31 <- 19 <- 49 use b = 1, 1, 3 (v2 of 98, 62, 152), so B = 5
 #guard (List.range 4).map (fun k => cycle5.bb (k + 1)) = [1, 1, 3, 1]
-#guard (List.range 4).map (fun k => cycle5.sumB k) = [0, 1, 2, 5]
+#guard (List.range 4).map (fun k => cycle5.BB k) = [0, 1, 2, 5]
 
 -- the two products, and the exact identity  prodG = 2^B * prodFrom 0
 #guard cycle5.prodFrom 0 3 = 49 * 31 * 19
 #guard cycle5.prodG 3 = 152 * 62 * 98
-#guard cycle5.prodG 3 = 2 ^ cycle5.sumB 3 * cycle5.prodFrom 0 3
+#guard cycle5.prodG 3 = 2 ^ cycle5.BB 3 * cycle5.prodFrom 0 3
 
 -- the squeeze, with m = 19:  3m * 2^B <= 3^L * (3m + 2Lq)
-#guard 3 * 19 * 2 ^ cycle5.sumB 3 = 1824
+#guard 3 * 19 * 2 ^ cycle5.BB 3 = 1824
 #guard 3 ^ 3 * (3 * 19 + 2 * 3 * 5) = 2349
 
+-- the single-halving count: bb = [1,1,3], so two of the three hops are single
+#guard cycle5.countOnes 3 = 2
+#guard 2 * cycle5.L ≤ cycle5.BB 3 + cycle5.countOnes 3      -- 6 <= 5 + 2
+
+-- the two halves of the sandwich, on the real cycle {49, 31, 19} with m = 19
+#guard (3 * cycle5.M + 5) ^ 3 ≤ cycle5.M ^ 3 * 2 ^ cycle5.BB 3   -- 3511808 <= 3764768
+#guard 19 ^ 3 * 2 ^ cycle5.BB 3 ≤ (3 * 19 + 5) ^ 3               -- 219488  <= 238328
+
 -- the Baker input at kappa = 3, c = 5 is TIGHT here (equality)
-#guard 3 ^ 3 * 3 ^ 3 + 5 * 3 ^ 3 = 2 ^ cycle5.sumB 3 * 3 ^ 3
+#guard 3 ^ 3 * 3 ^ 3 + 5 * 3 ^ 3 = 2 ^ cycle5.BB 3 * 3 ^ 3
 
 end Collatz

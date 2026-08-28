@@ -449,3 +449,68 @@ corollary would be vacuous if Collatz is true. The general-`q` theorem is not:
 depends only on `M mod 3^k`; the tail rate is conjectured — not shown — to
 approach `λ/3 ≈ 0.9465`.
 
+---
+
+## 7. Later work, and what is machine-checked  (added after §6)
+
+The project kept going after the sections above were written. This records what
+was added and — more importantly — **which of it is verified how**, because the
+newest results were for a while the least checked.
+
+### Certification (`docs/CERTIFY.md`)
+
+Three *complete* tests that a given `M` is not a cycle maximum, in increasing
+order of cleverness and decreasing order of cost (200 000 odd `M` from `10⁷`):
+
+| test | work | complete because |
+|---|---|---|
+| run the orbit to 1 | 11 424 896 | cycles never reach 1 |
+| run until it exceeds `M` | 3 095 678 | then `M` isn't its own orbit's max |
+| exhaust the backward tree | 414 293 | equivalence theorem (§6) |
+
+A dead residue class mod `3^k` certifies **infinitely many** `M` at once, for
+`M` above a closed-form threshold `T_k` that reproduces the project's own
+`running_max` exactly. `T₁₁₈ = 1.87×10²¹ ≤ 2.39×10²¹ < T₁₁₉`, so the threshold
+is *not* the binding constraint — `a_k`'s `2.84^k` growth is.
+
+### Both ends (`docs/STRUCTURE.md`)
+
+The minimum is the exact mirror of the maximum: one halving out, `≥ 2` in,
+`m ≡ 3 (mod 4)` and `≡ 7 or 11 (mod 12)` for `q = 1`. Pairing them gives
+`m ≤ qL/(3 ln2 · d) ≤ M` with `d = B − L log₂3`. Three consequences:
+`L ≤ |R(O)|`; the ascent needs `≥ 1.71 log₂(O/m)` steps while the descent can be
+a single step (17 of 77 census cycles); and `u ≥ 2L − B`, which for `q = 1`
+becomes **at least 41.5 % of steps are single halvings**.
+
+### Why none of it finishes (`docs/WHY_NOT.md`)
+
+Periodic points of the backward map are exactly `c_L/(2^B − 3^L)` — the cycle
+equation — so a cycle is a periodic point landing on a positive integer. The
+all-ones pattern gives `y = −1`, which is `≡ 2 (mod 3^k)` for every `k` and so
+survives the sieve at every depth. Hence `a_k ≥ 1` **provably, with a witness**,
+and `−1` is not a natural number. A congruence sieve cannot see sign or
+integrality; that is the whole gap.
+
+### Verification status
+
+| result | Python | Lean |
+|---|---|---|
+| T0–T8, U, FP, T6, T7 (§3) | ✓ | ✓ |
+| equivalence theorem (§6) | ✓ | ✓ `Equivalence.lean` |
+| cycle-length bound (Baker assumed) | ✓ | ✓ `Length.lean` |
+| sandwich, both halves | ✓ | ✓ `pow_le_of_min`, `pow_ge_of_max` |
+| `u ≥ 2L − B` | ✓ | ✓ `single_halving_count` |
+| the 41.5 % figure itself | ✓ | ✗ — needs real arithmetic on `log₂3` |
+| min mirror (`m ≡ 3 mod 4`) | ✓ | ✗ — `Cycle` has `hmax`, no `hmin` |
+| `L ≤ \|R(O)\|` | ✓ | ✗ — needs finite-set machinery |
+| periodic points / the `−1` witness | ✓ | ✗ |
+| census, death-depth tail, dimension | ✓ | ✗ (measurements, not theorems) |
+
+Lean total: **138 declarations**, all certifying `[propext, Quot.sound]` — no
+`sorry`, no `Classical.choice`, no Mathlib.
+
+### A duplication that was removed
+
+`Length.lean` originally defined its own `sumB`, which was identical to the
+`BB` already in `Cycle.lean`. It has been deleted and the file now uses `BB`.
+

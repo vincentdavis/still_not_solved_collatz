@@ -170,7 +170,6 @@ in the theorem's statement, so it cannot hide in the certificate below. -/
 
 #print axioms Collatz.Cycle.prodFrom
 #print axioms Collatz.Cycle.prodG
-#print axioms Collatz.Cycle.sumB
 #print axioms Collatz.Cycle.prodFrom_pos
 #print axioms Collatz.Cycle.prodG_eq
 #print axioms Collatz.Cycle.prodFrom_shift
@@ -178,9 +177,14 @@ in the theorem's statement, so it cannot hide in the certificate below. -/
 #print axioms Collatz.Cycle.prod_squeeze
 #print axioms Collatz.Cycle.pow_le_of_min
 #print axioms Collatz.pow_succ_le
+#print axioms Collatz.Cycle.prod_squeeze_max
+#print axioms Collatz.Cycle.pow_ge_of_max
+#print axioms Collatz.Cycle.countOnes
+#print axioms Collatz.Cycle.two_mul_le_BB_add_countOnes
+#print axioms Collatz.Cycle.single_halving_count
 #print axioms Collatz.Cycle.squeeze
 #print axioms Collatz.Cycle.length_bound
 #print axioms Collatz.Cycle.length_bound_q1
-#print axioms Collatz.cycle5_sumB
+#print axioms Collatz.cycle5_BB
 #print axioms Collatz.cycle5_min
 #print axioms Collatz.cycle5_length_bound
