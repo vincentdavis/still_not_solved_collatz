@@ -20,9 +20,9 @@ exactly from their halving vectors alone.
 The witness
 -----------
 Take the pattern with every ``b_j = 1``.  Then ``3y = 2y - 1``, so ``y = -1``,
-for every length ``L``.  In ``Z_3`` the number ``-1`` is ``...2222``: it is
-``= 2 (mod 3^k)`` for every ``k``, which is exactly the parity condition an odd
-``b`` needs at every step.  So:
+for every length ``L``.  In ``Z_3`` the number ``-1`` is ``...2222``: every
+digit of its base-3 expansion is a 2, so ``-1 = 3^k - 1 (mod 3^k)`` ends in a 2
+at every depth -- exactly the residue an odd ``b`` needs at every step.  So:
 
     the class  -1 (mod 3^k)  survives the backward sieve at EVERY depth
 
@@ -92,7 +92,8 @@ def minus_one_survives(k: int, q: int = 1) -> bool:
     """Is the class ``-1 (mod 3^k)`` alive in the magnitude-free backward sieve?
 
     Always True for ``q = 1``: ``-1`` is the fixed point of the all-``b=1``
-    chain, and ``-1 = 2 (mod 3^k)`` supplies the odd-``b`` parity at every step.
+    chain, and ``-1 = 3^k - 1 (mod 3^k)`` ends in the base-3 digit 2, supplying
+    the odd-``b`` parity at every step.
     This is the explicit witness that ``a_k >= 1``, i.e. that the sieve never
     empties.
     """

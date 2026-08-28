@@ -191,7 +191,7 @@ standard library; `pytest` is the only dev dependency.
 $ cd python
 $ uv run pytest
 ...
-143 passed in 2.61s
+211 passed in 5.63s
 
 $ uv run python -m collatz_maxodd                  # full report
 $ uv run python -m collatz_maxodd --q-max 499 --bound 20000 --depth 10
@@ -231,8 +231,8 @@ ALL CHECKS PASSED
 warning in Lean. `check.sh` is the real gate, and it has five steps: clean build
 with zero warnings, a source scan for unsoundness escape hatches
 (`sorry`/`axiom`/`native_decide`/`set_option`/`unsafe`/…), a forced-rebuild
-axiom audit (103 declarations: 90 on `[propext, Quot.sound]`, 12 on `[propext]`,
-1 on none; no `sorryAx`, no `Classical.choice`), a coverage check that every
+axiom audit (138 declarations: 118 on `[propext, Quot.sound]`, 18 on `[propext]`,
+2 on none; no `sorryAx`, no `Classical.choice`), a coverage check that every
 named declaration is actually audited, and a Mathlib-free check. It has been
 verified to *fail* on four deliberately injected defects, including a
 build-passing `sorry`.

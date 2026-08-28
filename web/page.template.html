@@ -195,8 +195,9 @@ footer{border-top:1px solid var(--rule);padding-top:28px;font-size:.84rem;color:
     </div>
     <div class="legend" id="strip-legend"></div>
     <figcaption>Every odd number from 1 to 3999, in reading order. Blue is struck out by the
-    powers-of-two rule, pink by the powers-of-three rules. Violet survives both — those are the
-    only numbers that could be the largest odd element of a cycle. Hover any cell.</figcaption>
+    powers-of-two rule, pink by the powers-of-three rules. Violet survives both — one odd number in
+    six, and the only place a cycle maximum can be. Deeper conditions thin the violet further as the
+    page goes on. Hover any cell.</figcaption>
   </figure>
 
   <div class="tally" id="tally"></div>
@@ -465,8 +466,11 @@ footer{border-top:1px solid var(--rule);padding-top:28px;font-size:.84rem;color:
 
   <div class="stack">
     <div class="note"><b>The tree never merges.</b> Distinct halving vectors always give distinct
-    numbers — 5, 18, 72, 288, 1152, … paths at each depth, and exactly that many distinct values.
-    That is forced: going forward is a function, so every number has exactly one parent.</div>
+    numbers — with the halving count capped at the twelve the buttons offer, and setting aside the one
+    edge <code>b = 2</code> that sends 1 back to itself, that is 5, 18, 72, 288, 1152, … paths at each
+    depth and exactly that many distinct values. That is forced: going forward is a function, so every
+    number has exactly one parent. The lone self-loop is the trivial cycle, and it is the only place
+    in the picture where a path returns somewhere it has already been.</div>
   </div>
 
   <h3 style="margin-top:14px">Why this cannot find a counterexample</h3>
@@ -486,8 +490,9 @@ footer{border-top:1px solid var(--rule);padding-top:28px;font-size:.84rem;color:
 
   <div class="note warn"><b>And it is circular as a strategy.</b> Collatz is true exactly when the
   reverse tree from 1 reaches every odd number. "Describe all reverse paths from 1" is the conjecture
-  restated, not a reduction of it. Every one of the 834 surviving-class numbers below 20 000 — 17, 29,
-  53, 65, … — turns out to reach 1.</div>
+  restated, not a reduction of it. The combined sieve at depth one leaves six classes mod 144 —
+  <code>17, 29, 53, 65, 101, 125</code> — and every one of the 834 numbers below 20 000 in those
+  classes turns out to reach 1.</div>
 
   <div class="prose stack">
     <p><b>Where the form does earn its keep.</b> Apply the identical algebra to a path that closes on
@@ -522,8 +527,8 @@ footer{border-top:1px solid var(--rule);padding-top:28px;font-size:.84rem;color:
     and neither goes to zero.</p>
     <p>The powers-of-two half <b>saturates</b>: no matter how deep you push it, it never removes more
     than about <span id="fwd-bits" class="mono"></span> of the odd numbers. The powers-of-three half
-    keeps cutting, but slower than its modulus grows — by depth 20 you have spent 33 bits of modulus
-    to buy 10 bits of sieve, and the number of surviving classes is <em>increasing</em>.</p>
+    keeps cutting, but slower than its modulus grows — by depth 20 you have spent 31.7 bits of modulus
+    to buy 9.7 bits of sieve, and the number of surviving classes is <em>increasing</em>.</p>
     <p>What actually stands between us and a proof is a different kind of statement. Going once
     around a cycle multiplies by <code>3</code> at each of <code>L</code> odd steps and divides by
     <code>2</code> a total of <code>B</code> times, so closing the loop needs
@@ -849,14 +854,19 @@ footer{border-top:1px solid var(--rule);padding-top:28px;font-size:.84rem;color:
     <p>Everything so far has been about the largest odd number. But a finite loop has a
     <em>smallest</em> one as well, and the same one-line arguments run at that end — giving an
     exact mirror image.</p>
-    <p>At the minimum <code>m</code>, the next step can't go down, so <code>2^b ≤ 3 + q/m &lt; 4</code>
-    and <code>b = 1</code>: the minimum ascends by a single halving. Coming in, a predecessor must be
-    at least <code>m</code>, which forces <code>a ≥ 2</code>. Precisely the reverse of the maximum.</p>
+    <p>At the minimum <code>m</code>, the next step can't go down, so <code>2^b ≤ 3 + q/m</code>.
+    <b>Once <code>m &gt; q</code></b> that right-hand side is below 4, forcing <code>b = 1</code>: the
+    minimum ascends by a single halving. Coming in, a predecessor must be at least <code>m</code>,
+    which forces <code>a ≥ 2</code>. Precisely the reverse of the maximum.</p>
+    <p>That hypothesis is not decoration. Drop it and the argument collapses — <code>q/m</code> can be
+    large, <code>2^b</code> has room, and real cycles take it. For <code>q = 1</code> it is free, since
+    the only cycle with <code>m = 1</code> is the trivial one; in <code>3n+q</code> it has to be
+    earned, and the maximum carries the matching hypothesis <code>M &gt; q</code>.</p>
   </div>
 
   <div class="frame scroll">
     <table id="bd-mirror"><thead><tr>
-      <th>end</th><th>hop in</th><th>hop out</th><th>residue (q = 1)</th>
+      <th>end</th><th>hop in</th><th>hop out</th><th>residue (q = 1)</th><th>needs</th>
     </tr></thead><tbody></tbody></table>
   </div>
 
@@ -962,8 +972,9 @@ footer{border-top:1px solid var(--rule);padding-top:28px;font-size:.84rem;color:
       <div id="st-out" class="verdict"></div>
     </div>
     <figcaption>The first two presets are genuine cycle maxima: their whole cycle appears inside
-    <code>R(O)</code>. The last two are ordinary numbers, where <code>R(O)</code> collapses almost
-    to nothing.</figcaption>
+    <code>R(O)</code>. The third is the deepest survivor of the backward sieve below 20 000 — its
+    <code>R(O)</code> stays large, and refuting it takes real work. The fourth is an ordinary number,
+    where <code>R(O)</code> collapses to nothing at all.</figcaption>
   </figure>
 
   <div class="tally" id="st-reach"></div>
@@ -1056,8 +1067,9 @@ footer{border-top:1px solid var(--rule);padding-top:28px;font-size:.84rem;color:
     <h3>The witness</h3>
     <p>Take the pattern where every hop is a single halving. Then <code>3y = 2y − 1</code>, so
     <code>y = −1</code> — at every length. And in the 3-adic integers <code>−1</code> is
-    <code>…2222</code>: it is <code>≡ 2 (mod 3^k)</code> for every <code>k</code>, which is exactly
-    the parity an odd halving count requires at every step.</p>
+    <code>…2222</code>: every digit of its base-3 expansion is a 2, so
+    <code>−1 ≡ 3^k − 1 (mod 3^k)</code> ends in a 2 at every depth — exactly the residue an odd
+    halving count requires at every step. The class of <code>−1</code> is therefore never sieved out.</p>
   </div>
 
   <div class="frame scroll" id="pa-witness"></div>
@@ -2020,7 +2032,8 @@ document.getElementById("eq-depth-cap").innerHTML =
   document.getElementById("eq-lean").innerHTML =
     '<div class="row" style="justify-content:space-between;align-items:baseline">'+
       '<span class="mono" style="font-size:.82rem;color:var(--ink-3)">'+L.file+'</span>'+
-      '<span class="badge b-live">'+L.declarations_audited+' declarations · '+L.axioms+'</span></div>'+
+      '<span class="badge b-live">'+L.declarations_audited+
+        ' declarations audited across the development · '+L.axioms+'</span></div>'+
     '<div class="stack-s">'+ L.proved.map(function(t){
       var parts = t.split(" — ");
       return '<div style="display:flex;gap:10px;align-items:baseline"><span class="ok">✓</span>'+
@@ -2450,17 +2463,30 @@ document.querySelector("#bd-mirror tbody").innerHTML = BD.mirror.map(function(r)
   var hi = r.end === "minimum";
   return '<tr'+(hi?' class="hl"':'')+'><td class="n"><b>'+r.end+'</b></td>'+
     '<td class="n">'+r.hop_in+'</td><td class="n">'+r.hop_out+'</td>'+
-    '<td class="n">'+r.residue+'</td></tr>';
+    '<td class="n">'+r.residue+'</td>'+
+    '<td class="n"><code>'+r.needs+'</code></td></tr>';
 }).join("");
-document.getElementById("bd-mirror-note").innerHTML =
-  "Checked on every primitive cycle in the census: <b>"+BD.cycles_checked+
-  " cycles, "+BD.violations+" violations</b>. For <code>q = 1</code> a minimum must be "+
-  "<code>≡ "+BD.min_residues_q1.join(" or ")+" (mod 12)</code>, against the maximum's "+
-  "<code>≡ 5 (mod 12)</code> — the two ends occupy disjoint residue classes.";
+(function mirrorScope(){
+  var S = BD.scope, w = S.witness;
+  document.getElementById("bd-mirror-note").innerHTML =
+    "Checked on every primitive cycle <em>that satisfies the hypothesis</em>: <b>"+S.in_hypothesis+
+    " cycles, "+BD.violations+" violations</b>. This sweep — <code>q &lt; 600</code>, maxima below "+
+    "<code>40q</code> — turns up "+S.total+" primitive cycles of length ≥ 2; "+
+    "the other "+S.outside+" have <code>m ≤ q</code> and lie outside it. That is not a technicality — <b>"+
+    S.outside_breaking+" of them really do break the mirror</b>. The worst is <code>q = "+w.q+
+    "</code>'s cycle of length "+w.L+", whose minimum <code>m = "+w.m+"</code> leaves by <b>"+w.b+
+    " halvings</b>, not one: <code>3·"+w.m+" + "+w.q+" = "+(3*w.m+w.q)+" = 2<sup>"+w.b+"</sup>·"+
+    ((3*w.m+w.q) >> w.b)+"</code>. With <code>m ≤ q</code> the quantity <code>3 + q/m</code> is "+
+    (3 + w.q/w.m).toFixed(1)+", nowhere near below 4, and the argument has nothing to say. "+
+    "For <code>q = 1</code> a minimum must be <code>≡ "+BD.min_residues_q1.join(" or ")+
+    " (mod 12)</code>, against the maximum's <code>≡ 5 (mod 12)</code> — the two ends occupy "+
+    "disjoint residue classes.";
+})();
 
 document.getElementById("bd-sand-note").innerHTML =
   "a number built from <code>(q, L, B)</code> alone must land inside the cycle — "+
-  BD.violations+" violations over "+BD.cycles_checked+" cycles";
+  BD.violations+" violations over the "+BD.cycles_checked+" cycles with <code>m &gt; q</code>, "+
+  "and "+BD.scope.outside_sandwich_breaking+" failures among the "+BD.scope.outside+" without it";
 
 document.querySelector("#bd-sand tbody").innerHTML = BD.sandwich_examples.map(function(r){
   var ok = r.m <= r.S && r.S <= r.M;
@@ -2524,6 +2550,7 @@ document.getElementById("bd-cov-cap").innerHTML =
   var g = BD.threshold_growth, K = BD.k_max_under_verified;
   var t118 = g.filter(function(x){ return x.k === K; })[0];
   var t119 = g.filter(function(x){ return x.k === K + 1; })[0];
+  var deepest = BD.classes[BD.classes.length - 1];
   document.getElementById("bd-bind").innerHTML =
     '<div class="work" style="font-size:.9rem">'+
       'T<sub>'+K+'</sub> = <b>'+t118.T.toExponential(3)+'</b> &nbsp;≤&nbsp; verified bound '+
@@ -2531,8 +2558,9 @@ document.getElementById("bd-cov-cap").innerHTML =
       t119.T.toExponential(3)+'</b></div>'+
     '<div class="note" style="border-color:var(--blue);font-size:.9rem">'+
       '<b>The threshold would permit depth '+K+'.</b> What stops us is <code>a_k</code> — the cost '+
-      'of finding which classes are dead. <code>a₂₄</code> is already '+fmt(182840849)+' nodes and '+
-      'grows like <code>2.84<sup>k</sup></code>. <b>The binding constraint is computational, not arithmetic.</b></div>';
+      'of finding which classes are dead. <code>a<sub>'+deepest.k+'</sub></code> is already '+
+      fmt(deepest.alive)+' nodes and grows like <code>2.84<sup>k</sup></code>. '+
+      '<b>The binding constraint is computational, not arithmetic.</b></div>';
 })();
 
 document.getElementById("bd-never").innerHTML =
@@ -2575,15 +2603,30 @@ function stRender(){
   if(!R){ out.innerHTML = '<div class="work">R(O) is too large to draw here.</div>'; return; }
   var arr = Array.from(R).sort(function(a,b){ return a-b; });
   var shown = arr.length > 24 ? arr.slice(0,24).join(", ") + ", …" : arr.join(", ");
+  /* Does O actually sit in a cycle?  Run it forward: every element of a cycle
+     with maximum O stays <= O, so leaving that range settles it either way. */
+  var onCycle = false, cycL = 0, y = O;
+  for(var i = 0; i < arr.length; i++){
+    var t = 3*y + q; while(t % 2 === 0) t /= 2;
+    y = t; cycL++;
+    if(y === O){ onCycle = true; break; }
+    if(y > O) break;
+  }
+  var tight = cycL === arr.length;
   out.innerHTML =
     '<div class="head"><span class="n">|R(O)| = '+fmt(arr.length)+'</span>'+
-      '<span class="badge '+(arr.length > 2 ? "b-live" : "b-kill")+'">L ≤ '+fmt(arr.length)+'</span></div>'+
+      '<span class="badge '+(onCycle?"b-live":"b-kill")+'">L ≤ '+fmt(arr.length)+'</span></div>'+
     '<div class="work">R('+fmt(O)+') for q = '+q+' = { '+shown+' }</div>'+
-    '<div class="note" style="border-color:var(--'+(arr.length>2?"violet":"ink-3")+')">'+
-      (arr.length <= 2
-        ? 'Only '+arr.length+' number'+(arr.length>1?'s':'')+' can reach '+fmt(O)+' from below without '+
-          'exceeding it — far too few for a cycle. Refuted immediately.'
-        : 'Any cycle with maximum '+fmt(O)+' must be built entirely from these '+arr.length+' numbers.')+
+    '<div class="note" style="border-color:var(--'+(onCycle?"violet":"ink-3")+')">'+
+      (onCycle
+        ? fmt(O)+' really is the maximum of a cycle of S<sub>'+q+'</sub> — and that cycle has '+
+          '<b>L = '+cycL+'</b>, drawn from '+
+          (arr.length===1 ? 'the single number above' : 'these '+arr.length+' numbers')+
+          (tight ? ', meeting the bound exactly.' : ', comfortably inside the bound.')
+        : 'A cycle with maximum '+fmt(O)+' could only be built from '+
+          (arr.length===1 ? 'the single number above' : 'these '+fmt(arr.length)+' numbers')+
+          ', so it would have <code>L ≤ '+fmt(arr.length)+'</code>. Running the map forward from '+
+          fmt(O)+' that many steps never returns to it — so <b>no cycle has this maximum</b>.')+
     '</div>';
 }
 ["st-O","st-q"].forEach(function(id){
@@ -2704,8 +2747,8 @@ paRender();
     '<table><thead><tr><th>k</th>' +
       PA.witness.map(function(w){ return '<th class="n">' + w.k + '</th>'; }).join("") +
     '</tr></thead><tbody><tr><td class="n">−1 mod 3<sup>k</sup> alive?</td>' +
-      PA.witness.map(function(w){ return '<td class="n"><span class="ok">' +
-        (w.alive ? '✓' : '✗') + '</span></td>'; }).join("") +
+      PA.witness.map(function(w){ return '<td class="n"><span class="' + (w.alive ? 'ok' : 'no') +
+        '">' + (w.alive ? '✓' : '✗') + '</span></td>'; }).join("") +
     '</tr></tbody></table>';
   document.getElementById("pa-witness-note").innerHTML =
     "<b>So <code>a_k ≥ 1</code> for every <code>k</code> — provably, with a witness.</b> " +
@@ -2729,7 +2772,7 @@ document.getElementById("pa-point").innerHTML =
 
 document.getElementById("pa-dim").innerHTML = [
   [PA.dimension.lo + "–" + PA.dimension.hi, "box dimension of the surviving set in ℤ₃"],
-  ["> 0", "so it is uncountable — never empty, at any depth"],
+  ["> 0", "and every depth leaves a live class, so the limit set is uncountable — never empty"],
   ["< 1", "so it has density zero — the sieve does keep cutting"],
   ["1", "dimension of the 2-adic survivors: positive density, no cutting at all"]
 ].map(function(t){ return "<div><b>" + t[0] + "</b><span>" + t[1] + "</span></div>"; }).join("");
@@ -2774,8 +2817,8 @@ document.querySelector("#th-table tbody").innerHTML = D.theorems.map(function(t)
     '<td>'+hyp.split(".")[0]+'</td><td class="n">'+(t.status||"")+'</td></tr>';
 }).join("");
 document.getElementById("tally2").innerHTML = [
-  ["102","Lean declarations, all certified free of <code>sorry</code>"],
-  ["143","Python tests, all passing"],
+  [fmt(D.lean.audited_decls),"Lean declarations, all certified free of <code>sorry</code>"],
+  [fmt(D.lean.python_tests),"Python tests, all passing"],
   [fmt(D.cycles.list.length),"real 3n+q cycles in the census"],
   ["0","new theorems — all of this is known"]
 ].map(function(t){ return "<div><b>"+t[0]+"</b><span>"+t[1]+"</span></div>"; }).join("");

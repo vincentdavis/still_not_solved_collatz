@@ -12,6 +12,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
 from collatz_maxodd.bounds import (can_be_min_odd, drops_below,  # noqa: E402
                                    min_residues_mod12, sandwich_holds, scale)
 from collatz_maxodd.census import primitive_cycles, total_halvings  # noqa: E402
+from collatz_maxodd.syracuse import v2 as _v2  # noqa: E402
 from collatz_maxodd.certify import (backward_depth, class_coverage,  # noqa: E402
                                     class_threshold)
 
@@ -20,11 +21,22 @@ A_K = [1, 2, 3, 6, 10, 22, 50, 104, 254, 538, 1302, 3202, 7553, 19206]
 VERIFIED = 2392312122059207475200
 
 # --- the mirror, checked over the census -----------------------------------
+# The mirror needs m > q: the step out of the minimum obeys 2^b <= 3 + q/m,
+# which only forces b = 1 once q/m < 1.  Cycles with m <= q are outside the
+# hypothesis and really do break it, so they are counted, not silently dropped.
 rows, viol = [], 0
+n_total, n_small, small_break, small_sand = 0, 0, [], 0
 for q in [q for q in range(1, 600, 2) if q % 3]:
     for L, M, el in primitive_cycles(q, 40 * q):
+        n_total += 1
         m = min(el)
         if m <= q or M <= q:
+            n_small += 1
+            if not can_be_min_odd(m, q):
+                small_break.append({"q": q, "L": L, "m": m, "M": M,
+                                    "b": _v2(3 * m + q)})
+            if not sandwich_holds(q, L, total_halvings(el, q), m, M):
+                small_sand += 1
             continue
         B = total_halvings(el, q)
         if not can_be_min_odd(m, q):
@@ -33,7 +45,10 @@ for q in [q for q in range(1, 600, 2) if q % 3]:
             viol += 1
         rows.append({"q": q, "L": L, "B": B, "m": m, "M": M,
                      "S": round(scale(q, L, B), 2)})
-assert viol == 0, f"{viol} mirror/sandwich violations"
+assert viol == 0, f"{viol} mirror/sandwich violations inside the hypothesis m > q"
+# every failure is outside the hypothesis, and for exactly that reason
+assert all(w["m"] <= w["q"] for w in small_break), "a failure with m > q would refute the mirror"
+witness = max(small_break, key=lambda w: w["L"])
 
 # the q=47 family: several cycles, one shared scale
 fam = [r for r in rows if r["q"] == 47 and r["L"] == 4 and r["B"] == 7]
@@ -64,12 +79,15 @@ k_max = max(k for k in range(1, 200) if class_threshold(k) <= VERIFIED)
 out = {
     "mirror": [
         {"end": "maximum", "hop_in": "1 halving", "hop_out": "≥ 2",
-         "residue": "M ≡ 1 (mod 4), ≡ 5 (mod 12)"},
+         "residue": "M ≡ 1 (mod 4), ≡ 5 (mod 12)", "needs": "M > q"},
         {"end": "minimum", "hop_in": "≥ 2", "hop_out": "1 halving",
-         "residue": "m ≡ 3 (mod 4), ≡ 7 or 11 (mod 12)"},
+         "residue": "m ≡ 3 (mod 4), ≡ 7 or 11 (mod 12)", "needs": "m > q"},
     ],
     "min_residues_q1": list(min_residues_mod12(1)),
     "cycles_checked": len(rows), "violations": viol,
+    "scope": {"total": n_total, "in_hypothesis": len(rows), "outside": n_small,
+              "outside_breaking": len(small_break),
+              "outside_sandwich_breaking": small_sand, "witness": witness},
     "sandwich_examples": sorted(rows, key=lambda r: (r["q"], r["m"]))[:4] + fam[:4],
     "family_q47": {"n": len(fam), "L": 4, "B": 7, "scale": fam[0]["S"],
                    "ranges": [[r["m"], r["M"]] for r in fam]},
@@ -89,6 +107,9 @@ out = {
 (ROOT / "web" / "bounds.json").write_text(json.dumps(out, separators=(",", ":")))
 print(f"wrote web/bounds.json  ({len(json.dumps(out))/1024:.1f} KB)")
 print(f"  mirror + sandwich: {len(rows)} cycles, {viol} violations")
+print(f"  scope: {n_total} primitive cycles, {n_small} outside m>q, "
+      f"{len(small_break)} of those break the mirror "
+      f"(worst: q={witness['q']}, m={witness['m']}, b={witness['b']})")
 print(f"  ends: min {w_min:,} vs max {w_max:,} units -> max {out['ends']['max_cheaper_by']}x cheaper")
 print(f"  classes: k=8 certifies {cov[7]['certified']}%, k=24 certifies {cov[8]['certified']}%")
 print(f"  threshold allows depth up to k = {k_max} (T={class_threshold(k_max):.3e} <= {VERIFIED:.3e})")

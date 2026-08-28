@@ -6,7 +6,7 @@
 Everything here is recomputed in Python and asserted against the values the Lean
 guards claim, so the page cross-checks the formalization rather than quoting it.
 """
-import json, pathlib, re
+import json, pathlib, re, subprocess, sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 LEAN = ROOT / "lean"
@@ -50,11 +50,28 @@ assert f"= {list(bb)}".replace(" ", "") in guards.replace(" ", ""), "bb guard mi
 assert f"= {list(sumB)}".replace(" ", "") in guards.replace(" ", ""), "sumB guard mismatch"
 
 audited = len(re.findall(r"^#print axioms ", (LEAN / "Collatz" / "Audit.lean").read_text(), re.M))
+
+# the Python test count, taken from pytest itself rather than written down
+def _count_tests() -> int:
+    for cmd in ([sys.executable, "-m", "pytest", "--collect-only", "-q"],
+                ["uv", "run", "pytest", "--collect-only", "-q"]):
+        try:
+            r = subprocess.run(cmd, cwd=ROOT / "python", capture_output=True, text=True)
+        except FileNotFoundError:
+            continue
+        mt = re.search(r"^(\d+) tests? collected", r.stdout, re.M)
+        if mt:
+            return int(mt.group(1))
+    raise SystemExit("could not read the test count from pytest")
+
+
+n_tests = _count_tests()
 length_src = (LEAN / "Collatz" / "Length.lean").read_text()
 proved = re.findall(r"^theorem (\w+)", length_src, re.M)
 
 out = {
     "audited_decls": audited,
+    "python_tests": n_tests,
     "axioms": "propext, Quot.sound",
     "proved_names": proved,
     "theorem": {
@@ -103,3 +120,4 @@ print(f"  cycle5: L={L} B={B}  prodG={prodG} = 2^{B} * {prodFrom0}  ✓")
 print(f"  Baker input tight: {lhs_baker} = {rhs_baker}  ✓")
 print(f"  conclusion: {3*m*c} <= {2*q*L**(kappa+1)}  ✓")
 print(f"  Lean: {audited} audited declarations, {len(proved)} theorems in Length.lean")
+print(f"  Python: {n_tests} tests collected")

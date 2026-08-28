@@ -11,9 +11,11 @@ Two limit sets, computed honestly:
                      bounded by M  <=>  a nontrivial cycle exists (Lean:
                      Collatz.BackChain.exists_nontrivial_periodic).
 """
-import json, pathlib
+import json, pathlib, re
 
-WEB = pathlib.Path(__file__).resolve().parents[2] / "web"
+ROOT = pathlib.Path(__file__).resolve().parents[2]
+WEB = ROOT / "web"
+AUDIT = ROOT / "lean" / "Collatz" / "Audit.lean"
 N_FWD, N_BWD, CAP = 200_000, 20_000, 400
 
 
@@ -125,7 +127,7 @@ out = {
             "BackChain.exists_nontrivial_periodic — so that periodic point is a nontrivial cycle",
         ],
         "not_proved": "Koenig's lemma: 'survives every finite depth' => 'an infinite chain exists'. Needs dependent choice.",
-        "declarations_audited": 118,
+        "declarations_audited": len(re.findall(r"^#print axioms ", AUDIT.read_text(), re.M)),
         "axioms": "propext, Quot.sound — no sorryAx, no Classical.choice",
         "nonvacuity": "q7_has_periodic_point instantiates the general theorem on the real cycle 11 -> 5 -> 11",
     },

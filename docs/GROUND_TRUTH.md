@@ -332,7 +332,7 @@ Two checks run against **real integers**, with no residue arithmetic:
    density 0.286555 vs. the DP limit 0.2863153965; observed mod-`2^a` residue
    sets ⊆ predicted, sizes identical, for `a = 2..14`.
 
-Plus: 143 Python tests over the 2127-cycle census; 1623 real `S_q` cycles
+Plus: 211 Python tests over the 2127-cycle census; 1623 real `S_q` cycles
 (`q < 700`) re-derived independently during the Lean pass with 0 violations;
 `lean/check.sh` verified to *fail* on four deliberately injected defects,
 including a build-passing `sorry`.
@@ -359,8 +359,8 @@ formalized.
 
 ## 7. Formalization status (`lean/`)
 
-Lean 4.33.1, **no Mathlib**, `"packages": []`. 103 declarations audited:
-90 depend on `[propext, Quot.sound]`, 12 on `[propext]`, 1 on nothing. Zero
+Lean 4.33.1, **no Mathlib**, `"packages": []`. 138 declarations audited:
+118 depend on `[propext, Quot.sound]`, 18 on `[propext]`, 2 on nothing. Zero
 `sorry`, zero `axiom`, zero `native_decide`, zero `set_option`.
 
 **Proved:** T0, T1, T1_mod4, T1_q1, T2, T2_mod3, T2_bb, T2_unique, T2_q1,
@@ -475,8 +475,12 @@ is *not* the binding constraint — `a_k`'s `2.84^k` growth is.
 
 ### Both ends (`docs/STRUCTURE.md`)
 
-The minimum is the exact mirror of the maximum: one halving out, `≥ 2` in,
-`m ≡ 3 (mod 4)` and `≡ 7 or 11 (mod 12)` for `q = 1`. Pairing them gives
+The minimum is the exact mirror of the maximum **once `m > q`**: one halving out,
+`≥ 2` in, `m ≡ 3 (mod 4)` and `≡ 7 or 11 (mod 12)` for `q = 1`. The hypothesis is
+load-bearing — 197 of the 474 census cycles with `m ≤ q` break the mirror, worst
+`q = 541` whose minimum `m = 25` leaves by three halvings — and it is free at
+`q = 1`, where any nontrivial cycle has `m ≥ 3`. See `docs/CERTIFY.md`.
+Pairing the two ends gives
 `m ≤ qL/(3 ln2 · d) ≤ M` with `d = B − L log₂3`. Three consequences:
 `L ≤ |R(O)|`; the ascent needs `≥ 1.71 log₂(O/m)` steps while the descent can be
 a single step (17 of 77 census cycles); and `u ≥ 2L − B`, which for `q = 1`
@@ -486,8 +490,8 @@ becomes **at least 41.5 % of steps are single halvings**.
 
 Periodic points of the backward map are exactly `c_L/(2^B − 3^L)` — the cycle
 equation — so a cycle is a periodic point landing on a positive integer. The
-all-ones pattern gives `y = −1`, which is `≡ 2 (mod 3^k)` for every `k` and so
-survives the sieve at every depth. Hence `a_k ≥ 1` **provably, with a witness**,
+all-ones pattern gives `y = −1`, whose base-3 expansion is all 2s — so its class
+mod `3^k` ends in a 2 at every depth and survives the sieve forever. Hence `a_k ≥ 1` **provably, with a witness**,
 and `−1` is not a natural number. A congruence sieve cannot see sign or
 integrality; that is the whole gap.
 
@@ -501,7 +505,7 @@ integrality; that is the whole gap.
 | sandwich, both halves | ✓ | ✓ `pow_le_of_min`, `pow_ge_of_max` |
 | `u ≥ 2L − B` | ✓ | ✓ `single_halving_count` |
 | the 41.5 % figure itself | ✓ | ✗ — needs real arithmetic on `log₂3` |
-| min mirror (`m ≡ 3 mod 4`) | ✓ | ✗ — `Cycle` has `hmax`, no `hmin` |
+| min mirror (`m ≡ 3 mod 4`, needs `m > q`) | ✓ | ✗ — `Cycle` has `hmax`, no `hmin` |
 | `L ≤ \|R(O)\|` | ✓ | ✗ — needs finite-set machinery |
 | periodic points / the `−1` witness | ✓ | ✗ |
 | census, death-depth tail, dimension | ✓ | ✗ (measurements, not theorems) |

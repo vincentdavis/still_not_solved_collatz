@@ -88,16 +88,35 @@ measurement is what is recorded here.
 Everything above constrains the **maximum**. The minimum obeys an exact mirror
 image, derived the same way (`collatz_maxodd/bounds.py`).
 
-Let `m` be the minimum. `S_q(m) ≥ m` forces `2^b ≤ 3 + q/m < 4`, so `b = 1` — the
-minimum ascends by a single halving, and `(3m+q)/2` must land odd, i.e.
-`3m + q ≡ 2 (mod 4)`. A predecessor `y ≥ m` forces `2^a ≥ 3 + q/m`, so `a ≥ 2`.
+Let `m` be the minimum. `S_q(m) ≥ m` forces `2^b ≤ 3 + q/m`. **Assume `m > q`**;
+then `3 + q/m < 4`, so `b = 1` — the minimum ascends by a single halving, and
+`(3m+q)/2` must land odd, i.e. `3m + q ≡ 2 (mod 4)`. A predecessor `y ≥ m` forces
+`2^a ≥ 3 + q/m`, so `a ≥ 2`.
 
-| end | hop in | hop out | residue (q = 1) |
-|---|---|---|---|
-| maximum | 1 halving | ≥ 2 | `M ≡ 1 (mod 4)`, `≡ 5 (mod 12)` |
-| minimum | ≥ 2 | 1 halving | `m ≡ 3 (mod 4)`, `≡ 7 or 11 (mod 12)` |
+| end | hop in | hop out | residue (q = 1) | needs |
+|---|---|---|---|---|
+| maximum | 1 halving | ≥ 2 | `M ≡ 1 (mod 4)`, `≡ 5 (mod 12)` | `M > q` |
+| minimum | ≥ 2 | 1 halving | `m ≡ 3 (mod 4)`, `≡ 7 or 11 (mod 12)` | `m > q` |
 
-**0 violations** over every primitive cycle in the census.
+**0 violations** over the 77 primitive cycles in the census that satisfy the
+hypothesis.
+
+### The hypothesis `m > q` is load-bearing
+
+The census holds 551 primitive cycles for `q < 600`; 474 have `m ≤ q`, and **197
+of those break the mirror outright**. The worst is `q = 541`, whose cycle of
+length 90 has minimum `m = 25`:
+
+```
+3·25 + 541 = 616 = 2³ · 77          — the minimum leaves by THREE halvings
+3 + q/m = 24.6                        — nowhere near < 4
+```
+
+For `q = 1` the hypothesis is free: the only cycle with `m = 1` is the trivial
+one, so any nontrivial cycle has `m ≥ 3 > q`. In `3n+q` it must be checked. The
+same applies to the maximum's `M > q` (see `GROUND_TRUTH.md`, T2/T3/T4).
+`can_be_min_odd` documents the hypothesis; `gen_bounds_data.py` now counts the
+cycles outside it rather than filtering them away silently.
 
 ### The sandwich
 
@@ -109,7 +128,8 @@ From `2^B = ∏(3 + q/x_j)` with `m ≤ x_j ≤ M`, and writing `d = B − L·lo
 ```
 
 So a **scale computed from `(q, L, B)` alone must land inside the cycle's range**.
-0 violations over the census. `q = 47` illustrates it well: five distinct cycles
+0 violations over the 77 cycles with `m > q`; 8 of the 474 without it fail, so the
+linearized form inherits the same hypothesis. `q = 47` illustrates it well: five distinct cycles
 share `L = 4, B = 7`, hence one scale `136.95` — and every one of them straddles it.
 
 | q | L | B | min m | scale | max M |
