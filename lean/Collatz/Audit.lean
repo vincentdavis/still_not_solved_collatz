@@ -26,6 +26,7 @@
 -/
 import Collatz.Guards
 import Collatz.Length
+import Collatz.Minimum
 
 /-! ## Definitions (`Collatz/Odd.lean`) -/
 #print axioms Collatz.v2
@@ -185,6 +186,68 @@ in the theorem's statement, so it cannot hide in the certificate below. -/
 #print axioms Collatz.Cycle.squeeze
 #print axioms Collatz.Cycle.length_bound
 #print axioms Collatz.Cycle.length_bound_q1
+#print axioms Collatz.Cycle.pow_le_m
+#print axioms Collatz.Cycle.length_bound_m
 #print axioms Collatz.cycle5_BB
 #print axioms Collatz.cycle5_min
 #print axioms Collatz.cycle5_length_bound
+#print axioms Collatz.cycle5_length_bound_m
+
+/-! ## The minimum of a cycle (`Collatz/Minimum.lean`).
+
+The minimum is *derived*, not postulated: `argMinFrom` is structural recursion,
+so nothing here needs choice, and no existing instance changed.  The hypothesis
+`q < m` is load-bearing — `min_bb_out_needs_hypothesis` exhibits a real cycle
+that fails it and fails the conclusion. -/
+
+#print axioms Collatz.argMinFrom
+#print axioms Collatz.argMinFrom_pos
+#print axioms Collatz.argMinFrom_le
+#print axioms Collatz.argMinFrom_min
+#print axioms Collatz.Cycle.y_add_mul
+#print axioms Collatz.Cycle.y_mod
+#print axioms Collatz.Cycle.exists_idx
+#print axioms Collatz.Cycle.minIdx
+#print axioms Collatz.Cycle.m
+#print axioms Collatz.Cycle.minIdx_pos
+#print axioms Collatz.Cycle.minIdx_le
+#print axioms Collatz.Cycle.m_le
+#print axioms Collatz.Cycle.m_odd
+#print axioms Collatz.Cycle.m_pos
+#print axioms Collatz.Cycle.m_le_M
+#print axioms Collatz.Cycle.m_le_y_le_M
+#print axioms Collatz.Cycle.m_step
+#print axioms Collatz.Cycle.m_bb_pos
+#print axioms Collatz.Cycle.min_bb_out
+#print axioms Collatz.Cycle.m_step_one
+#print axioms Collatz.Cycle.min_mod4
+#print axioms Collatz.Cycle.min_mod4'
+#print axioms Collatz.Cycle.min_bb_in
+#print axioms Collatz.Cycle.min_not_three
+#print axioms Collatz.Cycle.min_gt_one_q1
+#print axioms Collatz.Cycle.min_mod4_q1
+#print axioms Collatz.Cycle.min_mod12_q1
+#print axioms Collatz.Cycle.ends_disjoint_q1
+#print axioms Collatz.cycle17
+#print axioms Collatz.cycle5_minIdx
+#print axioms Collatz.cycle5_m
+#print axioms Collatz.cycle7_m
+#print axioms Collatz.cycle17_m
+#print axioms Collatz.trivial_m
+#print axioms Collatz.cycle5_m_le
+#print axioms Collatz.cycle5_q_lt_m
+#print axioms Collatz.cycle5_min_out
+#print axioms Collatz.cycle5_min_mod4
+#print axioms Collatz.cycle5_max_mod4
+#print axioms Collatz.cycle5_ends_mod4
+#print axioms Collatz.cycle5_min_in
+#print axioms Collatz.cycle17_minIdx
+#print axioms Collatz.cycle17_bb_out
+#print axioms Collatz.min_bb_out_needs_hypothesis
+#print axioms Collatz.cycle37
+#print axioms Collatz.cycle37_M
+#print axioms Collatz.cycle37_minIdx
+#print axioms Collatz.cycle37_m
+#print axioms Collatz.cycle37_bb_out
+#print axioms Collatz.min_bb_out_needs_its_own_hypothesis
+#print axioms Collatz.min_bb_out_hypothesis_not_necessary

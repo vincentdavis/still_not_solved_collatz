@@ -106,3 +106,101 @@ def test_drops_below_and_can_be_min_are_consistent():
     for m in range(3, 20001, 2):
         if drops_below(m) == 1:
             assert not can_be_min_odd(m)
+
+
+# ---------------------------------------------------------------------------
+# The mirror as formalized in lean/Collatz/Minimum.lean.
+#
+# Each test below is the Python counterpart of a named Lean theorem, checked on
+# real cycles so that the two sides cannot drift apart.
+# ---------------------------------------------------------------------------
+
+
+def _S(n: int, q: int) -> int:
+    t = 3 * n + q
+    while t % 2 == 0:
+        t //= 2
+    return t
+
+
+def _v2i(n: int) -> int:
+    b = 0
+    while n % 2 == 0:
+        n //= 2
+        b += 1
+    return b
+
+
+def test_min_mod4_mirrors_T1():
+    """Cycle.min_mod4: `3m + q = 2 (mod 4)`, against T1's `3M + q = 0 (mod 4)`.
+
+    The same expression at the two ends, in the two different even classes.
+    """
+    for q, _L, _B, m, M, _el in _census():
+        assert (3 * m + q) % 4 == 2
+        assert (3 * M + q) % 4 == 0
+
+
+def test_min_mod4_prime_puts_the_ends_two_apart():
+    """Cycle.min_mod4' vs Cycle.T1_mod4: `m = q + 2` and `M = q` (mod 4)."""
+    for q, _L, _B, m, M, _el in _census():
+        assert m % 4 == (q + 2) % 4
+        assert M % 4 == q % 4
+        assert m % 4 != M % 4
+
+
+def test_min_bb_out_is_a_single_halving():
+    """Cycle.min_bb_out: with `q < m`, the step out of the minimum halves once."""
+    for q, _L, _B, m, _M, _el in _census():
+        assert _v2i(3 * m + q) == 1
+
+
+def test_min_bb_in_needs_two_halvings_unconditionally():
+    """Cycle.min_bb_in: the hop *into* the minimum takes >= 2 halvings.
+
+    Stated with no size hypothesis in Lean, so it is checked here over the
+    whole census -- including the cycles with `m <= q`.
+    """
+    n = 0
+    for q in ADMISSIBLE:
+        for _L, _M, el in primitive_cycles(q, 40 * q):
+            m = min(el)
+            pred = [x for x in el if _S(x, q) == m]
+            assert pred, (q, m)
+            assert _v2i(3 * pred[0] + q) >= 2
+            n += 1
+    assert n == 349
+
+
+def test_min_bb_out_really_needs_q_lt_m():
+    """Cycle.min_bb_out_needs_hypothesis, and the 197 census witnesses.
+
+    Dropping `q < m` makes the statement false, so the hypothesis is not
+    bookkeeping.  `cycle17` is the instance Lean carries; the census has many.
+    """
+    # the Lean counterexample: {5, 1} is a genuine S_17-cycle
+    assert _S(5, 17) == 1 and _S(1, 17) == 5
+    assert _v2i(3 * 1 + 17) == 2          # two halvings out of the minimum
+
+    def _breaks(hi: int):
+        return [
+            (q, min(el))
+            for q in range(1, hi, 2)
+            if q % 3
+            for _L, _M, el in primitive_cycles(q, 40 * q)
+            if _v2i(3 * min(el) + q) != 1
+        ]
+
+    # every failure is outside the hypothesis.  Note this shows the hypothesis
+    # cannot be DROPPED, not that it is necessary: cycles with m <= q that
+    # satisfy the conclusion anyway exist (q=7, {11,5}) -- see the Lean
+    # theorem min_bb_out_hypothesis_not_necessary.
+    assert all(m <= q for q, m in _breaks(400))
+    # the figure quoted in docs/CERTIFY.md and on the web page, over its range
+    assert len(_breaks(600)) == 197
+
+
+def test_q1_minimum_is_seven_or_eleven_mod_twelve():
+    """Cycle.min_mod12_q1, and its disjointness from T3's `M = 5 (mod 12)`."""
+    assert set(min_residues_mod12(1)) == {7, 11}
+    assert 5 not in min_residues_mod12(1)

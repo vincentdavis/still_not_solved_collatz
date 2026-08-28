@@ -871,6 +871,7 @@ footer{border-top:1px solid var(--rule);padding-top:28px;font-size:.84rem;color:
   </div>
 
   <div class="note" id="bd-mirror-note"></div>
+  <div class="note" style="border-color:var(--violet)" id="bd-mirror-lean"></div>
 
   <div class="prose stack">
     <h3>Pairing the two ends</h3>
@@ -2482,6 +2483,21 @@ document.querySelector("#bd-mirror tbody").innerHTML = BD.mirror.map(function(r)
     " (mod 12)</code>, against the maximum's <code>≡ 5 (mod 12)</code> — the two ends occupy "+
     "disjoint residue classes.";
 })();
+
+document.getElementById("bd-mirror-lean").innerHTML =
+  "<b>All of this is now machine-checked.</b> The mirror was the last result here " +
+  "carrying a Lean blocker — <code>Cycle</code> has a field for the maximum and none for the " +
+  "minimum. It turned out not to need one: the orbit is periodic, so the minimum can be " +
+  "<em>computed</em> by structural recursion over one period rather than postulated. " +
+  "<code>Cycle.m_le</code> is the minimality proof, <code>min_bb_out</code> the single halving " +
+  "out, <code>min_bb_in</code> the two halvings in, and <code>min_mod12_q1</code> the residues " +
+  "above. No new field, no change to any existing cycle, and no <code>Classical.choice</code>." +
+  "<br><br>The hypothesis is checked too. <code>cycle37</code> is the real cycle " +
+  "<code>29 → 31 → 65</code> of <code>3n+37</code>: its <em>maximum</em> clears <code>q</code>, " +
+  "so it satisfies the hypothesis T2–T4 use at the top end, while its minimum " +
+  "<code>29 ≤ 37</code> does not — and its minimum leaves by <b>two</b> halvings, " +
+  "<code>3·29 + 37 = 124 = 2²·31</code>. So the mirror does not inherit the maximum's " +
+  "hypothesis; it needs its own, and the machine says so.";
 
 document.getElementById("bd-sand-note").innerHTML =
   "a number built from <code>(q, L, B)</code> alone must land inside the cycle — "+

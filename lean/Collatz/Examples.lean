@@ -17,6 +17,7 @@
   about, so those theorems are not vacuously true.
 -/
 import Collatz.Cycle
+import Collatz.Minimum
 
 namespace Collatz
 
@@ -121,6 +122,164 @@ example : (3 * cycle5.M + 5) % 4 = 0 := cycle5.T1
 example : cycle5.M % 4 = 5 % 4 := cycle5.T1_mod4
 example : 3 ≤ cycle5.M := cycle5.M_ge_three_of_L (by decide)
 example : cycle5.y 2 % 3 ≠ 0 := cycle5.T0 2
+
+/-! ## 4. The `q = 17` cycle {5, 1}:  5 → 1 → 5
+
+This one exists to be a *counterexample*.  Its minimum is `m = 1 ≤ 17 = q`, so
+it sits outside the hypothesis of `Cycle.min_bb_out` — and the conclusion fails
+for it: the step out of its minimum is `3·1 + 17 = 20 = 2² · 5`, **two**
+halvings, not one.  So `q < m` is not a convenience, and the machine says so. -/
+
+def cycle17 : Cycle 17 where
+  L := 2
+  y := fun i => if i % 2 = 0 then 5 else 1
+  hL := by decide
+  hq_pos := by decide
+  hq_odd := by decide
+  hq_three := by decide
+  hodd := fun i => by
+    rcases Nat.mod_two_eq_zero_or_one i with h | h <;> simp [h]
+  hstep := fun i => by
+    rcases Nat.mod_two_eq_zero_or_one i with h | h
+    · have h2 : (i + 1) % 2 = 1 := by omega
+      simp [h, h2, S, oddPart]
+    · have h2 : (i + 1) % 2 = 0 := by omega
+      simp [h, h2, S, oddPart]
+  hmax := fun i => by
+    rcases Nat.mod_two_eq_zero_or_one i with h | h <;> simp [h]
+  hper := fun i => by
+    have h : (i + 2) % 2 = i % 2 := by omega
+    simp [h]
+  hmin := fun k h1 h2 => by
+    have hk : k = 1 := by omega
+    subst hk
+    decide
+
+example : cycle17.M = 5 := rfl
+example : cycle17.L = 2 := rfl
+
+/-! ### The derived minimum agrees with the arithmetic one -/
+
+theorem cycle5_minIdx : cycle5.minIdx = 2 := rfl
+theorem cycle5_m : cycle5.m = 19 := rfl
+theorem cycle7_m : cycle7.m = 5 := rfl
+theorem cycle17_m : cycle17.m = 1 := rfl
+theorem trivial_m : trivialCycle.m = 1 := rfl
+
+/-- `Cycle.m_le` on a real cycle: nothing in `cycle5` is below 19. -/
+theorem cycle5_m_le (i : Nat) : 19 ≤ cycle5.y i := cycle5.m_le i
+
+/-! ### `cycle5` inhabits the hypothesis, and the mirror holds there -/
+
+theorem cycle5_q_lt_m : 5 < cycle5.m := by decide
+
+/-- The step out of the minimum is a single halving. -/
+theorem cycle5_min_out : cycle5.bb cycle5.minIdx = 1 :=
+  cycle5.min_bb_out cycle5_q_lt_m
+
+/-- The mirror of T1: `3m + q ≡ 2 (mod 4)`, against `3M + q ≡ 0` at the top. -/
+theorem cycle5_min_mod4 : (3 * cycle5.m + 5) % 4 = 2 :=
+  cycle5.min_mod4 cycle5_q_lt_m
+
+theorem cycle5_max_mod4 : (3 * cycle5.M + 5) % 4 = 0 := cycle5.T1
+
+/-- `m ≡ q + 2 (mod 4)` while `M ≡ q (mod 4)` — the two ends, two apart. -/
+theorem cycle5_ends_mod4 : cycle5.m % 4 = (5 + 2) % 4 ∧ cycle5.M % 4 = 5 % 4 :=
+  ⟨cycle5.min_mod4' cycle5_q_lt_m, cycle5.T1_mod4⟩
+
+/-- The backward hop *into* the minimum takes at least two halvings. -/
+theorem cycle5_min_in : 2 ≤ cycle5.bb (cycle5.minIdx + 1) := cycle5.min_bb_in
+
+/-! ### `cycle17` falls outside it, and the conclusion falls too -/
+
+theorem cycle17_minIdx : cycle17.minIdx = 1 := rfl
+
+theorem cycle17_bb_out : cycle17.bb cycle17.minIdx = 2 := by
+  show Collatz.v2 (3 * cycle17.y 1 + 17) = 2
+  have h : cycle17.y 1 = 1 := rfl
+  rw [h]
+  simp [v2]
+
+/-- **The hypothesis `q < m` of `Cycle.min_bb_out` cannot be dropped.**
+    `cycle17` is a genuine `S_17`-cycle that fails it, and fails the conclusion
+    too.
+
+    It does not, on its own, show that `q < m` is the *right* hypothesis:
+    `cycle17` also fails `q < M`, so it cannot tell the two apart.  `cycle37`
+    below can. -/
+theorem min_bb_out_needs_hypothesis :
+    ¬ (17 < cycle17.m) ∧ cycle17.bb cycle17.minIdx ≠ 1 := by
+  refine ⟨by decide, ?_⟩
+  rw [cycle17_bb_out]
+  decide
+
+/-! ## 5. The `q = 37` cycle {65, 31, 29}:  29 → 31 → 65 → 29
+
+The witness that separates the two hypotheses.  Here `m = 29 ≤ 37 = q < 65 = M`,
+so `q < M` — the hypothesis of T2/T3/T4 at the *top* end — holds, while `q < m`
+fails.  And the mirror's conclusion fails with it: `3·29 + 37 = 124 = 2² · 31`.
+So the minimum's mirror really does need its own hypothesis; it does not inherit
+the maximum's. -/
+
+def cycle37 : Cycle 37 where
+  L := 3
+  y := fun i => if i % 3 = 0 then 65 else if i % 3 = 1 then 31 else 29
+  hL := by decide
+  hq_pos := by decide
+  hq_odd := by decide
+  hq_three := by decide
+  hodd := fun i => by
+    rcases (show i % 3 = 0 ∨ i % 3 = 1 ∨ i % 3 = 2 by omega) with h | h | h <;>
+      simp [h]
+  hstep := fun i => by
+    rcases (show i % 3 = 0 ∨ i % 3 = 1 ∨ i % 3 = 2 by omega) with h | h | h
+    · have h2 : (i + 1) % 3 = 1 := by omega
+      simp [h, h2, S, oddPart]
+    · have h2 : (i + 1) % 3 = 2 := by omega
+      simp [h, h2, S, oddPart]
+    · have h2 : (i + 1) % 3 = 0 := by omega
+      simp [h, h2, S, oddPart]
+  hmax := fun i => by
+    rcases (show i % 3 = 0 ∨ i % 3 = 1 ∨ i % 3 = 2 by omega) with h | h | h <;>
+      simp [h]
+  hper := fun i => by
+    have h : (i + 3) % 3 = i % 3 := by omega
+    simp [h]
+  hmin := fun k h1 h2 => by
+    rcases (show k = 1 ∨ k = 2 by omega) with h | h <;> subst h <;> decide
+
+theorem cycle37_M : cycle37.M = 65 := rfl
+theorem cycle37_minIdx : cycle37.minIdx = 2 := rfl
+theorem cycle37_m : cycle37.m = 29 := rfl
+
+theorem cycle37_bb_out : cycle37.bb cycle37.minIdx = 2 := by
+  show Collatz.v2 (3 * cycle37.y 2 + 37) = 2
+  have h : cycle37.y 2 = 29 := rfl
+  rw [h]
+  simp [v2]
+
+/-- **The minimum's mirror needs `q < m` specifically, not the maximum's
+    `q < M`.**  `cycle37` satisfies `q < M`, fails `q < m`, and fails the
+    conclusion — so the hypothesis at the top end does not carry to the bottom.
+    This is the Lean-side counterpart of the census cycles recorded in
+    docs/CERTIFY.md, of which 167 have `m ≤ q < M` exactly like this one. -/
+theorem min_bb_out_needs_its_own_hypothesis :
+    37 < cycle37.M ∧ ¬ (37 < cycle37.m) ∧ cycle37.bb cycle37.minIdx ≠ 1 := by
+  refine ⟨by decide, by decide, ?_⟩
+  rw [cycle37_bb_out]
+  decide
+
+/-- The hypothesis is **sufficient, not necessary**: `cycle7` fails `q < m`
+    (`m = 5 ≤ 7`) and yet its minimum does leave by a single halving.  So the
+    census cycles that break the mirror are evidence that the hypothesis cannot
+    be dropped — not that every cycle without it breaks. -/
+theorem min_bb_out_hypothesis_not_necessary :
+    ¬ (7 < cycle7.m) ∧ cycle7.bb cycle7.minIdx = 1 := by
+  refine ⟨by decide, ?_⟩
+  show Collatz.v2 (3 * cycle7.y 1 + 7) = 1
+  have h : cycle7.y 1 = 5 := rfl
+  rw [h]
+  simp [v2]
 
 /-! ### `cycle5` witnesses the ❌ row of docs/GROUND_TRUTH.md
 

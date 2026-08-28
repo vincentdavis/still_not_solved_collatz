@@ -321,6 +321,24 @@ theorem length_bound_q1 (C : Cycle 1) {m κ c : Nat}
   have h := C.length_bound hm hmpos (by omega) hbaker
   omega
 
+/-! ### With the minimum supplied by the development itself
+
+`pow_le_of_min` and `length_bound` above take the minimum as a *hypothesis*
+`hm : ∀ i, m ≤ C.y i`, because when they were written `Cycle` had no minimum.
+`Collatz/Minimum.lean` derives one, so that hypothesis can now be discharged
+rather than assumed. -/
+
+/-- The sandwich's lower half, with no hypothesis about the minimum at all. -/
+theorem pow_le_m : C.m ^ C.L * 2 ^ C.BB C.L ≤ (3 * C.m + q) ^ C.L :=
+  C.pow_le_of_min C.m_le
+
+/-- `length_bound`, with `m` taken to be the cycle's own minimum. -/
+theorem length_bound_m {κ c : Nat}
+    (hsmall : 2 * C.L * q ≤ 3 * C.m)
+    (hbaker : 3 ^ C.L * C.L ^ κ + c * 3 ^ C.L ≤ 2 ^ C.BB C.L * C.L ^ κ) :
+    3 * C.m * c ≤ 2 * q * C.L ^ (κ + 1) :=
+  C.length_bound C.m_le C.m_pos hsmall hbaker
+
 end Cycle
 
 /-! ## 4. Non-vacuity — the bound applied to a REAL cycle
@@ -348,6 +366,17 @@ theorem cycle5_min (i : Nat) : 19 ≤ cycle5.y i := by
 /-- The length bound, instantiated on a cycle that actually exists. -/
 theorem cycle5_length_bound : 3 * 19 * 5 ≤ 2 * 5 * cycle5.L ^ (3 + 1) := by
   refine cycle5.length_bound (m := 19) (κ := 3) (c := 5) cycle5_min (by decide) ?_ ?_
+  · show 2 * 3 * 5 ≤ 3 * 19
+    decide
+  · show 3 ^ 3 * 3 ^ 3 + 5 * 3 ^ 3 ≤ 2 ^ cycle5.BB 3 * 3 ^ 3
+    rw [cycle5_BB]
+    decide
+
+/-- The same bound with the minimum taken from `Collatz/Minimum.lean` instead of
+    supplied by hand — `cycle5.m` reduces to 19, so this is `285 ≤ 810` again,
+    now with nothing about the minimum assumed. -/
+theorem cycle5_length_bound_m : 3 * cycle5.m * 5 ≤ 2 * 5 * cycle5.L ^ (3 + 1) := by
+  refine cycle5.length_bound_m (κ := 3) (c := 5) ?_ ?_
   · show 2 * 3 * 5 ≤ 3 * 19
     decide
   · show 3 ^ 3 * 3 ^ 3 + 5 * 3 ^ 3 ≤ 2 ^ cycle5.BB 3 * 3 ^ 3

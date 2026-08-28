@@ -118,6 +118,56 @@ same applies to the maximum's `M > q` (see `GROUND_TRUTH.md`, T2/T3/T4).
 `can_be_min_odd` documents the hypothesis; `gen_bounds_data.py` now counts the
 cycles outside it rather than filtering them away silently.
 
+### Formalized (`lean/Collatz/Minimum.lean`)
+
+This was the last result in the project carrying a recorded Lean blocker —
+"`Cycle` carries `hmax` but no `hmin`". It did not need one. `hper` makes the
+orbit periodic, so the minimum over one period can be **computed** by structural
+recursion (`argMinFrom`) instead of postulated: no new field, no change to any
+existing instance, no choice principle.
+
+| Lean name | statement |
+|---|---|
+| `Cycle.m_le` | `m ≤ y i` for every `i` — the minimality the structure never had |
+| `Cycle.min_bb_out` | `q < m` ⟹ the step out of the minimum halves exactly once |
+| `Cycle.min_bb_in` | the hop into the minimum halves at least twice (no hypothesis) |
+| `Cycle.min_mod4` | `3m + q ≡ 2 (mod 4)`, against T1's `3M + q ≡ 0 (mod 4)` |
+| `Cycle.min_mod4'` | `m ≡ q + 2 (mod 4)`, against `T1_mod4`'s `M ≡ q (mod 4)` |
+| `Cycle.min_mod12_q1` | `q = 1` ⟹ `m ≡ 7 or 11 (mod 12)` |
+| `Cycle.ends_disjoint_q1` | both ends at once: `M ≡ 5`, `m ∈ {7, 11}` (mod 12) |
+| `Cycle.min_gt_one_q1` | `q = 1`: the hypothesis `q < m` is free |
+| `min_bb_out_needs_hypothesis` | `cycle17` fails the hypothesis and the conclusion |
+| `min_bb_out_needs_its_own_hypothesis` | **`cycle37` fails `q < m` while satisfying `q < M`** |
+| `min_bb_out_hypothesis_not_necessary` | `cycle7` fails `q < m` and satisfies the conclusion anyway |
+
+The last three rows are the ones worth having, and they say three different
+things.
+
+`cycle37 : Cycle 37` is the genuine cycle `29 → 31 → 65 → 29`. Its minimum
+`m = 29` is `≤ q = 37`, while its maximum `M = 65` is `> q` — so it satisfies the
+hypothesis T2/T3/T4 use at the *top* end and fails the one the mirror needs at
+the bottom. Its minimum leaves by `3·29 + 37 = 124 = 2² · 31`, two halvings. So
+the mirror does **not** inherit the maximum's hypothesis; it needs its own. 167
+census cycles have `m ≤ q < M` like this.
+
+`cycle17` (`5 → 1 → 5`) is the extreme version, `m = 1`. But on its own it proves
+less than it looks: it fails `q < M` too, so it cannot tell the two hypotheses
+apart. That is why `cycle37` is there.
+
+`cycle7` (`11 → 5 → 11`) supplies the caveat. It has `m = 5 ≤ 7 = q` and its
+minimum leaves by a single halving regardless. **`q < m` is sufficient, not
+necessary** — the 197 census cycles show the hypothesis cannot be dropped, not
+that every cycle lacking it breaks.
+
+Counting convention for that 197: primitive cycles of length `≥ 2` (the default
+`min_length=2` of `census.primitive_cycles`) with `q < 600` and maxima below
+`40q`. Counting the eight length-1 fixed points as well gives 205 of 559.
+
+A side effect: `pow_le_of_min` and `length_bound` in `Length.lean` took the
+minimum as a hypothesis `hm : ∀ i, m ≤ y i`, because when they were written
+there was no minimum to hand. `Cycle.pow_le_m` and `Cycle.length_bound_m` now
+discharge it.
+
 ### The sandwich
 
 From `2^B = ∏(3 + q/x_j)` with `m ≤ x_j ≤ M`, and writing `d = B − L·log₂3 > 0`,

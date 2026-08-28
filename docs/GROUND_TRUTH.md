@@ -332,7 +332,7 @@ Two checks run against **real integers**, with no residue arithmetic:
    density 0.286555 vs. the DP limit 0.2863153965; observed mod-`2^a` residue
    sets ⊆ predicted, sizes identical, for `a = 2..14`.
 
-Plus: 211 Python tests over the 2127-cycle census; 1623 real `S_q` cycles
+Plus: 217 Python tests over the 2127-cycle census; 1623 real `S_q` cycles
 (`q < 700`) re-derived independently during the Lean pass with 0 violations;
 `lean/check.sh` verified to *fail* on four deliberately injected defects,
 including a build-passing `sorry`.
@@ -359,8 +359,8 @@ formalized.
 
 ## 7. Formalization status (`lean/`)
 
-Lean 4.33.1, **no Mathlib**, `"packages": []`. 138 declarations audited:
-118 depend on `[propext, Quot.sound]`, 18 on `[propext]`, 2 on nothing. Zero
+Lean 4.33.1, **no Mathlib**, `"packages": []`. 192 declarations audited:
+167 depend on `[propext, Quot.sound]`, 22 on `[propext]`, 3 on nothing. Zero
 `sorry`, zero `axiom`, zero `native_decide`, zero `set_option`.
 
 **Proved:** T0, T1, T1_mod4, T1_q1, T2, T2_mod3, T2_bb, T2_unique, T2_q1,
@@ -477,8 +477,10 @@ is *not* the binding constraint — `a_k`'s `2.84^k` growth is.
 
 The minimum is the exact mirror of the maximum **once `m > q`**: one halving out,
 `≥ 2` in, `m ≡ 3 (mod 4)` and `≡ 7 or 11 (mod 12)` for `q = 1`. The hypothesis is
-load-bearing — 197 of the 474 census cycles with `m ≤ q` break the mirror, worst
-`q = 541` whose minimum `m = 25` leaves by three halvings — and it is free at
+load-bearing — 197 of the 474 census cycles with `m ≤ q` break the mirror (the
+longest being `q = 541`, whose minimum `m = 25` leaves by three halvings) — and
+it is *sufficient, not necessary*: some cycles with `m ≤ q` satisfy it anyway.
+It is free at
 `q = 1`, where any nontrivial cycle has `m ≥ 3`. See `docs/CERTIFY.md`.
 Pairing the two ends gives
 `m ≤ qL/(3 ln2 · d) ≤ M` with `d = B − L log₂3`. Three consequences:
@@ -505,13 +507,14 @@ integrality; that is the whole gap.
 | sandwich, both halves | ✓ | ✓ `pow_le_of_min`, `pow_ge_of_max` |
 | `u ≥ 2L − B` | ✓ | ✓ `single_halving_count` |
 | the 41.5 % figure itself | ✓ | ✗ — needs real arithmetic on `log₂3` |
-| min mirror (`m ≡ 3 mod 4`, needs `m > q`) | ✓ | ✗ — `Cycle` has `hmax`, no `hmin` |
+| min mirror (`m ≡ 3 mod 4`, needs `m > q`) | ✓ | ✓ `Minimum.lean` |
+| that hypothesis cannot be *dropped* | ✓ | ✓ `min_bb_out_needs_its_own_hypothesis` |
 | `L ≤ \|R(O)\|` | ✓ | ✗ — needs finite-set machinery |
 | periodic points / the `−1` witness | ✓ | ✗ |
 | census, death-depth tail, dimension | ✓ | ✗ (measurements, not theorems) |
 
-Lean total: **138 declarations**, all certifying `[propext, Quot.sound]` — no
-`sorry`, no `Classical.choice`, no Mathlib.
+Lean total: **192 declarations**, all certifying `[propext, Quot.sound]` or
+`[propext]` — no `sorry`, no `Classical.choice`, no Mathlib.
 
 ### A duplication that was removed
 
