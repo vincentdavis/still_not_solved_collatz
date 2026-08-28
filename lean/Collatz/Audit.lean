@@ -28,6 +28,7 @@ import Collatz.Guards
 import Collatz.Length
 import Collatz.Minimum
 import Collatz.Reach
+import Collatz.Periodic
 
 /-! ## Definitions (`Collatz/Odd.lean`) -/
 #print axioms Collatz.v2
@@ -281,3 +282,57 @@ pigeonhole. -/
 #print axioms Collatz.cycle7_length_le_reach
 #print axioms Collatz.cycle37_length_le_reach
 #print axioms Collatz.cycle5_length_le_M
+
+/-! ## Periodic points and the `−1` witness (`Collatz/Periodic.lean`).
+
+The first file to leave ℕ — the witness is negative, so it has to.  Core `Int`
+only; still no Mathlib, still no `ℝ`, still no choice. -/
+
+#print axioms Collatz.PB
+#print axioms Collatz.Pc
+#print axioms Collatz.two_pow_pos
+#print axioms Collatz.three_pow_pos
+#print axioms Collatz.two_pow_le_three_pow
+#print axioms Collatz.two_pow_int_le_add
+#print axioms Collatz.two_pow_int_le
+#print axioms Collatz.eq_one_of_pos_mul_eq_one
+#print axioms Collatz.two_pow_lt_three_pow
+#print axioms Collatz.IsPeriodic
+#print axioms Collatz.IsPeriodic.closed
+#print axioms Collatz.IsPeriodic.cycle_equation
+#print axioms Collatz.periodic_unique
+#print axioms Collatz.ones
+#print axioms Collatz.PB_ones
+#print axioms Collatz.Pc_ones
+#print axioms Collatz.onesPeriodic
+#print axioms Collatz.minus_one_of_ones
+#print axioms Collatz.ones_not_a_cycle
+#print axioms Collatz.const
+#print axioms Collatz.PB_const
+#print axioms Collatz.Pc_const
+#print axioms Collatz.const_equation
+#print axioms Collatz.constTwoPeriodic
+#print axioms Collatz.const_positive_integer
+#print axioms Collatz.neg_one_emod
+#print axioms Collatz.neg_one_residue
+#print axioms Collatz.digit_pow_sub_one
+#print axioms Collatz.shift_pow_sub_one
+#print axioms Collatz.all_digits_two
+#print axioms Collatz.neg_one_all_digits_two
+#print axioms Collatz.Cycle.toPeriodic
+#print axioms Collatz.Cycle.cycle_is_positive_periodic
+#print axioms Collatz.Cycle.PB_eq_BB
+#print axioms Collatz.Cycle.Pc_eq_cc
+#print axioms Collatz.Cycle.T7_from_periodic
+#print axioms Collatz.Pc_ones_1
+#print axioms Collatz.Pc_ones_2
+#print axioms Collatz.Pc_ones_3
+#print axioms Collatz.Pc_ones_4
+#print axioms Collatz.PB_ones_3
+#print axioms Collatz.ones_three_equation
+#print axioms Collatz.ones_witness
+#print axioms Collatz.trivial_is_const_two
+#print axioms Collatz.only_b_two
+#print axioms Collatz.const_two_exists
+#print axioms Collatz.cycle5_is_periodic
+#print axioms Collatz.cycle7_is_periodic

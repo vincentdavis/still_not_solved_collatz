@@ -19,6 +19,7 @@
 import Collatz.Cycle
 import Collatz.Minimum
 import Collatz.Reach
+import Collatz.Periodic
 
 namespace Collatz
 
@@ -303,6 +304,56 @@ theorem cycle37_length_le_reach :
 
 /-- `L ≤ M`, on a real cycle: `3 ≤ 49`. -/
 theorem cycle5_length_le_M : cycle5.L ≤ cycle5.M := cycle5.length_le_M
+
+/-! ## 7. Periodic points and the `−1` witness
+
+`Collatz/Periodic.lean` proves that *any* periodic point of a halving pattern
+satisfies the cycle equation, with no cycle in the hypotheses.  (Existence of a
+periodic point is a separate matter: over `ℤ` most patterns have none — the
+solution is only rational.  See that file's header.)  Here are the ones the page
+quotes. -/
+
+/-- `c_L = 3^L − 2^L` for the all-ones pattern: 1, 5, 19, 65, … -/
+theorem Pc_ones_1 : Pc 1 ones 1 = 1 := by decide
+theorem Pc_ones_2 : Pc 1 ones 2 = 5 := by decide
+theorem Pc_ones_3 : Pc 1 ones 3 = 19 := by decide
+theorem Pc_ones_4 : Pc 1 ones 4 = 65 := by decide
+
+theorem PB_ones_3 : PB ones 3 = 3 := by decide
+
+/-- **The witness, concretely.**  `(−1)·(2³ − 3³) = 19 = c₃`. -/
+theorem ones_three_equation : (-1 : Int) * (2 ^ (3 : Nat) - 3 ^ (3 : Nat)) = 19 := by decide
+
+/-- **The witness, at every length.**  The all-ones pattern's periodic point is
+    `−1` for every `L ≥ 1`, and `−1` is not a natural number.  It passes every
+    congruence test at every depth (`Collatz.all_digits_two`) and is not a cycle.
+    That gap is invisible to a sieve. -/
+theorem ones_witness {L : Nat} (hL : 0 < L) {y : Int} (P : IsPeriodic 1 ones L y) :
+    y = -1 ∧ ¬ ∃ n : Nat, 0 < n ∧ (n : Int) = y := by
+  have hy := minus_one_of_ones hL P
+  refine ⟨hy, ?_⟩
+  rintro ⟨n, hn, he⟩
+  rw [hy] at he
+  omega
+
+/-- The trivial cycle is the constant pattern `b = 2`, and `const_positive_integer`
+    says it is the *only* constant pattern reaching a positive integer. -/
+theorem trivial_is_const_two : (1 : Int) * (2 ^ (2 : Nat) - 3) = 1 := by decide
+
+theorem only_b_two {b : Nat} {y : Int} (h : y * (2 ^ b - 3) = 1) (hy : 0 < y) :
+    b = 2 ∧ y = 1 := const_positive_integer h hy
+
+/-- …and `b = 2` is inhabited, so that is a characterisation, not a vacuity. -/
+theorem const_two_exists : Nonempty (IsPeriodic 1 (const 2) 1 1) := ⟨constTwoPeriodic⟩
+
+/-- A real cycle really is a positive-integer periodic point of its own pattern. -/
+theorem cycle5_is_periodic :
+    (cycle5.M : Int) * (2 ^ cycle5.BB cycle5.L - 3 ^ cycle5.L) = (cycle5.cc cycle5.L : Int) :=
+  cycle5.T7_from_periodic
+
+theorem cycle7_is_periodic :
+    (cycle7.M : Int) * (2 ^ cycle7.BB cycle7.L - 3 ^ cycle7.L) = (cycle7.cc cycle7.L : Int) :=
+  cycle7.T7_from_periodic
 
 /-! ### `cycle5` witnesses the ❌ row of docs/GROUND_TRUTH.md
 

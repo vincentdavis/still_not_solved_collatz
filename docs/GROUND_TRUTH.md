@@ -332,7 +332,7 @@ Two checks run against **real integers**, with no residue arithmetic:
    density 0.286555 vs. the DP limit 0.2863153965; observed mod-`2^a` residue
    sets ⊆ predicted, sizes identical, for `a = 2..14`.
 
-Plus: 221 Python tests over the 2127-cycle census; 1623 real `S_q` cycles
+Plus: 228 Python tests over the 2127-cycle census; 1623 real `S_q` cycles
 (`q < 700`) re-derived independently during the Lean pass with 0 violations;
 `lean/check.sh` verified to *fail* on four deliberately injected defects,
 including a build-passing `sorry`.
@@ -359,8 +359,8 @@ formalized.
 
 ## 7. Formalization status (`lean/`)
 
-Lean 4.33.1, **no Mathlib**, `"packages": []`. 214 declarations audited:
-183 depend on `[propext, Quot.sound]`, 25 on `[propext]`, 6 on nothing. Zero
+Lean 4.33.1, **no Mathlib**, `"packages": []`. 262 declarations audited:
+211 depend on `[propext, Quot.sound]`, 29 on `[propext]`, 22 on nothing. Zero
 `sorry`, zero `axiom`, zero `native_decide`, zero `set_option`.
 
 **Proved:** T0, T1, T1_mod4, T1_q1, T2, T2_mod3, T2_bb, T2_unique, T2_q1,
@@ -510,10 +510,10 @@ integrality; that is the whole gap.
 | min mirror (`m ≡ 3 mod 4`, needs `m > q`) | ✓ | ✓ `Minimum.lean` |
 | that hypothesis cannot be *dropped* | ✓ | ✓ `min_bb_out_needs_its_own_hypothesis` |
 | `L ≤ \|R(O)\|` | ✓ | ✓ `Reach.lean` (count `#eval`'d, not kernel-reduced) |
-| periodic points / the `−1` witness | ✓ | ✗ |
+| periodic points / the `−1` witness | ✓ | ✓ `Periodic.lean` (algebra only; existence and `a_k` are not) |
 | census, death-depth tail, dimension | ✓ | ✗ (measurements, not theorems) |
 
-Lean total: **214 declarations**, all certifying `[propext, Quot.sound]` or
+Lean total: **262 declarations**, all certifying `[propext, Quot.sound]` or
 `[propext]` — no `sorry`, no `Classical.choice`, no Mathlib.
 
 ### A duplication that was removed

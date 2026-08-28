@@ -38,6 +38,54 @@ witness**. The sieve can never empty.
 
 And `−1` is not a natural number.
 
+### Formalized (`lean/Collatz/Periodic.lean`)
+
+The *algebra* of this section is now machine-checked — and it is the first file
+in the development to leave `ℕ`, because the witness is negative. Core `Int`
+only; still no Mathlib, still no `ℝ`.
+
+Read the scope carefully, because it is narrower than the section around it:
+
+- **Proved.** Any periodic point satisfies the cycle equation; the all-ones
+  pattern's point is `−1`; `−1 mod 3^k = 3^k − 1` and every base-3 digit of that
+  is a 2; only `b = 2` among constant patterns reaches a positive integer; a real
+  cycle is a positive-integer periodic point.
+- **Not proved.** *Existence* of a periodic point for an arbitrary pattern. Over
+  `ℤ` that is false — `b = (3)`, `q = 1` gives `1/5`, and only 12 of the 340
+  patterns of length `≤ 4` with entries `≤ 4` have an integer point. The general
+  statement lives in `ℚ`/`ℤ₃`, which this development does not build.
+- **Not proved.** Anything about the sieve itself: `a_k`, class survival, "the
+  sieve never empties". `all_digits_two` is the *ingredient* for that argument,
+  not the argument. `a_k ≥ 1` remains measured, not machine-checked.
+
+| Lean name | statement |
+|---|---|
+| `IsPeriodic` | a point the pattern returns to itself, written without division |
+| `IsPeriodic.closed` | the closed form `3^k z_k + c_k = 2^{B_k} y`, over `ℤ` |
+| `IsPeriodic.cycle_equation` | **`y(2^B − 3^L) = c_L`, with no cycle in the hypotheses** |
+| `periodic_unique` | off `2^B = 3^L` the periodic point is unique |
+| `minus_one_of_ones` | the all-ones pattern's point is `−1`, at every length |
+| `Pc_ones` | `c_L = 3^L − 2^L` for that pattern |
+| `ones_not_a_cycle` | and `−1` is not a natural number |
+| `neg_one_residue` | `−1 mod 3^k = 3^k − 1`, over `ℤ` |
+| `all_digits_two` | every base-3 digit of `3^k − 1` is a 2 |
+| `const_positive_integer` | `q=1`: only `b = 2` gives a positive integer, namely 1 |
+| `Cycle.toPeriodic` | a real cycle *is* a periodic point |
+| `Cycle.T7_from_periodic` | so `T7_eq` is the special case that lands on `ℕ` |
+
+The shape of the argument is worth stating: `cycle_equation` needs no cycle in
+its hypotheses. What distinguishes a cycle is that its solution is a *positive
+integer* — and `Cycle.T7_from_periodic` derives the cycle-only `T7_eq` from the
+general statement. (`T7_eq`'s own proof still stands; the two now sit beside
+each other, with the general one showing the special one was never really about
+cycles.)
+
+A note for anyone extending this file: running `induction d` with a hypothesis
+`a ≤ a + d` in scope makes Lean generalize that hypothesis and pulls
+`Classical.choice` into the certificate. `check.sh` now rejects that (it used to
+only warn), and the fix is to state the lemma in the `a + d` form and specialize
+afterwards — see `two_pow_int_le_add`.
+
 ## The constant patterns, in full
 
 `y = q/(2^b − 3)`:

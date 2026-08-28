@@ -1094,6 +1094,7 @@ footer{border-top:1px solid var(--rule);padding-top:28px;font-size:.84rem;color:
   </div>
 
   <div class="note kill" id="pa-point"></div>
+  <div class="note" style="border-color:var(--violet)" id="pa-lean"></div>
 
   <div class="prose stack">
     <p>It also explains the shape of every measurement above, in a single number.</p>
@@ -2803,6 +2804,26 @@ document.getElementById("pa-point").innerHTML =
   "That is not a congruence question at all — which is why every route on this page stops in the " +
   "same place. The only constant pattern reaching a positive integer is <code>b = " +
   PA.only_positive_integer_b + "</code>, and it gives the cycle we already knew about.";
+
+document.getElementById("pa-lean").innerHTML =
+  "<b>The algebra here is machine-checked — with no cycle in the hypotheses.</b> " +
+  "<code>IsPeriodic.cycle_equation</code> proves <code>y(2<sup>B</sup> − 3<sup>L</sup>) = c<sub>L</sub></code> " +
+  "for any periodic point of any pattern, and <code>Cycle.T7_from_periodic</code> then derives the " +
+  "cycle-only version from it — so the equation was never really a fact about cycles. " +
+  "<code>minus_one_of_ones</code> pins the all-ones pattern's point at <code>−1</code> at every length, " +
+  "<code>neg_one_residue</code> gives <code>−1 mod 3<sup>k</sup> = 3<sup>k</sup> − 1</code>, " +
+  "<code>all_digits_two</code> shows every base-3 digit of that is a 2, and " +
+  "<code>const_positive_integer</code> shows the only constant pattern reaching a positive integer is " +
+  "<code>b = 2</code> — the cycle we already knew." +
+  "<br><br><b>Two things are deliberately not proved.</b> First, <em>existence</em>: that every pattern " +
+  "has a periodic point. Over the integers that is simply false — <code>b = (3)</code> gives " +
+  "<code>1/5</code>, and only 12 of the 340 short patterns land on an integer at all. The general " +
+  "statement lives in <code>ℚ</code>, which this development does not build. Second, anything about " +
+  "the <em>sieve</em>: <code>a_k ≥ 1</code> and &ldquo;the sieve never empties&rdquo; are the " +
+  "interpretation of these lemmas, not theorems in the file. " +
+  "<br><br>This is the first file in the development to leave <code>ℕ</code>. It has to: the witness " +
+  "is negative, and being negative is precisely what a congruence cannot see. Core <code>Int</code>, " +
+  "still no Mathlib and still no <code>ℝ</code>.";
 
 document.getElementById("pa-dim").innerHTML = [
   [PA.dimension.lo + "–" + PA.dimension.hi, "box dimension of the surviving set in ℤ₃"],
