@@ -76,6 +76,23 @@ out = {
         "concl_lhs": 3 * m * c, "concl_rhs": 2 * q * L ** (kappa + 1),
     },
     "verification_limit": 2392312122059207475200,
+    "verification_status": [
+        {"r": "T0–T8, U, FP — the residue constraints", "py": True, "lean": True, "n": ""},
+        {"r": "the equivalence theorem (sieve = cycle problem)", "py": True, "lean": True,
+         "n": "Equivalence.lean; König's lemma assumed, see Unproved.lean"},
+        {"r": "cycle-length bound", "py": True, "lean": True, "n": "Baker input assumed"},
+        {"r": "min–max sandwich, both halves", "py": True, "lean": True,
+         "n": "pow_le_of_min and pow_ge_of_max"},
+        {"r": "u ≥ 2L − B", "py": True, "lean": True, "n": "single_halving_count"},
+        {"r": "the 41.5% figure itself", "py": True, "lean": False,
+         "n": "needs real arithmetic on log₂3, which core Lean has no ℝ for"},
+        {"r": "the minimum's mirror (m ≡ 3 mod 4)", "py": True, "lean": False,
+         "n": "Cycle carries hmax but no hmin"},
+        {"r": "L ≤ |R(O)|", "py": True, "lean": False, "n": "needs finite-set machinery"},
+        {"r": "periodic points and the −1 witness", "py": True, "lean": False, "n": ""},
+        {"r": "census, death-depth tail, dimension", "py": True, "lean": False,
+         "n": "measurements, not theorems"},
+    ],
     "caveat": ("weaker than the published bounds, which use genuine effective irrationality "
                "measures for log2(3); this repo verifies no such constant — that is exactly "
                "the part left as a hypothesis"),

@@ -788,6 +788,8 @@ footer{border-top:1px solid var(--rule);padding-top:28px;font-size:.84rem;color:
     <div class="mono" style="font-size:clamp(.82rem,2vw,1.05rem);line-height:2.1;color:var(--ink)" id="ln-thm"></div>
   </div>
 
+  <div class="note" style="border-color:var(--violet)" id="ln-sandwich"></div>
+
   <div class="prose stack">
     <h3>The part that would normally need analysis</h3>
     <p>The textbook derivation takes logarithms of <code>2^B = ∏ (3 + 1/x_j)</code>. With no
@@ -998,6 +1000,7 @@ footer{border-top:1px solid var(--rule);padding-top:28px;font-size:.84rem;color:
       <span style="color:var(--violet)" id="st-frac"></span>
     </div>
     <div style="font-size:.78rem;color:var(--ink-3);margin-top:8px" id="st-frac-note"></div>
+    <div style="font-size:.78rem;color:var(--violet);margin-top:6px" id="st-lean"></div>
   </div>
 
   <div class="note" style="border-color:var(--violet)" id="st-headline"></div>
@@ -1100,6 +1103,18 @@ footer{border-top:1px solid var(--rule);padding-top:28px;font-size:.84rem;color:
       <th>id</th><th>claim</th><th>hypotheses</th><th>status</th>
     </tr></thead><tbody></tbody></table>
   </div>
+  <div class="prose stack">
+    <h3>Proved, or measured?</h3>
+    <p>The two are not the same thing, and the difference is easy to lose track of once a project
+    has run this long. This is the accounting.</p>
+  </div>
+  <div class="frame scroll">
+    <table id="vstatus"><thead><tr>
+      <th>result</th><th>tested</th><th>machine-checked</th><th>if not, why</th>
+    </tr></thead><tbody></tbody></table>
+  </div>
+  <div class="note" id="vstatus-note"></div>
+
   <div class="tally" id="tally2"></div>
 </section>
 
@@ -2718,6 +2733,39 @@ document.getElementById("pa-dim").innerHTML = [
   ["< 1", "so it has density zero — the sieve does keep cutting"],
   ["1", "dimension of the 2-adic survivors: positive density, no cutting at all"]
 ].map(function(t){ return "<div><b>" + t[0] + "</b><span>" + t[1] + "</span></div>"; }).join("");
+
+
+/* ─── the sandwich is now formalized on both sides ─── */
+document.getElementById("ln-sandwich").innerHTML =
+  "<b>Both halves of the min–max sandwich are now machine-checked.</b> " +
+  "<code>pow_le_of_min</code> gives <code>m<sup>L</sup>·2<sup>B</sup> ≤ (3m+q)<sup>L</sup></code> and " +
+  "<code>pow_ge_of_max</code> gives <code>(3M+q)<sup>L</sup> ≤ M<sup>L</sup>·2<sup>B</sup></code> — " +
+  "together the two-sided squeeze, written without division and so without any real arithmetic.";
+
+/* ─── u >= 2L - B is machine-checked; the 41.5% step is not ─── */
+document.getElementById("st-lean").innerHTML =
+  "✓ <code>Cycle.single_halving_count</code> — the integer inequality is machine-checked. " +
+  "Turning it into the 41.5% figure needs real arithmetic on <code>log₂3</code>, and core Lean has " +
+  "no <code>ℝ</code>, so that last step is not.";
+
+/* ─── the verification table ─── */
+(function vstatus(){
+  var V = D.lean.verification_status;
+  document.querySelector("#vstatus tbody").innerHTML = V.map(function(r){
+    return '<tr' + (r.lean ? ' class="hl"' : '') + '><td>' + r.r + '</td>' +
+      '<td class="n"><span class="ok">✓</span></td>' +
+      '<td class="n">' + (r.lean ? '<span class="ok">✓</span>' : '<span class="dash">—</span>') + '</td>' +
+      '<td style="font-size:.9em;color:var(--ink-3)">' + (r.n || '') + '</td></tr>';
+  }).join("");
+  var n = V.filter(function(r){ return r.lean; }).length;
+  document.getElementById("vstatus-note").innerHTML =
+    "<b>" + n + " of " + V.length + " lines are machine-checked</b>, across " +
+    D.lean.audited_decls + " Lean declarations that all certify <code>" + D.lean.axioms +
+    "</code> — no <code>sorry</code>, no <code>Classical.choice</code>, no Mathlib. The rest are " +
+    "tested against thousands of real <code>3n+q</code> cycles but rest on floating-point or on " +
+    "machinery a Mathlib-free development does not have. Two of them have identifiable blockers " +
+    "rather than missing effort, which is why they are named here instead of quietly omitted.";
+})();
 
 /* ═══ 7. STATUS ════════════════════════════════════════════════ */
 document.querySelector("#th-table tbody").innerHTML = D.theorems.map(function(t){
