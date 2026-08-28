@@ -931,6 +931,80 @@ footer{border-top:1px solid var(--rule);padding-top:28px;font-size:.84rem;color:
 </section>
 
 
+<!-- ══ STRUCTURE ═════════════════════════════════════════════════ -->
+<section>
+  <div class="eyebrow">Working from the top down</div>
+  <h2>Fix the largest element. What must the rest look like?</h2>
+  <div class="prose stack">
+    <p>Suppose <code>O</code> is the biggest odd number in a cycle. That single assumption pins
+    down a surprising amount about everything below it — how long the cycle can be, how the climb
+    and the fall must be shaped, and even what fraction of its steps take a particular form.</p>
+    <h3>The cycle can only use what <code>O</code> can reach</h3>
+    <p>Every element lies at or below <code>O</code>, and every element is reached from another
+    one. So the whole cycle sits inside <code>R(O)</code> — everything reachable backwards from
+    <code>O</code> without ever going above it. That caps the length outright.</p>
+  </div>
+
+  <figure>
+    <div class="frame stack">
+      <div class="row">
+        <label for="st-O">largest odd O</label>
+        <input id="st-O" type="text" inputmode="numeric" value="49" size="12" aria-label="largest odd">
+        <label for="st-q">q</label>
+        <input id="st-q" type="number" value="5" min="1" step="2" style="width:70px">
+        <button class="st-eg" data-o="49" data-q="5">49 · q=5</button>
+        <button class="st-eg" data-o="79" data-q="11">79 · q=11</button>
+        <button class="st-eg" data-o="3077" data-q="1">3077 · q=1</button>
+        <button class="st-eg" data-o="1000003" data-q="1">10⁶+3 · q=1</button>
+      </div>
+      <div id="st-out" class="verdict"></div>
+    </div>
+    <figcaption>The first two presets are genuine cycle maxima: their whole cycle appears inside
+    <code>R(O)</code>. The last two are ordinary numbers, where <code>R(O)</code> collapses almost
+    to nothing.</figcaption>
+  </figure>
+
+  <div class="tally" id="st-reach"></div>
+
+  <div class="prose stack">
+    <h3>The climb is slow. The fall need not be.</h3>
+    <p>Split the cycle at its two extremes. Going up from the minimum, each step multiplies by at
+    most <code>(3 + q/m)/2</code> — about <code>1.5</code> — so climbing from <code>m</code> to
+    <code>O</code> takes at least <code>1.71·log₂(O/m)</code> steps. Coming down there is no such
+    limit: one large halving can undo many small climbs.</p>
+  </div>
+
+  <div class="frame scroll">
+    <table id="st-ex"><thead><tr>
+      <th>q</th><th>min m</th><th>max O</th><th>L</th><th>|R(O)|</th>
+      <th>steps up</th><th>bound</th><th>steps down</th>
+    </tr></thead><tbody></tbody></table>
+  </div>
+
+  <div class="note" id="st-asym"></div>
+
+  <div class="prose stack">
+    <h3>And at least 41.5% of the steps are single halvings</h3>
+    <p>Write <code>u</code> for the number of steps taking exactly one halving. Since every other
+    step takes at least two, <code>B ≥ u + 2(L−u)</code>, so <code>u ≥ 2L − B</code>. That is exact
+    and holds on every cycle in the census.</p>
+    <p>For <code>q = 1</code> it becomes sharp, because the min-max sandwich pins
+    <code>B/L</code> to <code>log₂3</code> to twenty-two decimal places:</p>
+  </div>
+
+  <div class="frame" style="text-align:center;padding:26px 18px">
+    <div class="mono" style="font-size:clamp(.86rem,2.1vw,1.1rem);line-height:2;color:var(--ink)">
+      u / L &nbsp;≥&nbsp; 2 − log<sub>2</sub>3 &nbsp;=&nbsp;
+      <span style="color:var(--violet)" id="st-frac"></span>
+    </div>
+    <div style="font-size:.78rem;color:var(--ink-3);margin-top:8px" id="st-frac-note"></div>
+  </div>
+
+  <div class="note" style="border-color:var(--violet)" id="st-headline"></div>
+  <div class="note warn" id="st-notdo"></div>
+</section>
+
+
 <!-- ══ WHY NOT ═══════════════════════════════════════════════════ -->
 <section>
   <div class="eyebrow">The answer underneath</div>
@@ -2451,6 +2525,104 @@ document.getElementById("bd-never").innerHTML =
   "always survives. That is not an accident of the computation: by the equivalence theorem, "+
   "certifying <em>every</em> class would prove the conjecture. Coverage climbs toward 100% and "+
   "never arrives. The same wall, in its fifth disguise.";
+
+/* ═══ 7g. STRUCTURE FROM THE MAXIMUM ═══════════════════════════ */
+var ST = D.structure;
+
+/* R(O) live -- the same visited-set walk as the Python side */
+function reachableSet(O, q, cap){
+  var seen = new Set([O]), stack = [O];
+  while(stack.length){
+    if(seen.size > cap) return null;
+    var y = stack.pop();
+    if(y % 3 === 0) continue;
+    var b = ((y % 3) === (q % 3)) ? 2 : 1;
+    while(true){
+      var num = Math.pow(2, b) * y - q;
+      if(num <= 0){ b += 2; continue; }
+      if(!isFinite(num)) break;
+      var z = (num) / 3;
+      if(z > O) break;
+      if(Number.isInteger(z) && z > 0 && !seen.has(z)){ seen.add(z); stack.push(z); }
+      b += 2;
+    }
+  }
+  return seen;
+}
+function stRender(){
+  var O = parseInt(document.getElementById("st-O").value.replace(/[^0-9]/g,""), 10);
+  var q = Math.max(1, parseInt(document.getElementById("st-q").value, 10) || 1);
+  var out = document.getElementById("st-out");
+  if(!O || O % 2 === 0 || O < 1){
+    out.innerHTML = '<div class="work">Enter a positive odd number.</div>'; return;
+  }
+  var R = reachableSet(O, q, 20000);
+  if(!R){ out.innerHTML = '<div class="work">R(O) is too large to draw here.</div>'; return; }
+  var arr = Array.from(R).sort(function(a,b){ return a-b; });
+  var shown = arr.length > 24 ? arr.slice(0,24).join(", ") + ", …" : arr.join(", ");
+  out.innerHTML =
+    '<div class="head"><span class="n">|R(O)| = '+fmt(arr.length)+'</span>'+
+      '<span class="badge '+(arr.length > 2 ? "b-live" : "b-kill")+'">L ≤ '+fmt(arr.length)+'</span></div>'+
+    '<div class="work">R('+fmt(O)+') for q = '+q+' = { '+shown+' }</div>'+
+    '<div class="note" style="border-color:var(--'+(arr.length>2?"violet":"ink-3")+')">'+
+      (arr.length <= 2
+        ? 'Only '+arr.length+' number'+(arr.length>1?'s':'')+' can reach '+fmt(O)+' from below without '+
+          'exceeding it — far too few for a cycle. Refuted immediately.'
+        : 'Any cycle with maximum '+fmt(O)+' must be built entirely from these '+arr.length+' numbers.')+
+    '</div>';
+}
+["st-O","st-q"].forEach(function(id){
+  document.getElementById(id).addEventListener("input", stRender);
+});
+Array.prototype.forEach.call(document.querySelectorAll(".st-eg"), function(b){
+  b.addEventListener("click", function(){
+    document.getElementById("st-O").value = b.dataset.o;
+    document.getElementById("st-q").value = b.dataset.q;
+    stRender();
+  });
+});
+stRender();
+
+(function reach(){
+  var S = ST.reach_stats;
+  document.getElementById("st-reach").innerHTML = [
+    [S.median, "median |R(O)| for ordinary odd numbers near 10⁶"],
+    [S.mean, "mean — the backward tree almost always dies at once"],
+    [fmt(S.max), "the largest seen over " + fmt(S.n) + " samples"],
+    [ST.violations.reach, "cycles in the census that escaped their own R(O)"]
+  ].map(function(t){ return "<div><b>"+t[0]+"</b><span>"+t[1]+"</span></div>"; }).join("");
+})();
+
+document.querySelector("#st-ex tbody").innerHTML = ST.examples.map(function(r){
+  return '<tr><td class="n">'+r.q+'</td><td class="n">'+fmt(r.m)+'</td><td class="n">'+fmt(r.M)+
+    '</td><td class="n">'+r.L+'</td><td class="n">'+r.R+'</td>'+
+    '<td class="n"><b>'+r.up+'</b></td><td class="n">'+r.bound+'</td>'+
+    '<td class="n">'+r.down+(r.down===1?' <span class="ok">←</span>':'')+'</td></tr>';
+}).join("");
+
+document.getElementById("st-asym").innerHTML =
+  "<b>The two halves are different objects.</b> Across the census the ascent takes a mean <b>"+
+  (100*ST.ascent.share_mean).toFixed(1)+"%</b> of the cycle (ranging "+
+  (100*ST.ascent.share_min).toFixed(0)+"% to "+(100*ST.ascent.share_max).toFixed(0)+"%), while in <b>"+
+  ST.ascent.single_step_descents+" of "+ST.cycles+"</b> cycles the maximum falls to the minimum in a "+
+  "<em>single step</em>. Climbing is bounded below; falling is not bounded at all.";
+
+document.getElementById("st-frac").textContent = ST.halving.q1_fraction;
+document.getElementById("st-frac-note").innerHTML =
+  "exact form <code>u ≥ 2L − B</code>, checked with "+ST.violations.halving+
+  " violations across "+ST.cycles+" cycles";
+
+document.getElementById("st-headline").innerHTML =
+  "<b>At least "+(100*ST.halving.q1_fraction).toFixed(1)+"% of the steps in a hypothetical Collatz "+
+  "cycle must be single halvings</b> — equivalently, at least that share of its odd elements are "+
+  "<code>≡ 3 (mod 4)</code>. A concrete structural fact about an object nobody has ever seen.";
+
+document.getElementById("st-notdo").innerHTML =
+  "<b>What this does not do.</b> None of it forces a cycle out of existence. The length bound is "+
+  "only as strong as the published lower bound on <code>L</code> you compare it against; the other "+
+  "two describe the <em>shape</em> a cycle must have, not whether one exists. Structure, not "+
+  "obstruction — and worth keeping straight, because a constraint this specific can easily read "+
+  "like progress when it is not.";
 
 /* ═══ 7f. WHY A CONGRUENCE SIEVE CANNOT FINISH ═════════════════ */
 var PA = D.padic;
