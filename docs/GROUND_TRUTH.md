@@ -263,6 +263,19 @@ asymptotic floor from `N(k)` is `(λ/3)^k = 0.9465^k·k^(−1.51)`. The collisio
 term is still decreasing at `k = 20` and its asymptotics were not determined —
 **no claim is made** that the density decays at rate `0.82^k`.
 
+⚠️ **This table is a different sieve from `a_k`, and the two are easy to
+confuse.** Read as `a_{k+1}` the row agrees at `k = 1, 3, 5, 6, 8, 10, 15, 20`
+but **not** at `k = 2, 4, 7`, where it gives `4, 13, 123` against
+`a_3, a_5, a_8 = 3, 10, 104`. Concretely `SURV3[2]` lists `{2, 17, 20, 26}`
+mod 27 while the magnitude-free survivor set is `{17, 20, 26}` — the extra class
+`2` survives the T6 test here but not the `2^{B_k} ≤ 3^k` one. The `a_k` of
+§7 and `docs/DEATH_DEPTH.md` are the magnitude-free counts; this table is the
+exact-size-test counts, and the discrepancy at those three depths has not been
+run down. Neither is wrong; they are answers to different questions, and the
+row heading does not say which. (The "three independent routes" claim for `a_k`
+elsewhere rests on `exact_tail`, `surviving_residue_count` and `class_coverage`,
+none of which is this table.)
+
 Exact survivor sets, `M mod 3^{k+1}`:
 
 ```python
@@ -332,7 +345,7 @@ Two checks run against **real integers**, with no residue arithmetic:
    density 0.286555 vs. the DP limit 0.2863153965; observed mod-`2^a` residue
    sets ⊆ predicted, sizes identical, for `a = 2..14`.
 
-Plus: 247 Python tests over the 2127-cycle census; 1623 real `S_q` cycles
+Plus: 252 Python tests over the 2127-cycle census; 1623 real `S_q` cycles
 (`q < 700`) re-derived independently during the Lean pass with 0 violations;
 `lean/check.sh` verified to *fail* on four deliberately injected defects,
 including a build-passing `sorry`.
@@ -506,11 +519,17 @@ motivated them.
 1. **Where the over-dispersion lives.** Guessed `m ≤ q`; it is concentrated in
    `m > q` (var/mean 10.1 against 3.6) — the regime that most *resembles*
    `q = 1`, not the one least like it.
-2. **A certified upper bound on the tail rate.** `a_k` is supermultiplicative
-   and not submultiplicative, so Fekete gives a rigorous **lower** bound
-   (0.7364) and no upper bound at all. **The published bracket
-   `[0.896, 0.947]` is therefore not an interval of proof** — its lower end is
-   a model fit. The rigorous bracket is `[0.736, 0.947]`.
+2. **A certified upper bound on the tail rate.** Guessed the wrong direction:
+   `a_k` is supermultiplicative and not submultiplicative, so Fekete gives a
+   **lower** bound and no upper bound at all. That direction is then *provable*,
+   and is now **proved** — `a_(j+k) ≥ a_j·a_k` by splicing chains, the size cap
+   composing and a lexicographic-least choice giving injectivity. So
+   `μ = lim a_k^(1/k)` exists, equals `sup_k a_k^(1/k)`, and the rate is
+   rigorously `≥ 0.7364`. **The published bracket `[0.896, 0.947]` is not an
+   interval of proof**: its lower end is a model fit, and its upper end needs
+   `lim N_k^(1/k) = λ`, which §5 above gets *empirically*. Only the `0.7364`
+   is proved outright. The argument is standard Fekete and very likely
+   folklore — see `docs/EXPLORE.md` for the prior-art note.
 3. **The Hercher pincer.** `L ≤ |R(O)|` plus Hercher's `L > 1.375×10¹¹` means a
    cycle maximum needs `|R(O)| > 1.375×10¹¹`. Measured: `|R(M)|` is flat in `M`
    (median 3–4 from `10⁵` to `10¹⁰`) with a maximum of 289 — nine orders of

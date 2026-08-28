@@ -57,10 +57,13 @@ Neither leads stably -- the ranking FLIPS with one more term:
 
 That reversal on a single data point is the honest result: the computed range
 cannot separate them.  Separating them needs the model gap to clear the residual Sturmian
-oscillation of +/-14%, which happens near k = 33 -- about 7e11 tree nodes and
-two weeks of compute.  Not attempted.
+oscillation of +/-14%, which happens near k = 36 -- about 2e13 tree nodes and
+about a year of compute.  Not attempted.
 
-So the tail rate is BRACKETED, 0.897 <= rate <= 0.947, and NOT confirmed.  An
+So the FITTED bracket is 0.896 <= rate <= 0.947.  The RIGOROUS bracket is
+wider: a_k is supermultiplicative (proved, docs/EXPLORE.md), so Fekete gives
+rate >= a_24^(1/24)/3 = 0.7364, and the upper end rests on a measured
+asymptotic for N_k rather than a bound, and NOT confirmed.  An
 earlier fit of 0.705 over k = 3..10 was pre-asymptotic and is wrong.
 
 Note also: if the rate is the conjectured lambda/3 then the polynomial factor is
@@ -178,6 +181,62 @@ def tail_ratios(a: list[int]) -> Iterator[float]:
     """``a_k / a_{k-1}`` -- conjectured to approach ``2.83951``."""
     for prev, cur in zip(a, a[1:]):
         yield cur / prev
+
+
+def live_chains(y: int, B: int, j: int, d: int) -> list[tuple[int, ...]]:
+    """Every live halving vector of length ``d`` from residue ``y``.
+
+    Live means each division by 3 is exact and the magnitude-free cap
+    ``2^{B_t} <= 3^t`` holds at every step.  Used by :func:`splice`, which is
+    the constructive heart of the supermultiplicativity proof; for counting use
+    :func:`surviving_residue_count`, which is far faster.
+    """
+    if d == 0:
+        return [()]
+    if y % 3 == 0:
+        return []
+    out: list[tuple[int, ...]] = []
+    b = 2 if y % 3 == 1 else 1
+    while (1 << (B + b)) <= 3 ** (j + 1):
+        num = (1 << b) * y - 1
+        if num % 3 == 0:
+            for tail in live_chains(num // 3, B + b, j + 1, d - 1):
+                out.append((b,) + tail)
+        b += 2
+    return out
+
+
+def survives(r: int, k: int) -> bool:
+    """Does the residue ``r`` survive the magnitude-free sieve to depth ``k``?"""
+    return bool(live_chains(r, 0, 0, k))
+
+
+def splice(r: int, j: int, s: int, k: int) -> int:
+    """The residue mod ``3^(j+k)`` witnessing ``a_(j+k) >= a_j * a_k``.
+
+    Given ``r`` surviving to depth ``j`` and ``s`` surviving to depth ``k``,
+    returns the unique ``M mod 3^(j+k)`` that (a) reduces to ``r`` mod ``3^j``
+    and (b) whose depth-``j`` endpoint along ``r``'s canonical chain is ``s``
+    mod ``3^k``.  Such an ``M`` survives to depth ``j+k``: the two chains
+    concatenate, and the size cap composes because ``2^{B} <= 3^j`` and
+    ``2^{B'} <= 3^i`` give ``2^{B+B'} <= 3^{j+i}``.
+
+    The canonical chain is the lexicographically least live one, which is what
+    makes the map injective: ``r`` is read off ``M mod 3^j``, the chain follows,
+    and then so does ``s``.
+
+    See docs/EXPLORE.md for the proof this construction certifies.
+    """
+    cs = live_chains(r, 0, 0, j)
+    if not cs:
+        raise ValueError(f"{r} does not survive to depth {j}")
+    bs = min(cs)                               # canonical: lexicographically least
+    y = r
+    for b in bs:
+        y = ((1 << b) * y - 1) // 3            # y_j for M = r, exactly
+    mod = 3 ** k
+    t = (pow(pow(2, sum(bs), mod), -1, mod) * (s - y)) % mod
+    return (r + 3 ** j * t) % 3 ** (j + k)
 
 
 def surviving_residue_count(K: int) -> list[int]:

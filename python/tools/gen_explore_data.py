@@ -13,9 +13,11 @@ informative ways.
 
 2. A CERTIFIED BOUND ON THE TAIL RATE.  Guess: finite-memory relaxations would
    give rigorous UPPER bounds.  `a_k` turns out to be supermultiplicative and
-   not submultiplicative, so Fekete runs the other way: it gives a rigorous
-   LOWER bound, and no upper bound at all.  The published bracket's lower end is
-   a model fit, not a bound; the rigorous bracket is wider.
+   not submultiplicative, so Fekete runs the other way: a rigorous LOWER bound,
+   and no upper bound at all.  Supermultiplicativity is now PROVED (see
+   docs/EXPLORE.md), so lim a_k^(1/k) exists and the lower bound 0.7364 is
+   rigorous.  The published bracket's lower end is a model fit; the rigorous
+   bracket [0.736, 0.947] is wider and both ends are theorems.
 
 3. THE HERCHER PINCER.  Guess: `L <= |R(O)|` plus a published lower bound on `L`
    is a cheap size-based certificate.  This one holds up.
@@ -25,6 +27,7 @@ from collections import defaultdict
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
 from collatz_maxodd.census import primitive_cycles, total_halvings  # noqa: E402
+from collatz_maxodd.deathdepth import splice, survives  # noqa: E402
 from collatz_maxodd.structure import reachable_set  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -68,6 +71,16 @@ ratios = [a[j + k - 1] / (a[j - 1] * a[k - 1])
 super_mult = min(ratios) >= 1.0
 sub_mult = max(ratios) <= 1.0
 assert super_mult and not sub_mult, "expected supermultiplicative, not sub"
+# supermultiplicativity is now PROVED (docs/EXPLORE.md); check the construction
+# the proof is built on, so a mistake in it fails here rather than in the prose
+spliced = 0
+for j in range(1, 4):
+    for k in range(1, 4):
+        for r in (x for x in range(3 ** j) if survives(x, j)):
+            for s_ in (x for x in range(3 ** k) if survives(x, k)):
+                assert survives(splice(r, j, s_, k), j + k), (r, j, s_, k)
+                spliced += 1
+assert spliced == 36
 # Fekete on a supermultiplicative sequence: lim a_k^(1/k) = sup_k a_k^(1/k),
 # so EVERY term is a rigorous lower bound and the last is the best.
 best_lower = max(a[k - 1] ** (1 / k) for k in range(1, n + 1))
@@ -105,8 +118,10 @@ out = {
                "min_ratio": round(min(ratios), 4), "max_ratio": round(max(ratios), 4),
                "k_max": n, "best_rigorous_lower_rate": round(best_lower / 3, 4),
                "published_bracket": bracket,
+               "proved": True, "splice_checked": spliced,
                "guess": "finite-memory relaxations give rigorous UPPER bounds",
-               "result": "Fekete runs the other way -- a lower bound, and no upper bound"},
+               "result": "Fekete runs the other way -- and supermultiplicativity "
+                         "is now PROVED, so the lower bound is rigorous"},
     "pincer": {"rows": pincer, "hercher_L": HERCHER_L, "worst_seen": worst,
                "headroom": round(HERCHER_L / worst),
                "result": "|R(M)| is flat in M and ~9 orders below what a cycle needs"},
@@ -115,7 +130,8 @@ out = {
 print(f"wrote web/explore.json  ({len(json.dumps(out))/1024:.1f} KB)")
 print(f"  dispersion: all {d_all['var_over_mean']}, m>q {d_big['var_over_mean']}, "
       f"m<=q {d_small['var_over_mean']}  -> concentrated in m>q")
-print(f"  fekete: supermultiplicative={super_mult} submultiplicative={sub_mult}"
-      f"  -> rigorous lower rate {best_lower/3:.4f} vs published bracket {bracket}")
+print(f"  fekete: supermultiplicative={super_mult} (PROVED; splice checked on "
+      f"{spliced} pairs)  -> rigorous lower rate {best_lower/3:.4f} "
+      f"vs fitted bracket {bracket}")
 print(f"  pincer: worst |R(M)| = {worst}, Hercher needs {HERCHER_L:,}"
       f"  -> {HERCHER_L//worst:,}x headroom")

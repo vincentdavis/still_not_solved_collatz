@@ -54,41 +54,130 @@ not explained; it is only better localised.
 
 ---
 
-## 2. A certified bound on the tail rate — *Fekete runs the other way*
+## 2. A certified bound on the tail rate — *the guess was backwards, and then the other direction turned out to be provable*
 
-The death-depth tail rate is bracketed `[0.8958, 0.9465]`, and
-deciding it needs `k ≈ 36`. I proposed finite-memory relaxations whose spectral
-radii would be rigorous **upper** bounds, turning the coin flip into a one-sided
-theorem.
+The death-depth tail rate is bracketed `[0.896, 0.947]`, and deciding it needs
+`k ≈ 36`. I proposed finite-memory relaxations whose spectral radii would be
+rigorous **upper** bounds, turning the coin flip into a one-sided theorem.
 
-The sequence does not cooperate. Over all `j + k ≤ 24`:
+The sequence does not cooperate in that direction. Over all `j + k ≤ 24`:
 
 ```
-a_(j+k) / (a_j a_k)  ranges over [1.5, 18.5927]
+a_(j+k) / (a_j a_k)  ranges over [1.5000, 18.5927]
 ```
 
 so `a_k` is **supermultiplicative** and emphatically **not** submultiplicative.
-Fekete's lemma therefore gives `lim a_k^(1/k) = sup_k a_k^(1/k)` — every term is
-a rigorous **lower** bound, and the route yields no upper bound at all.
+Fekete's lemma therefore runs the other way: it gives a rigorous **lower** bound
+and no upper bound at all.
 
-The best rigorous lower bound is `a_24^(1/24)/3 = 0.7364`.
+That was where this stopped, as an observation on 24 terms. It is now a theorem.
 
-**This changes how the bracket should be read.** `[0.8958, 0.9465]`
-is not an interval of proof: its upper end is the genuine bound `λ/3` from
-`a_k ≤ N_k`, but its lower end is where the fitted models put the rate. The
-rigorous bracket is
+### `a_(j+k) ≥ a_j · a_k`
+
+Write `S_k ⊆ Z/3^k` for the residues surviving the magnitude-free sieve to depth
+`k`, so `a_k = |S_k|`. A halving vector `(b_1,…,b_i)` is *live for `M` at depth
+`i`* if every division by 3 is exact and the cap `2^{B_t} ≤ 3^t` holds for all
+`t ≤ i`.
+
+**Lemma (locality).** Whether `(b_1,…,b_i)` is live for `M` depends only on
+`M mod 3^i`.
+
+*Proof.* The closed form gives `3^t y_t = 2^{B_t} M − c_t`, with `c_t` depending
+only on the `b`'s. Exactness at step `t` is a condition on `y_(t−1) mod 3`, which
+that identity determines from `M mod 3^t`. The cap does not involve `M`. ∎
+
+So `S_i` is well defined. Now fix `j, k`, and for each `r ∈ S_j` choose the
+**lexicographically least** live vector `β(r)`; write `B` for its halving total
+and `c` for its constant. For `M ≡ r (mod 3^j)`, put `M = r + 3^j t`; then
 
 ```
-[0.7364, 0.9465]
+y_j  =  (2^B M − c)/3^j  =  y_j(r) + 2^B · t
 ```
 
-which is much wider. Worth keeping straight.
+and since `gcd(2,3) = 1`, `t ↦ y_j(r) + 2^B t` is a **bijection** of `Z/3^k`.
+Define `Φ(r, s) = r + 3^j t` for the unique `t` with `y_j ≡ s (mod 3^k)`.
 
-(Supermultiplicativity is *observed on 24 terms*, not proved.
-There is a natural argument behind it — the size cap `2^B ≤ 3^k` is
-multiplicative, so two surviving chains ought to splice — but this repository
-does not prove it, and the rigorous lower bound above is only as good as that
-assumption.)
+**Claim A — `Φ(r,s) ∈ S_(j+k)`.** By locality `β(r)` is live for `M = Φ(r,s)` at
+depth `j`, landing on `y_j ≡ s`. Since `s ∈ S_k`, some `β'` is live for `s` at
+depth `k`, hence by locality live for `y_j`. Concatenate. The caps compose,
+which is the crux:
+
+```
+2^{B + B'_i}  =  2^B · 2^{B'_i}  ≤  3^j · 3^i  =  3^{j+i}
+```
+
+so every cap of the spliced chain holds. ∎
+
+**Claim B — `Φ` is injective.** `Φ(r,s) mod 3^j = r`, so `r` is recovered; the
+canonical choice makes `β(r)` a function of `r`; then `y_j` is determined by `M`,
+and `s = y_j mod 3^k`. ∎
+
+Hence `a_(j+k) = |S_(j+k)| ≥ |S_j × S_k| = a_j · a_k`. **∎**
+
+The canonical choice is the whole trick, and it is where I expected the argument
+to fail — the sieve's state is a *set* of live chains, which is exactly why `a_k`
+has no finite transfer matrix. But injectivity only needs *some* function of `r`,
+not a canonically meaningful one, and a finite nonempty set always has a least
+element. The difficulty that blocks the transfer matrix does not block this.
+
+### Consequence: the limit exists, and the bracket's lower end is a fit
+
+`a_k ≥ 1` (the `−1` witness) and `a_k ≤ 3^k`, so `a_k^(1/k) ∈ [1, 3]`. With
+superadditivity of `log a_k`, Fekete gives
+
+```
+mu  :=  lim_k a_k^(1/k)   EXISTS   and equals   sup_k a_k^(1/k)
+```
+
+so **every** computed term is a rigorous lower bound. (Superadditivity does not
+make `a_k^(1/k)` monotone — only the running maximum is guaranteed to improve;
+it happens to be monotone through `k = 24`, but that is data.) The best
+available is `k = 24`:
+
+```
+mu  >=  a_24^(1/24)  =  2.2093        tail rate  =  mu/3  >=  0.7364
+```
+
+Combined with the standing upper bound `a_k ≤ N_k` (giving `mu ≤ λ = 2.8395`):
+
+| | rate | status |
+|---|---|---|
+| lower | **0.7364** | **proved** (this section) |
+| upper | **0.9465** | `a_k ≤ N_k` is proved; `μ ≤ λ` also needs `lim N_k^(1/k) = λ`, which `GROUND_TRUTH.md` §5 gets **empirically** |
+| published bracket | `[0.8958, 0.9465]` | lower end is a **model fit** |
+
+So `[0.896, 0.947]` is not an interval of proof, and saying so is the point. But
+be exact about which end: the lower one is a fitted model parameter, and the
+upper one leans on a numerically-confirmed asymptotic for `N_k` rather than a
+bound. **Only the 0.7364 is proved outright here.**
+
+That upper end looks closable — `N_k` is supermultiplicative too, and the
+elementary count `N_k ≤ ⌊αk⌋·C(⌊αk⌋, k−1)` should give `μ ≤ λ` directly — but
+this repository does not do it, so it stays measured.
+
+`deathdepth.splice` implements `Φ`. `test_explore.py` checks it lands in the
+survivors and is injective — including at `(j,k) = (5,6)`, `(6,5)` and `(4,7)`.
+That last detail matters: below `j + k = 11` no `M` in the image carries two
+live depth-`j` chains, so a *non-canonical* implementation would pass a shallow
+test. At `(5,6)` one does — `M = 42443 mod 3^11` has depth-5 chains ending at
+both `242` and `485 mod 3^6`, both survivors — so the choice function is tested
+where it is actually load-bearing.
+
+**Prior art — no novelty claimed.** This is the textbook Fekete setup for a
+concatenation-closed family: the admissible halving vectors are closed under
+concatenation (the caps compose by `⌊x⌋ + ⌊y⌋ ≤ ⌊x+y⌋`), the residue map
+respects it, and a canonical-representative trick turns a surjection into an
+injection from a product. The same shape appears for factor complexity of
+concatenation-closed languages, and these objects — counts of admissible
+vectors, 3-adic classes in the backward tree — are the territory of
+Applegate & Lagarias, *Density bounds for the 3x+1 problem I* (Math. Comp. 64,
+1995) and Wirsching (LNM 1681). It is half a page of standard argument and is
+very likely folklore there. It is written out because the repository was
+relying on it as an observation, not because it is new.
+
+*Not formalized in Lean.* The counting step needs "an injection from a product
+bounds the product of counts", which the development does not have — the nearest
+thing, `Cycle.length_le_count`, uses pigeonhole for a one-sided bound.
 
 ---
 

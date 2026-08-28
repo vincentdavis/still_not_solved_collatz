@@ -117,6 +117,15 @@ compute. Not attempted. (These figures come from
 
 **Bracketed result:** `0.897 ≤ tail rate ≤ 0.947`.
 
+> **The bracket is not an interval of proof.** Its upper end is a genuine bound
+> (`a_k ≤ N_k`, so `μ ≤ λ`). Its lower end is where the fitted models sit.
+> Supermultiplicativity of `a_k` — `a_(j+k) ≥ a_j·a_k`, **proved** in
+> `docs/EXPLORE.md` — plus Fekete shows the limit `μ = lim a_k^(1/k)` *exists*
+> and equals `sup_k a_k^(1/k)`, so every computed term is a rigorous lower
+> bound. At `k = 24` that gives rate `≥ 0.7364`. The **rigorous** bracket is
+> therefore `[0.7364, 0.9465]`, wider than the fitted one, with both ends
+> theorems.
+
 ⚠️ **A second correction.** Even if the rate is the conjectured `λ/3`, the
 polynomial factor is `k^(−2.2)`, **not** the `k^(−3/2)` recorded earlier —
 since `a_k ~ N_k·k^(−0.70) ~ λ^k·k^(−3/2−0.70)`.

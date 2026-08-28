@@ -133,3 +133,119 @@ def test_a_real_cycle_max_would_be_wildly_atypical():
     """
     # the known q=5 cycle max has |R| = 10 and L = 3: L <= |R(O)| holds
     assert 3 <= len(reachable_set(49, 5)) == 10
+
+
+# ---------------------------------------------------------------------------
+# Supermultiplicativity, PROVED -- see docs/EXPLORE.md.
+#
+# These check the construction the proof is built on, not just the inequality:
+# if the splice ever failed to land in the survivors, or ever collided, the
+# proof would be wrong and these would catch it.
+# ---------------------------------------------------------------------------
+
+
+def test_the_splice_lands_in_the_survivors():
+    """Claim A: splice(r,j,s,k) survives to depth j+k.
+
+    The two chains concatenate and the size cap composes, because
+    2^B <= 3^j and 2^B' <= 3^i give 2^(B+B') <= 3^(j+i).
+    """
+    from collatz_maxodd.deathdepth import splice, survives
+
+    n = 0
+    for j in range(1, 5):
+        for k in range(1, 5):
+            if j + k > 7:
+                continue
+            for r in (x for x in range(3 ** j) if survives(x, j)):
+                for s in (x for x in range(3 ** k) if survives(x, k)):
+                    assert survives(splice(r, j, s, k), j + k), (r, j, s, k)
+                    n += 1
+    assert n == 108
+
+
+def test_the_splice_is_injective():
+    """Claim B: distinct (r,s) give distinct M.
+
+    r is recovered as M mod 3^j; the canonical chain follows from r; then the
+    depth-j endpoint, and hence s, follows from M.  This is the step the
+    canonical choice exists for.
+    """
+    from collatz_maxodd.deathdepth import splice, survives
+
+    for j in range(1, 5):
+        for k in range(1, 5):
+            if j + k > 7:
+                continue
+            seen = {}
+            for r in (x for x in range(3 ** j) if survives(x, j)):
+                for s in (x for x in range(3 ** k) if survives(x, k)):
+                    M = splice(r, j, s, k)
+                    assert M not in seen, (M, seen.get(M), (r, s))
+                    seen[M] = (r, s)
+
+
+def test_the_splice_is_injective_where_canonicity_actually_bites():
+    """Injectivity past j+k = 11 -- the first depth where it could fail.
+
+    A residue can carry several live depth-j chains; below j+k = 11 no M in the
+    image does, so a non-canonical implementation would still pass.  At (5,6)
+    one does (M = 42443 mod 3^11 has two, ending at 242 and 485 mod 3^6, both
+    survivors), so this is the first test that the choice function is load
+    bearing rather than decorative.
+    """
+    from collatz_maxodd.deathdepth import live_chains, splice, survives
+
+    for j, k in ((5, 6), (6, 5), (4, 7)):
+        Sj = [r for r in range(3 ** j) if survives(r, j)]
+        Sk = [x for x in range(3 ** k) if survives(x, k)]
+        Ms = [splice(r, j, x, k) for r in Sj for x in Sk]
+        assert len(set(Ms)) == len(Ms), (j, k)
+        assert all(survives(M, j + k) for M in Ms), (j, k)
+    # and confirm the ambiguity really is present at this depth
+    multi = [r for r in range(3 ** 5) if len(live_chains(r, 0, 0, 5)) > 1]
+    assert multi, "expected some residue with several live depth-5 chains"
+
+
+def test_supermultiplicativity_holds_where_we_can_check_it():
+    """a_(j+k) >= a_j * a_k -- now a consequence, not an observation."""
+    from collatz_maxodd.deathdepth import surviving_residue_count
+
+    a = surviving_residue_count(9)
+    for j in range(1, 9):
+        for k in range(1, 9 - j + 1):
+            assert a[j + k - 1] >= a[j - 1] * a[k - 1], (j, k)
+
+
+def test_fekete_gives_a_rigorous_lower_bound_on_the_rate():
+    """Supermultiplicative + bounded => the limit EXISTS and equals the sup.
+
+    a_k >= 1 and a_k <= 3^k, so a_k^(1/k) is in [1, 3]; Fekete then gives
+    lim a_k^(1/k) = sup_k a_k^(1/k).  Every term is therefore a rigorous lower
+    bound on the growth, and the best available one comes from k = 24.
+    """
+    import math
+
+    a = json.loads((ROOT / "web" / "asym.json").read_text())["a_k"]
+    assert all(1 <= a[k - 1] <= 3 ** k for k in range(1, len(a) + 1))
+    best = max(a[k - 1] ** (1 / k) for k in range(1, len(a) + 1))
+    assert best == a[-1] ** (1 / len(a))          # the sup is attained at k=24
+    # NB superadditivity does not make a_k^(1/k) monotone -- only the running
+    # max is guaranteed to improve.  It happens to be monotone here, but that
+    # is data, not the lemma.
+    seq = [a[k - 1] ** (1 / k) for k in range(1, len(a) + 1)]
+    assert seq == sorted(seq)                     # true for k <= 24, not a theorem
+    rate = best / 3
+    assert rate > 0.736
+    # and it is genuinely below where the fitted models put it
+    lo_fit, hi = _explore()["fekete"]["published_bracket"]
+    assert rate < lo_fit < hi
+    # the upper end stays as it was: a_k <= N_k, so mu <= lambda
+    assert hi == pytest_approx(0.9465)
+
+
+def pytest_approx(x, tol=1e-4):
+    class _A:
+        def __eq__(self, other):
+            return abs(other - x) < tol
+    return _A()
