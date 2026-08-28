@@ -30,6 +30,7 @@ import Collatz.Minimum
 import Collatz.Reach
 import Collatz.Periodic
 import Collatz.Halving
+import Collatz.Census
 
 /-! ## Definitions (`Collatz/Odd.lean`) -/
 #print axioms Collatz.v2
@@ -357,3 +358,39 @@ explicit hypothesis `hlarge`. -/
 #print axioms Collatz.Cycle.single_halving_percent_m
 #print axioms Collatz.Cycle.percent_arithmetic
 #print axioms Collatz.Cycle.needs_the_size_hypothesis
+
+/-! ## The census theorems (`Collatz/Census.lean`).
+
+The row "census, death-depth tail, dimension" bundled three theorems in with
+three measurements.  These are the theorems.  The measurements -- variance/mean,
+the tail-rate bracket, the box dimension -- are not formalized, and the file
+header says why each one is not a theorem. -/
+
+#print axioms Collatz.Cycle.q_dvd_cc
+#print axioms Collatz.Cycle.M_mul_sub
+#print axioms Collatz.Cycle.q_dvd_sub
+#print axioms Collatz.Cycle.burst
+#print axioms Collatz.three_pow_succ_mod_eight
+#print axioms Collatz.eight_dvd_two_pow
+#print axioms Collatz.nine_le_three_pow
+#print axioms Collatz.q1_burst
+#print axioms Collatz.scanB
+#print axioms Collatz.alive
+#print axioms Collatz.aa
+#print axioms Collatz.aa_1
+#print axioms Collatz.aa_2
+#print axioms Collatz.aa_3
+#print axioms Collatz.aa_4
+#print axioms Collatz.aa_pos
+#print axioms Collatz.cycle5_coprime
+#print axioms Collatz.cycle5_q_dvd
+#print axioms Collatz.cycle5_exact_hit
+#print axioms Collatz.cycle5_burst
+#print axioms Collatz.cycle7_coprime
+#print axioms Collatz.cycle7_q_dvd
+#print axioms Collatz.cycle7_exact_hit
+#print axioms Collatz.cycle17_coprime
+#print axioms Collatz.cycle17_q_dvd
+#print axioms Collatz.cycle17_not_an_exact_hit
+#print axioms Collatz.trivial_L_BB
+#print axioms Collatz.q1_burst_is_exactly_the_trivial_cycle

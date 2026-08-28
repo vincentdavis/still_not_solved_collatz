@@ -772,6 +772,7 @@ footer{border-top:1px solid var(--rule);padding-top:28px;font-size:.84rem;color:
     <h3>The verdict — including on this experiment</h3>
   </div>
   <div class="note kill" id="cen-verdict2"></div>
+  <div class="note" style="border-color:var(--violet)" id="cen-lean"></div>
 </section>
 
 
@@ -2374,6 +2375,29 @@ document.getElementById("cen-verdict2").innerHTML =
   "of a completely different character. <b>So cycle abundance in <code>3n+q</code> says little about " +
   "Collatz itself.</b> The experiment answers its own question in the negative — which is worth " +
   "knowing, and is why it is written up here rather than quietly dropped.";
+
+document.getElementById("cen-lean").innerHTML =
+  "<b>The theorems here are machine-checked — the measurements are not, and telling them apart is " +
+  "the point.</b> <code>Cycle.q_dvd_sub</code> proves that a cycle whose maximum is coprime to " +
+  "<code>q</code> forces <code>q ∣ 2<sup>B</sup> − 3<sup>L</sup></code>, the arithmetic condition " +
+  "driving this section. (Coprimality is a hypothesis; primitivity gives it, but that step is " +
+  "checked in Python, not proved.) <code>Cycle.burst</code> proves the collapse " +
+  "<code>M·q = c<sub>L</sub></code> at an exact hit, and <code>q1_burst</code> proves that " +
+  "<code>2<sup>B</sup> = 3<sup>L</sup> + 1</code> with <code>L ≥ 1</code> has the single solution " +
+  "<code>(1, 2)</code> — which is exactly <code>trivialCycle</code>'s. The divisibility is witnessed " +
+  "on real cycles including a <em>non-degenerate</em> one: <code>q = 17</code> gives " +
+  "<code>2<sup>7</sup> − 3<sup>2</sup> = 119 = 7·17</code>, not merely <code>q ∣ q</code>." +
+  "<br><br>And the death-depth counts are checked too: <code>a<sub>k</sub></code> is the number of " +
+  "residues mod <code>3<sup>k</sup></code> surviving the magnitude-free sieve, and the kernel now " +
+  "verifies <code>a₁…a₄ = 1, 2, 3, 6</code> directly rather than trusting the Python. " +
+  "<br><br><b>What is not formalized, and why each one differs.</b> The variance-to-mean figure is a " +
+  "proposition about integers — it needs no reals — so the honest reason is <em>infeasibility</em>, " +
+  "not category: re-deriving a 333-system census inside the kernel is out of reach. " +
+  "&ldquo;Poisson is rejected&rdquo; is a modelling judgement and not a proposition at all. The tail " +
+  "<em>rate</em> is genuinely <em>open</em> — separating the two models needs <code>k ≈ 36</code>. " +
+  "And the box dimension rests on an unresolved limit, so it would not be a theorem even with " +
+  "<code>ℝ</code> in hand. The accounting table below used to carry all of this on one line reading " +
+  "&ldquo;measurements, not theorems&rdquo;; it now carries two, because some of it was theorems.";
 
 onTheme(cenHist);
 cenHist();

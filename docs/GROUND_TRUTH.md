@@ -332,7 +332,7 @@ Two checks run against **real integers**, with no residue arithmetic:
    density 0.286555 vs. the DP limit 0.2863153965; observed mod-`2^a` residue
    sets ⊆ predicted, sizes identical, for `a = 2..14`.
 
-Plus: 235 Python tests over the 2127-cycle census; 1623 real `S_q` cycles
+Plus: 240 Python tests over the 2127-cycle census; 1623 real `S_q` cycles
 (`q < 700`) re-derived independently during the Lean pass with 0 violations;
 `lean/check.sh` verified to *fail* on four deliberately injected defects,
 including a build-passing `sorry`.
@@ -359,13 +359,14 @@ formalized.
 
 ## 7. Formalization status (`lean/`)
 
-Lean 4.33.1, **no Mathlib**, `"packages": []`. 274 declarations audited:
-219 depend on `[propext, Quot.sound]`, 29 on `[propext]`, 26 on nothing. Zero
+Lean 4.33.1, **no Mathlib**, `"packages": []`. 302 declarations audited:
+238 depend on `[propext, Quot.sound]`, 30 on `[propext]`, 34 on nothing. Zero
 `sorry`, zero `axiom`, zero `native_decide`, zero `set_option`.
 
 **Proved:** T0, T1, T1_mod4, T1_q1, T2, T2_mod3, T2_bb, T2_unique, T2_q1,
 T3_gen, T3, T3_of_L, T4_mod9, T4_base_gen, T4_base, T4_base_of_L, T5_gen,
 T5_bb_gen, T5, T5', T5_of_L, T5_bb, T6, T6_iff, closed_form, T7_eq, T7, T8,
+q_dvd_cc, M_mul_sub, q_dvd_sub, burst, q1_burst, aa_1..aa_4,
 T8_mod16, T3_T8, plus `pred_unique`, `pred_exists`, `M_ge_three_of_L`,
 `y_ne_of_lt`, `shift_zero`, and the soundness bridge `Cycle.ofOrbit`.
 
@@ -511,9 +512,11 @@ integrality; that is the whole gap.
 | that hypothesis cannot be *dropped* | ✓ | ✓ `min_bb_out_needs_its_own_hypothesis` |
 | `L ≤ \|R(O)\|` | ✓ | ✓ `Reach.lean` (count `#eval`'d, not kernel-reduced) |
 | periodic points / the `−1` witness | ✓ | ✓ `Periodic.lean` (algebra only; existence and `a_k` are not) |
-| census, death-depth tail, dimension | ✓ | ✗ (measurements, not theorems) |
+| census: `q ∣ 2^B − 3^L`, the burst, `q=1`'s unique burst | ✓ | ✓ `Census.lean` |
+| the death-depth counts `a_k` (`k ≤ 4`) | ✓ | ✓ `Census.lean` |
+| over-dispersion, tail rate, box dimension | ✓ | ✗ — infeasible in-kernel, open, unresolved limit |
 
-Lean total: **274 declarations**, all certifying `[propext, Quot.sound]` or
+Lean total: **302 declarations**, all certifying `[propext, Quot.sound]` or
 `[propext]` — no `sorry`, no `Classical.choice`, no Mathlib.
 
 ### A duplication that was removed

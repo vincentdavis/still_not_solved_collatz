@@ -111,8 +111,12 @@ out = {
          "n": "Reach.lean; the count itself is #eval'd, not kernel-reduced"},
         {"r": "periodic points and the −1 witness", "py": True, "lean": True,
          "n": "Periodic.lean, over ℤ — the algebra; existence and a_k are not"},
-        {"r": "census, death-depth tail, dimension", "py": True, "lean": False,
-         "n": "measurements, not theorems"},
+        {"r": "census: q | 2^B − 3^L, the burst, q=1's unique burst", "py": True, "lean": True,
+         "n": "Census.lean; the theorems the census row was hiding"},
+        {"r": "the death-depth counts a_k (k ≤ 4)", "py": True, "lean": True,
+         "n": "Census.lean; residues mod 3^k, decided by the kernel"},
+        {"r": "over-dispersion, tail rate, box dimension", "py": True, "lean": False,
+         "n": "infeasible in-kernel, open, and an unresolved limit — respectively"},
     ],
     "caveat": ("weaker than the published bounds, which use genuine effective irrationality "
                "measures for log2(3); this repo verifies no such constant — that is exactly "

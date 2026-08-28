@@ -20,6 +20,7 @@ import Collatz.Cycle
 import Collatz.Minimum
 import Collatz.Reach
 import Collatz.Periodic
+import Collatz.Census
 
 namespace Collatz
 
@@ -354,6 +355,78 @@ theorem cycle5_is_periodic :
 theorem cycle7_is_periodic :
     (cycle7.M : Int) * (2 ^ cycle7.BB cycle7.L - 3 ^ cycle7.L) = (cycle7.cc cycle7.L : Int) :=
   cycle7.T7_from_periodic
+
+/-! ## 8. The census theorems, on real cycles
+
+`cycle5` is the `q = 5` cycle `{49, 31, 19}` with `L = 3, B = 5`, so
+`2^B − 3^L = 32 − 27 = 5 = q` — an *exact hit*, the burst case.  It is the first
+cycle on the page and it is there because of this. -/
+
+theorem cycle5_coprime : Nat.gcd cycle5.M 5 = 1 := by decide
+
+/-- `q ∣ 2^B − 3^L`, on a cycle that exists. -/
+theorem cycle5_q_dvd : (5 : Nat) ∣ 2 ^ cycle5.BB cycle5.L - 3 ^ cycle5.L :=
+  cycle5.q_dvd_sub cycle5_coprime
+
+/-- And `q = 5` is an exact hit: `2^5 − 3^3 = 5`. -/
+theorem cycle5_exact_hit : 2 ^ cycle5.BB cycle5.L - 3 ^ cycle5.L = 5 := by
+  have hBB : cycle5.BB 3 = 5 := by
+    have h1 : cycle5.y 1 = 31 := rfl
+    have h2 : cycle5.y 2 = 19 := rfl
+    have h3 : cycle5.y 3 = 49 := rfl
+    simp [Cycle.BB, Cycle.bb, h1, h2, h3, v2]
+  show 2 ^ cycle5.BB 3 - 3 ^ 3 = 5
+  rw [hBB]
+
+/-- So the burst identity holds for it: `M · q = c_L`, i.e. `49 · 5 = 245`. -/
+theorem cycle5_burst : cycle5.M * 5 = cycle5.cc cycle5.L :=
+  cycle5.burst cycle5_exact_hit
+
+/-- `q = 7`'s cycle `{11, 5}` is another exact hit: `2^4 − 3^2 = 7 = q`. -/
+theorem cycle7_coprime : Nat.gcd cycle7.M 7 = 1 := by decide
+
+theorem cycle7_q_dvd : (7 : Nat) ∣ 2 ^ cycle7.BB cycle7.L - 3 ^ cycle7.L :=
+  cycle7.q_dvd_sub cycle7_coprime
+
+theorem cycle7_exact_hit : 2 ^ cycle7.BB cycle7.L - 3 ^ cycle7.L = 7 := by
+  have hBB : cycle7.BB 2 = 4 := by
+    have h1 : cycle7.y 1 = 5 := rfl
+    have h2 : cycle7.y 2 = 11 := rfl
+    simp [Cycle.BB, Cycle.bb, h1, h2, v2]
+  show 2 ^ cycle7.BB 2 - 3 ^ 2 = 7
+  rw [hBB]
+
+/-- **A non-degenerate witness.**  `cycle5` and `cycle7` are both *exact* hits,
+    where `q ∣ 2^B − 3^L` collapses to `q ∣ q`.  `cycle17` is not:
+    `2^7 − 3^2 = 119 = 7 · 17`, so the divisibility has quotient 7 and the
+    general theorem is doing real work. -/
+theorem cycle17_coprime : Nat.gcd cycle17.M 17 = 1 := by decide
+
+theorem cycle17_q_dvd : (17 : Nat) ∣ 2 ^ cycle17.BB cycle17.L - 3 ^ cycle17.L :=
+  cycle17.q_dvd_sub cycle17_coprime
+
+theorem cycle17_not_an_exact_hit : 2 ^ cycle17.BB cycle17.L - 3 ^ cycle17.L = 119 := by
+  have hBB : cycle17.BB 2 = 7 := by
+    have h1 : cycle17.y 1 = 1 := rfl
+    have h2 : cycle17.y 2 = 5 := rfl
+    simp [Cycle.BB, Cycle.bb, h1, h2, v2]
+  show 2 ^ cycle17.BB 2 - 3 ^ 2 = 119
+  rw [hBB]
+
+/-- `trivialCycle` really does have `(L, B) = (1, 2)`. -/
+theorem trivial_L_BB : trivialCycle.L = 1 ∧ trivialCycle.BB 1 = 2 := by
+  refine ⟨rfl, ?_⟩
+  have h1 : trivialCycle.y 1 = 1 := rfl
+  simp [Cycle.BB, Cycle.bb, h1, v2]
+
+/-- **`q = 1` gets exactly one burst, and it is the trivial cycle.**  Any
+    `(L, B)` with `L ≥ 1` solving `2^B = 3^L + 1` is `(1, 2)`; and `(1, 2)` is
+    exactly `trivialCycle`'s `(L, B)`, so the characterisation is not vacuous
+    and the unique solution really is the cycle everybody knows. -/
+theorem q1_burst_is_exactly_the_trivial_cycle :
+    (∀ L B : Nat, 1 ≤ L → 2 ^ B = 3 ^ L + 1 → L = 1 ∧ B = 2)
+    ∧ trivialCycle.L = 1 ∧ trivialCycle.BB 1 = 2 :=
+  ⟨fun _ _ hL h => q1_burst hL h, trivial_L_BB.1, trivial_L_BB.2⟩
 
 /-! ### `cycle5` witnesses the ❌ row of docs/GROUND_TRUTH.md
 

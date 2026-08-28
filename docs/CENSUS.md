@@ -23,6 +23,47 @@ smaller systems aren't double-counted) with maximum `≤ R·q`. Fixing the **rat
 the counts become directly comparable. Census: `R = 100`, all admissible
 `q ≤ 1000` — 333 systems, **1080 primitive cycles**.
 
+## Formalized (`lean/Collatz/Census.lean`)
+
+This section's *theorems* are machine-checked; its *measurements* are not, and
+the distinction is the point.
+
+| Lean name | statement |
+|---|---|
+| `Cycle.q_dvd_sub` | a cycle with `gcd(M, q) = 1` forces `q ∣ 2^B − 3^L` |
+| `Cycle.burst` | if `2^B − 3^L = q` exactly then `M·q = c_L` |
+| `q1_burst` | `2^B = 3^L + 1` with `L ≥ 1` forces `(L, B) = (1, 2)` |
+
+`q_dvd_sub` is the engine of the whole effect: cycles do not scatter across `q`,
+they concentrate on the `q` dividing some `2^B − 3^L`, and those are sparse.
+`q1_burst` is why `q = 1` is unlike every other `q` here, and its proof is a
+mod-8 count — `3^L + 1` is `2` or `4` mod `8`, never `0`, so `2^B ≤ 4`.
+
+`Census.lean` also formalizes the *exact* half of the death-depth row:
+`Cycle.aa k` counts the residues mod `3^k` surviving the magnitude-free sieve,
+and the kernel checks `a₁…a₄ = 1, 2, 3, 6` directly. The ceiling is mechanical
+(`countLE` recurses once per residue, so `k = 5` exceeds Lean's default
+`maxRecDepth` and `set_option` is banned), not mathematical.
+
+**Not formalized — and the three reasons are different, which matters.**
+
+- **Over-dispersion.** The statistic *is* a proposition about integers:
+  `N·Σc² − (Σc)² > 4·N·Σc` needs no reals. The obstacle is **infeasibility** —
+  reducing a 333-system census inside the kernel is out of reach with
+  `native_decide` banned. Calling this a category error would be wrong.
+- **"Poisson is rejected"** is a modelling judgement on top of that statistic,
+  and is not a proposition about the integers at all.
+- **The tail rate** is genuinely **open**, not merely unformalized: separating
+  the two candidate models needs `k ≈ 36` (`DEATH_DEPTH.md`). Note this is the
+  *rate*; the `a_k` underneath it are formalized, per above.
+- **The box dimension** rests on an unresolved limit, so it would not be a
+  theorem even with `ℝ` in hand.
+
+The project's accounting table used to carry all of this on one line marked
+"measurements, not theorems". It now carries three, because some of it was
+theorems — and an earlier draft of this very file made the same bundling
+mistake one level down, declining `a_k` because the *rate* is open.
+
 ## Result 1 — the heuristic is not calibrated
 
 | | value |
