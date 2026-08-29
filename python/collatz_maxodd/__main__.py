@@ -199,11 +199,14 @@ def report(q_max: int, bound: int, depth: int, mod2_depth: int) -> str:
         L, B, margin = cycleeq.smallest_admissible_length(m)
         lines.append(f"  min element > {m:>25,}  =>  L >= {L:,}  (B = {B:,})\n")
     lines.append(
-        f"  {cycleeq.BARINA_2025_LIMIT:,} = 2075 * 2^60 is Barina's 2025 verification limit\n"
-        "  (J. Supercomputing 81 (2025) art. 810), so a nontrivial q=1 cycle has a\n"
+        f"  {cycleeq.BARINA_2025_LIMIT:,} = 2075 * 2^60 is Barina's project-page figure\n"
+        "  (pcbarina.fit.vutbr.cz; the published paper, J. Supercomputing 81 (2025)\n"
+        "  art. 810, states 2^71 = 2048 * 2^60), so a nontrivial q=1 cycle has a\n"
         "  minimum element above it.  The published bound is STRONGER than what this\n"
-        "  elementary computation gives: Hercher, JIS 26 (2023) Art. 23.3.5, gets\n"
-        "  K > 1.375e11 odd elements and m >= 92 circuits using Baker's theorem.\n"
+        "  elementary computation gives: Hercher, JIS 26 (2023) Art. 23.3.5 — no\n"
+        "  m-cycles with m <= 91, and K > 1.375e11 odd elements (Cor. 29, conditional\n"
+        "  on X_0 >= 3*2^69, which Barina's paper discharges).  See hercher.py for\n"
+        "  the exact re-run of that ladder at the 2025 bound.\n"
     )
     out.append("".join(lines))
 

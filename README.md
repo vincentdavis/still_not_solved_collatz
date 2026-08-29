@@ -135,9 +135,11 @@ of time" — the method has a measurable ceiling.
 
 4. **It is far weaker than the state of the art.** Published bounds — no
    nontrivial cycle has fewer than 92 circuits (Hercher, *JIS* 26 (2023)
-   Art. 23.3.5), fewer than `1.375×10¹¹` odd elements, or a minimum element
-   below `2.39×10²¹` (Barina, *J. Supercomputing* 81 (2025) art. 810) — rest on
-   Baker's theorem plus weeks of dedicated computation. The elementary Crandall
+   Art. 23.3.5), fewer than `1.375×10¹¹` odd elements (his Cor. 29, conditional
+   on `X₀ ≥ 3·2⁶⁹`, discharged by Barina 2025), or a minimum element below
+   `2⁷¹ ≈ 2.36×10²¹` (Barina, *J. Supercomputing* 81 (2025) art. 810) — rest on
+   continued fractions, verified computation, and Baker's theorem for the per-m
+   ceilings. The elementary Crandall
    squeeze reproduced here gets `L ≥ 72 057 431 991`, which is *weaker*, and the
    test suite asserts the published inequality so that weakness cannot be
    quietly dropped.
@@ -233,8 +235,8 @@ ALL CHECKS PASSED
 warning in Lean. `check.sh` is the real gate, and it has five steps: clean build
 with zero warnings, a source scan for unsoundness escape hatches
 (`sorry`/`axiom`/`native_decide`/`set_option`/`unsafe`/…), a forced-rebuild
-axiom audit (302 declarations: 238 on `[propext, Quot.sound]`, 30 on `[propext]`,
-34 on none; no `sorryAx`, no `Classical.choice`), a coverage check that every
+axiom audit (316 declarations: 238 on `[propext, Quot.sound]`, 30 on `[propext]`,
+48 on none; no `sorryAx`, no `Classical.choice`), a coverage check that every
 named declaration is actually audited, and a Mathlib-free check. It has been
 verified to *fail* on four deliberately injected defects, including a
 build-passing `sorry`.

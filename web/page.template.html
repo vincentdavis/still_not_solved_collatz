@@ -875,6 +875,58 @@ footer{border-top:1px solid var(--rule);padding-top:28px;font-size:.84rem;color:
 </section>
 
 
+<!-- ══ HERCHER LADDER ════════════════════════════════════════════ -->
+<section>
+  <div class="eyebrow">Standing on the frontier</div>
+  <h2>Re-running the record ladder at 2025's verification bound</h2>
+  <div class="prose stack">
+    <p>The strongest published cycle results come from one pipeline — Hercher (2023), building on
+    Simons–de Weger — and it consumes exactly the inputs the wall two sections down says any
+    finishing argument must consume: the <b>continued fraction of log₂3</b>, the <b>verified
+    convergence bound</b> <code>X₀</code>, and <b>positivity</b> (<code>2^B &gt; 3^L</code>).
+    A cycle's step ratio <code>(K+L)/K</code> is trapped in a window just above <code>log₂3</code>
+    whose width shrinks as <code>X₀</code> grows; the smallest denominator of any fraction in that
+    window is a lower bound on <code>K</code>; a better <code>K</code> shrinks the window again.
+    Iterate, and each rung is a theorem. Since publication, the verified bound has grown by
+    <b>2.95×</b> (Barina 2025) — so this project re-implemented the ladder in exact rational
+    arithmetic, every inequality certified by directed rounding, and ran it forward.</p>
+    <p><b>Regression first.</b> At Hercher's own <code>X₀ = 695·2⁶⁰</code> the module must
+    reproduce his printed iterates before the new bound is touched. It does — every
+    <code>m₂</code> and every rung, to the digit:</p>
+  </div>
+
+  <div class="frame scroll">
+    <table id="hl-ladder"><thead><tr>
+      <th>iterate</th><th>m₂</th><th>window width &lt;</th><th>forces K &gt;</th>
+    </tr></thead><tbody></tbody></table>
+  </div>
+
+  <div class="note" style="border-color:var(--violet)" id="hl-cross"></div>
+
+  <div class="prose stack">
+    <p>Then the 2025 bound. The honest headline is the one the adversarial referee predicted,
+    not the one hoped for:</p>
+  </div>
+
+  <div class="note warn" id="hl-verdict"></div>
+
+  <div class="prose stack">
+    <p>What the new bound <em>does</em> buy is four strictly improved rows of Hercher's Table 1 —
+    each one a theorem given the imported inputs, each one driven by Barina's extra factor of
+    three (at the old <code>X₀</code> the same ladder stalls a full rung lower, matching the
+    published table):</p>
+  </div>
+
+  <div class="frame scroll">
+    <table id="hl-rows"><thead><tr>
+      <th>if a cycle has</th><th>then it has odd elements</th><th>published (2023)</th>
+    </tr></thead><tbody></tbody></table>
+  </div>
+
+  <div class="note" style="border-color:var(--violet)" id="hl-rungs"></div>
+</section>
+
+
 <!-- ══ BOTH ENDS ═════════════════════════════════════════════════ -->
 <section>
   <div class="eyebrow">The other end</div>
@@ -1142,6 +1194,52 @@ footer{border-top:1px solid var(--rule);padding-top:28px;font-size:.84rem;color:
   </div>
 
   <div class="tally" id="pa-dim"></div>
+</section>
+
+
+<!-- ══ Q-TRANSFER ════════════════════════════════════════════════ -->
+<section>
+  <div class="eyebrow">The wall, sharpened</div>
+  <h2>The sieve cannot even see q</h2>
+  <div class="prose stack">
+    <p>The witness <code>−1</code> says the sieve never empties. This says something stronger:
+    <b>every statistic the sieve produces is identical across all the <code>3n+q</code>
+    systems</b> — including ones that really do have cycles.</p>
+  </div>
+
+  <div class="frame" style="text-align:center;padding:26px 18px">
+    <div class="mono" style="font-size:clamp(.86rem,2.1vw,1.1rem);line-height:2;color:var(--ink)">
+      S<sub>k</sub>(q) &nbsp;=&nbsp; <span style="color:var(--violet)">q · S<sub>k</sub>(1)</span>
+      &nbsp;(mod 3<sup>k</sup>)&nbsp;&nbsp;&nbsp;⟹&nbsp;&nbsp;&nbsp;a<sub>k</sub>(q) = a<sub>k</sub>(1)
+    </div>
+    <div style="font-size:.78rem;color:var(--ink-3);margin-top:8px" id="qt-check"></div>
+  </div>
+
+  <div class="prose stack">
+    <p>The proof is ten lines: the chain constant is <em>linear</em> in <code>q</code>
+    (<code>c_t = 2^{b_t}c_{t−1} + 3^{t−1}q</code> with <code>c₀ = 0</code>, so
+    <code>c_t(q) = q·c_t(1)</code>), the size caps <code>2^{B_t} ≤ 3^t</code> never mention
+    <code>q</code>, and multiplying by the unit <code>q</code> just permutes the residues mod
+    <code>3^k</code>. The forward 2-adic sieve scales the same way, so its 1.80-bit ceiling is
+    q-blind too.</p>
+  </div>
+
+  <div class="note kill" id="qt-consequence"></div>
+
+  <div class="note warn" id="qt-phrase"></div>
+
+  <div class="prose stack">
+    <p>Together with its cousins this becomes a standing gate — five two-minute tests a proposed
+    strategy must pass before any work starts (<code>docs/FILTER.md</code>):</p>
+  </div>
+
+  <div class="frame scroll">
+    <table id="qt-filter"><thead><tr>
+      <th>test</th><th>swap in…</th><th>kills</th><th>witness</th>
+    </tr></thead><tbody></tbody></table>
+  </div>
+
+  <div class="note" style="border-color:var(--violet)" id="qt-lean"></div>
 </section>
 
 
@@ -3122,6 +3220,105 @@ document.getElementById("as-fekete").innerHTML =
     "not that one cannot exist. And it costs the same as the depth-based certificate, measured to " +
     "the node. What it adds is a bound that composes with a published theorem.";
 })();
+
+/* ═══ Q-TRANSFER + THE HERCHER LADDER ══════════════════════════ */
+var QH = D.qhercher, QT = QH.qtransfer, HL = QH.hercher;
+function sci(x){
+  var e = Math.floor(Math.log10(x));
+  return (x/Math.pow(10,e)).toFixed(2) + "×10<sup>" + e + "</sup>";
+}
+
+document.getElementById("qt-check").innerHTML =
+  "checked as <b>set equality</b> for k ≤ " + QT.k_max + ", q ∈ {" + QT.qs.join(", ") +
+  "} — a<sub>k</sub> = " + QT.a_k.slice(0, 8).join(", ") + ", … every time; forward sieve to 2<sup>" +
+  QT.forward_a_max + "</sup>";
+
+document.getElementById("qt-consequence").innerHTML =
+  "<b>Why this is a wall.</b> Every number the sieve produces on this page — every " +
+  "<code>a<sub>k</sub></code>, the growth rate, the death-rate bracket, the 0.2863 forward " +
+  "density — is <b>identical at q = 5</b>, where the real cycle {" + QT.q5_cycle.join(", ") + "} " +
+  "exists (and at q ≡ −1, the 3x−1 system, which has <b>three</b> cycles). A hypothesis " +
+  "expressible in sieve statistics alone is q-uniform — instantiated at q = 5 it proves a " +
+  "falsehood. No spectral bound, no branching model, no automaticity argument built on these " +
+  "statistics can finish. Ever.";
+
+document.getElementById("qt-phrase").innerHTML =
+  "<b>Phrase it carefully</b> (a referee caught the wrong version): the q = 5 cycle does " +
+  "<em>not</em> “survive the sieve” — its maximum 49 <b>dies at depth " +
+  QT.q5_max_death_depth + "</b>, because its own halving vector violates the size cap. The cycle " +
+  "lives <em>below the sieve's asymptotic regime</em>. That is the precise spot where magnitude " +
+  "enters: the exact sieve transfers only along M ↦ qM, and that map has no " +
+  "integrality-preserving inverse.";
+
+(function(){
+  var rows = [
+    ["A", "q = 5", "anything built from sieve statistics", "real cycle {19, 31, 49}"],
+    ["B", "3n − 1", "sign-blind drift/entropy/density arguments", "three cycles, checked live"],
+    ["C", "ℤ₃ or ℤ₂", "arguments stable under completion", "−1 survives; shift conjugacy"],
+    ["D", "“almost every M”", "density conclusions of any kind", "cycles are finite sets"],
+    ["E", "the Conway family", "uniform decision procedures", "undecidability (1972)"]
+  ];
+  document.querySelector("#qt-filter tbody").innerHTML = rows.map(function(r){
+    return "<tr><td class='mono'>" + r[0] + "</td><td>" + r[1] + "</td><td>" + r[2] +
+           "</td><td>" + r[3] + "</td></tr>";
+  }).join("");
+})();
+
+document.getElementById("qt-lean").innerHTML =
+  "<b>Machine-checked.</b> <code>lean/Collatz/QTransfer.lean</code> re-encodes the sieve " +
+  "subtraction-free (step t is live iff 2<sup>B<sub>t</sub></sup>·M ≡ c<sub>t</sub> mod " +
+  "3<sup>t</sup>) and the kernel checks the transfer exhaustively over every residue mod 3<sup>" +
+  QT.lean_depth + "</sup> for offsets " + QT.lean_offsets.join(", ") +
+  " — plus the survivor counts and the −q witness. Zero axioms beyond propext.";
+
+(function(){
+  var body = HL.regression.m2.map(function(m2, i){
+    return "<tr><td>" + (i + 1) + "</td><td class='mono'>" + m2 + "</td><td class='mono'>" +
+           (i === 0 ? "6.9×10<sup>−32</sup>" : ["5.1×10<sup>−36</sup>","4.1×10<sup>−38</sup>","2.3×10<sup>−39</sup>","2.3×10<sup>−40</sup>","5.3×10<sup>−41</sup>","1.1×10<sup>−43</sup>"][i-1]) +
+           "</td><td class='mono'>" + sci(HL.regression.rungs_float[i]) +
+           "&nbsp;&nbsp;<span style='color:var(--ink-3)'>" + HL.regression.rungs[i] + "</span></td></tr>";
+  }).join("");
+  document.querySelector("#hl-ladder tbody").innerHTML = body;
+})();
+
+document.getElementById("hl-cross").innerHTML =
+  "<b>Three independent computations, one answer.</b> The final rung " +
+  sci(HL.regression.rungs_float[6]) + " beats the Simons–de Weger ceiling " +
+  sci(HL.regression.ceiling_91) + " — Hercher's <em>no m-cycles with m ≤ 91</em>, reproduced end " +
+  "to end. His Remark 28 threshold reproduces as 2835.29·2⁶⁰ (he prints the round-up " +
+  HL.next_rung.x0_printed + "·2⁶⁰), and Simons–de Weger's lattice-reduction K values for the " +
+  "hypothetical m = 76/77 cycles appear <b>digit for digit</b> among this module's " +
+  "best-approximation denominators. Different teams, different decades, different algorithms.";
+
+document.getElementById("hl-verdict").innerHTML =
+  "<b>m = 92 still stands.</b> At X₀ = " + HL.x0.paper + " the ladder stalls at K &gt; " +
+  sci(HL.m92.stall_float) + " against a ceiling of " + sci(HL.m92.ceiling) + ": certifying " +
+  "m₂ = 92 needs K ≥ 3.07×10<sup>20</sup>, and one rung short, the window cannot squeeze under " +
+  "the next gap. The exact cost, by certified binary search: <b>eliminating m = 92 needs " +
+  "X₀ ≥ " + fmt(HL.m92.cost_units_2p60) + "·2⁶⁰ ≈ " + sci(HL.m92.cost_float) + " ≈ 2⁷⁴</b> — " +
+  "7.8× today's verified frontier. Sharp, falsifiable, and waiting on nothing but compute.";
+
+(function(){
+  var pub = HL.published_rows;
+  var body = HL.new_rows.map(function(r, i){
+    return "<tr><td>m ≤ " + r.m_le + "</td><td class='mono'>K &gt; " + sci(r.K_float) +
+           "</td><td class='mono' style='color:var(--ink-3)'>" +
+           (i === 0 ? "m ≤ 98: K &gt; " + sci(pub[0].K_float)
+                    : i === 1 ? "m ≤ 117: K &gt; " + sci(pub[1].K_float)
+                              : "m ≤ 117: K &gt; " + sci(pub[1].K_float)) + "</td></tr>";
+  }).join("");
+  document.querySelector("#hl-rows tbody").innerHTML = body;
+})();
+
+document.getElementById("hl-rungs").innerHTML =
+  "<b>The rung economics.</b> The X₀-scalable route gives K ≥ " + fmt(HL.allm) +
+  " for <em>every</em> m — Hercher's own “for all m” row, digit for digit. The next rung, " +
+  "K ≥ " + fmt(HL.next_rung.K) + " (his 1.375×10<sup>11</sup>), demands X₀ ≥ " +
+  HL.next_rung.x0_printed + "·2⁶⁰; the published frontier is " + HL.x0.paper +
+  ", short of it — which is why Hercher's Corollary 29 (a frozen five-week C++ certificate, " +
+  "conditional on X₀ ≥ " + HL.cor29_condition_units + "·2⁶⁰, met since Barina 2025) remains the " +
+  "only unconditional route to that bound today. When public verification reaches 2836·2⁶⁰, it " +
+  "becomes program-free.";
 
 /* ═══ TABLE OF CONTENTS ════════════════════════════════════════ */
 /* 17 sections and 32 000 px of page: without this, the only way to find

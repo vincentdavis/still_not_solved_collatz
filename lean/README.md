@@ -12,7 +12,7 @@ lake build      # zero errors, zero warnings
 
 **Status: no `sorry` anywhere.** `#print axioms` runs at build time on **every
 named declaration** — every theorem, every definition, the `Cycle` structure
-itself, and every `Cycle` instance (302 declarations, `Collatz/Audit.lean`).
+itself, and every `Cycle` instance (316 declarations, `Collatz/Audit.lean`).
 All report `[propext, Quot.sound]`, `[propext]`, or nothing — no `sorryAx`, and
 no `Classical.choice`.
 
@@ -373,7 +373,7 @@ of novelty, and not to be presented as results.
 
 What this directory contributes is **machine-checked certainty** and a small
 reusable `Cycle` API, nothing more. Nothing here comes close to the state of the
-art (no `m`-cycles with `m ≤ 91`, Hercher 2023; minimum element `> 2.39×10²¹`,
+art (no `m`-cycles with `m ≤ 91`, Hercher 2023; minimum element `> 2.36×10²¹`,
 Barina 2025).
 
 ### On the user's seed intuitions

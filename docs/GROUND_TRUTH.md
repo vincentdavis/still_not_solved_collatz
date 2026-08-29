@@ -209,10 +209,26 @@ fixtures**
 The Diophantine half is **not formalized** and not proved here; it is where
 Baker's theorem enters the literature.
 Elementary Crandall squeeze, as computed in `python/collatz_maxodd/cycleeq.py`:
-a minimum element above Barina's verified `2075·2^60 = 2.39×10²¹` forces
-`L ≥ 72 057 431 991` (`B = 114 208 327 604`). The published bound is
-**stronger**: Hercher (2023) gets `K > 1.375×10¹¹` odd elements and `m ≥ 92`
-circuits using Baker's theorem.
+a minimum element above Barina's verified bound forces
+`L ≥ 72 057 431 991` (`B = 114 208 327 604`). The published bounds are
+**stronger**, and their citation chain is (a referee caught the flat version
+that used to stand here):
+
+- **Barina**, *J. Supercomputing* 81 (2025) art. 810: convergence verified
+  below `2^71 = 2048·2^60` — the figure **in the paper**. The project page
+  (pcbarina.fit.vutbr.cz, retrieved 2025-01-15 state) reports `2075·2^60`,
+  which is not in print. Cite the paper for theorems.
+- **Hercher**, *JIS* 26 (2023) Art. 23.3.5, Thm 23: **no m-cycles with
+  `m ≤ 91`** — unconditional already at his `X₀ = 695·2^60`.
+- **Hercher, Cor. 29**: `K > 1.375×10¹¹` odd elements, **conditional on
+  `X₀ ≥ 1536·2^60 = 3·2^69`** — unmet at his publication (`695·2^60`),
+  **discharged by Barina 2025** (either figure). So the pincer's
+  `L > 1.375×10¹¹` is now unconditional, via the two-paper chain, and the
+  `m ≥ 92` phrasing means "at least 92 circuits", not that 92 is eliminated.
+
+`python/collatz_maxodd/hercher.py` re-runs Hercher's ladder in exact rational
+arithmetic at the 2025 bound — see §7's "The Hercher ladder, re-run" for what
+that did and did not buy.
 
 ### T8 — the mod-16 refinement (`q = 1`)
 > **`M ≢ 9 (mod 16)`**, hence `M ≡ 1, 5, 13 (mod 16)`, and with T3
@@ -414,8 +430,12 @@ real witnesses: `two7 : Cycle 7` (`{11,5}`) and `three5 : Cycle 5`
 | `3n+q` setting | Belaga & Mignotte, *Exp. Math.* 7(2) (1998) 145–151; Belaga, *Acta Arith.* 106.2 (2003) 197–206; Lagarias, *Acta Arith.* 56 (1990) 33–53. |
 
 State of the art, for scale: no nontrivial cycle has `m ≤ 91` circuits (Hercher
-2023); `K > 1.375×10¹¹` odd elements; minimum element `> 2075·2^60 ≈ 2.39×10²¹`
-(Barina, *J. Supercomputing* 81 (2025) art. 810). Nothing here approaches that.
+2023, unconditional); `K > 1.375×10¹¹` odd elements (Hercher Cor. 29,
+conditional on `X₀ ≥ 3·2^69`, discharged by Barina 2025); minimum element
+`> 2^71 = 2048·2^60 ≈ 2.36×10²¹` (Barina, *J. Supercomputing* 81 (2025)
+art. 810; his project page reports `2075·2^60`, not in print). Nothing here
+approaches that. The full chain, and what re-running the ladder at the 2025
+bound yields, is in T7 and §7.
 
 Two literature gaps could not be closed (searched, found nothing — absence of
 evidence only): an explicit published `M ≡ 5 (mod 12)` for the maximum, and an
@@ -539,6 +559,67 @@ motivated them.
    magnitude of headroom. Same wall, new disguise, but a sharp measurement of
    how atypical a counterexample must be.
 
+### The strategy filter, and the q-transfer theorem (`docs/FILTER.md`)
+
+The direction survey's guardrail, now proved: **the magnitude-free sieve
+cannot see `q`** — `S_k(q) = q·S_k(1) (mod 3^k)`, so `a_k(q) = a_k(1)` for
+every odd `q` with `3 ∤ q`, either sign. Ten-line proof (`c_t` is linear in
+`q`, the caps are q-free, multiplication by a unit bijects `Z/3^k`); checked
+as set equality to `k = 10` for six `q` including negatives, kernel-checked
+exhaustively at `k ≤ 4` (`lean/Collatz/QTransfer.lean`). The forward 2-adic
+sieve scales identically (`a ≤ 12` checked), so its `0.2863…` saturation is
+q-blind too. Since `q = 5` has the real cycle `{19, 31, 49}`, no hypothesis
+expressible in sieve statistics alone can prove `q = 1` cyclelessness.
+Stated with care: the `q = 5` cycle max `49` *dies* in the magnitude-free
+sieve at depth 8 (§6 ✗1's counterexample) — the no-go is "statistics are
+q-uniform, hence false at `q = 5`", not "the cycle survives the sieve".
+`docs/FILTER.md` turns this and its four cousins (sign, completion, density,
+uniformity) into a standing five-test gate with one executable witness or
+pinned citation each.
+
+### The Hercher ladder, re-run at the 2025 bound (`hercher.py`)
+
+Hercher's m-cycle elimination pipeline (Thm 16/21/27 + Lemma 22 + the
+S&dW Thm 3 ceiling), reimplemented in exact rational arithmetic with every
+inequality certified by directed rounding. **Regression first**: at his
+`X₀ = 695·2^60` the module reproduces the printed Theorem-23 ladder exactly —
+`m₂ = 47, 67, 77, 82, 86, 88, 91` and every K rung down to the digit
+(`5 267 319 278 509 397 → … → 7 941 964 418 702 608 664 581`), killing
+`m ≤ 91`. Two independent published computations also reproduce: Remark 28's
+`2836·2^60` threshold (ours: `2835.29·2^60`, his integer round-up), and
+Simons–de Weger's m = 76/77 candidate `K` values, which appear verbatim among
+the best-approximation denominators.
+
+At `X₀ = 2^71` (Barina 2025, published figure) the honest verdict, exactly the
+referee's predicted fallback:
+
+- **m = 92 still stands.** The ladder stalls at `K > 2.0563×10²⁰` against a
+  ceiling of `3.43×10²⁰`: certifying `m₂ = 92` needs `K ≥ 3.07×10²⁰`, and at
+  `m₂ = 91` the width's `X₀` term cannot get under the next rung's gap
+  (`6.245×10⁻⁴³`). Sharp cost statement, by exact binary search:
+  **eliminating m = 92 needs `X₀ ≥ 15905·2^60 ≈ 1.83×10²² ≈ 2^74`** —
+  7.8× the published verification frontier (boundary verified both sides).
+- **Four strictly improved Table-1 rows** (published: `m ≤ 98 → 7.76×10¹⁹`,
+  `m ≤ 117 → 2.74×10¹⁹`, `m ≤ 276 → 4.68×10¹⁸`):
+  `m ≤ 100 ⟹ K > 2.0563×10²⁰`, `m ≤ 124 ⟹ K > 7.7692×10¹⁹`,
+  `m ≤ 187 ⟹ K > 2.7444×10¹⁹`, `m ≤ 276+ ⟹ K > 4.64×10¹⁸` — each a
+  theorem given the imported inputs, each Barina-driven (at `695·2^60` the
+  m = 92 ladder stalls a full rung lower, matching the published table).
+- **The all-m rung economics.** The scalable Thm-27 route gives
+  `K ≥ 72 057 431 991` at every current `X₀` — Hercher's own "for all m" row,
+  digit for digit. The next rung, `K ≥ 137 528 045 312` (his `1.375×10¹¹`),
+  needs `X₀ ≥ 2836·2^60`; Barina's `2048·2^60` is short of it, so Cor. 29's
+  frozen five-week C++ certificate (condition `1536·2^60`, met) remains the
+  only unconditional route to `1.375×10¹¹` today. When public verification
+  reaches `2836·2^60`, that bound becomes program-free.
+
+Status: **P (imported + computed)** — all mathematics is Hercher's /
+Simons–de Weger's; the computation is in-repo, exact, and regression-guarded
+(`python/tests/test_hercher.py`, 17 tests). Nothing here is Lean-checked: the
+only realistic kernel target is Lemma 22 over `Q` with a hypothesized rational
+bracket on `log₂3`, which would sit beside `Length.lean`'s "Baker assumed"
+style — not attempted.
+
 ### Verification status
 
 | result | Python | Lean |
@@ -555,9 +636,10 @@ motivated them.
 | periodic points / the `−1` witness | ✓ | ✓ `Periodic.lean` (algebra only; existence and `a_k` are not) |
 | census: `q ∣ 2^B − 3^L`, the burst, `q=1`'s unique burst | ✓ | ✓ `Census.lean` |
 | the death-depth counts `a_k` (`k ≤ 4`) | ✓ | ✓ `Census.lean` |
+| q-transfer: `S_k(q) = q·S_k(1)`, `a_k` q-blind (docs/FILTER.md) | ✓ (`k ≤ 10`, six `q`) | ✓ `QTransfer.lean` (`k ≤ 4`, four offsets incl. `q ≡ −1`) |
 | over-dispersion, tail rate, box dimension | ✓ | ✗ — infeasible in-kernel, open, unresolved limit |
 
-Lean total: **302 declarations**, all certifying `[propext, Quot.sound]` or
+Lean total: **316 declarations**, all certifying `[propext, Quot.sound]` or
 `[propext]` — no `sorry`, no `Classical.choice`, no Mathlib.
 
 ### A duplication that was removed

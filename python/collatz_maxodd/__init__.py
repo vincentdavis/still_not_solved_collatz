@@ -32,6 +32,7 @@ from .backtree import (
 )
 from .cycleeq import (
     BARINA_2025_LIMIT,
+    BARINA_2025_PAPER_LIMIT,
     best_upper_approximations,
     check_cycle_equation,
     cycle_constant,
@@ -127,4 +128,5 @@ __all__ = [
     "length_admissible",
     "smallest_admissible_length",
     "BARINA_2025_LIMIT",
+    "BARINA_2025_PAPER_LIMIT",
 ]

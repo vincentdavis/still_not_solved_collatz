@@ -27,9 +27,12 @@ limiting density of `0.2863153965` of the odd numbers -- 1.80 bits, forever, no
 matter how deep you go.  The 3-adic (backward) half keeps cutting, but only
 geometrically in the depth `k`, while the modulus grows at `log2 3 = 1.585` bits
 per step; the number of surviving classes *grows* (about 11 million classes at
-`k = 20`).  The published state of the art (min element `> 2.39e21`, Barina 2025;
-`K > 1.375e11` odd elements and `>= 92` circuits, Hercher 2023) uses Baker's
-theorem and weeks of computation, and nothing here approaches it.
+`k = 20`).  The published state of the art (min element `> 2^71 ~ 2.36e21`, Barina 2025,
+paper figure; no m-cycles with `m <= 91`, Hercher 2023; `K > 1.375e11` odd
+elements via Hercher Cor. 29, conditional on `X_0 >= 3*2^69` and discharged by
+Barina) rests on continued fractions, verified computation, and -- for the
+per-m ceilings -- Baker's theorem; nothing here approaches it.  The exact
+re-run of Hercher's ladder at the 2025 bound is `collatz_maxodd/hercher.py`.
 
 ## Corrections to `docs/GROUND_TRUTH.md`
 

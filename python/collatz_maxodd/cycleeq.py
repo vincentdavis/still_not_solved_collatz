@@ -28,10 +28,17 @@ elements and ``B`` halvings:
    Hercher 2023) use Baker's theorem and are far stronger than what this module
    computes.  Do not present the number produced here as a new bound.
 
-Current published inputs (for the report): Barina, *J. Supercomputing* 81 (2025)
-art. 810, verified Collatz convergence for all ``n < 2075 * 2^60 ~ 2.39e21``;
-Hercher, *JIS* 26 (2023) Art. 23.3.5, ``m >= 92`` circuits and ``K > 1.375e11``
-odd elements under ``X_0 >= 1536 * 2^60``.
+Current published inputs (for the report), with the chain stated exactly:
+Barina, *J. Supercomputing* 81 (2025) art. 810, verifies Collatz convergence
+for all ``n < 2^71 = 2048 * 2^60`` (the figure IN THE PAPER); his project page
+(pcbarina.fit.vutbr.cz, retrieved 2025-01-15 state) reports ``2075 * 2^60``,
+which is not in print.  Hercher, *JIS* 26 (2023) Art. 23.3.5: no ``m``-cycles
+with ``m <= 91`` (Thm 23, unconditional at his ``X_0 = 695 * 2^60``), and
+``K > 1.375e11`` odd elements *conditional on* ``X_0 >= 1536 * 2^60 = 3*2^69``
+(Cor. 29) — a condition Barina's paper discharges, so the length bound is now
+unconditional.  Either Barina figure discharges it; this module keeps the two
+distinct.  The exact-rational re-run of Hercher's ladder at the 2025 bound
+lives in :mod:`collatz_maxodd.hercher`.
 """
 
 from __future__ import annotations
@@ -57,10 +64,19 @@ __all__ = [
     "length_admissible",
     "smallest_admissible_length",
     "BARINA_2025_LIMIT",
+    "BARINA_2025_PAPER_LIMIT",
 ]
 
-#: Barina 2025: Collatz convergence verified for all n < 2075 * 2^60.
+#: Barina's PROJECT-PAGE figure (pcbarina.fit.vutbr.cz, 2025-01-15 state):
+#: convergence verified for all n < 2075 * 2^60.  Not in print — the published
+#: paper stops at :data:`BARINA_2025_PAPER_LIMIT`.  Kept as this module's
+#: working limit for the *report* only; anything labeled a theorem should cite
+#: the paper figure.
 BARINA_2025_LIMIT = 2075 * 2**60
+
+#: The figure in Barina's published paper (J. Supercomputing 81 (2025) 810):
+#: convergence verified for all n < 2^71 = 2048 * 2^60.
+BARINA_2025_PAPER_LIMIT = 2**71
 
 
 def cycle_constant(cycle: Cycle) -> int:
