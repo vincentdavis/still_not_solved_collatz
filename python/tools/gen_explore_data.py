@@ -27,6 +27,7 @@ from collections import defaultdict
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
 from collatz_maxodd.census import primitive_cycles, total_halvings  # noqa: E402
+from collatz_maxodd.backtree import _LAMBDA, chain_bound_holds  # noqa: E402
 from collatz_maxodd.deathdepth import splice, survives  # noqa: E402
 from collatz_maxodd.structure import reachable_set  # noqa: E402
 
@@ -81,6 +82,13 @@ for j in range(1, 4):
                 assert survives(splice(r, j, s_, k), j + k), (r, j, s_, k)
                 spliced += 1
 assert spliced == 36
+
+# the UPPER end is a bound too: a_k <= N_k <= C(floor(k*alpha),k) <= lambda^k
+for _k in range(1, 16):
+    assert chain_bound_holds(_k, a[_k - 1]), _k
+for _k in range(16, 61):
+    assert chain_bound_holds(_k), _k
+upper = _LAMBDA / 3
 # Fekete on a supermultiplicative sequence: lim a_k^(1/k) = sup_k a_k^(1/k),
 # so EVERY term is a rigorous lower bound and the last is the best.
 best_lower = max(a[k - 1] ** (1 / k) for k in range(1, n + 1))
@@ -119,6 +127,7 @@ out = {
                "k_max": n, "best_rigorous_lower_rate": round(best_lower / 3, 4),
                "published_bracket": bracket,
                "proved": True, "splice_checked": spliced,
+               "rigorous_upper_rate": round(upper, 4), "upper_proved": True,
                "guess": "finite-memory relaxations give rigorous UPPER bounds",
                "result": "Fekete runs the other way -- and supermultiplicativity "
                          "is now PROVED, so the lower bound is rigorous"},
@@ -133,5 +142,7 @@ print(f"  dispersion: all {d_all['var_over_mean']}, m>q {d_big['var_over_mean']}
 print(f"  fekete: supermultiplicative={super_mult} (PROVED; splice checked on "
       f"{spliced} pairs)  -> rigorous lower rate {best_lower/3:.4f} "
       f"vs fitted bracket {bracket}")
+print(f"  upper end also proved: a_k <= lambda^k  ->  rate <= {upper:.4f} "
+      f"(chain checked to k=60)")
 print(f"  pincer: worst |R(M)| = {worst}, Hercher needs {HERCHER_L:,}"
       f"  -> {HERCHER_L//worst:,}x headroom")

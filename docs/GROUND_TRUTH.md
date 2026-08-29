@@ -345,7 +345,7 @@ Two checks run against **real integers**, with no residue arithmetic:
    density 0.286555 vs. the DP limit 0.2863153965; observed mod-`2^a` residue
    sets ⊆ predicted, sizes identical, for `a = 2..14`.
 
-Plus: 252 Python tests over the 2127-cycle census; 1623 real `S_q` cycles
+Plus: 255 Python tests over the 2127-cycle census; 1623 real `S_q` cycles
 (`q < 700`) re-derived independently during the Lean pass with 0 violations;
 `lean/check.sh` verified to *fail* on four deliberately injected defects,
 including a build-passing `sorry`.
@@ -525,11 +525,14 @@ motivated them.
    and is now **proved** — `a_(j+k) ≥ a_j·a_k` by splicing chains, the size cap
    composing and a lexicographic-least choice giving injectivity. So
    `μ = lim a_k^(1/k)` exists, equals `sup_k a_k^(1/k)`, and the rate is
-   rigorously `≥ 0.7364`. **The published bracket `[0.896, 0.947]` is not an
-   interval of proof**: its lower end is a model fit, and its upper end needs
-   `lim N_k^(1/k) = λ`, which §5 above gets *empirically*. Only the `0.7364`
-   is proved outright. The argument is standard Fekete and very likely
-   folklore — see `docs/EXPLORE.md` for the prior-art note.
+   rigorously `≥ 0.7364`. The **upper** end is now a bound too:
+   `a_k ≤ N_k ≤ C(⌊kα⌋,k) ≤ λ^k` at every `k`, from the binomial entropy
+   inequality — which does *not* need §5's empirical `N_k ~ C·λ^k·k^(−3/2)`.
+   So the rigorous bracket is `[0.7364, 0.9465]`, **both ends theorems**.
+   **The published `[0.896, 0.947]` is still not an interval of proof** — it is
+   strictly narrower and its lower end is a model fit. Both arguments are
+   standard and very likely folklore; see `docs/EXPLORE.md` for the prior-art
+   note.
 3. **The Hercher pincer.** `L ≤ |R(O)|` plus Hercher's `L > 1.375×10¹¹` means a
    cycle maximum needs `|R(O)| > 1.375×10¹¹`. Measured: `|R(M)|` is flat in `M`
    (median 3–4 from `10⁵` to `10¹⁰`) with a maximum of 289 — nine orders of

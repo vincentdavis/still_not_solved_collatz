@@ -122,9 +122,12 @@ compute. Not attempted. (These figures come from
 > Supermultiplicativity of `a_k` — `a_(j+k) ≥ a_j·a_k`, **proved** in
 > `docs/EXPLORE.md` — plus Fekete shows the limit `μ = lim a_k^(1/k)` *exists*
 > and equals `sup_k a_k^(1/k)`, so every computed term is a rigorous lower
-> bound. At `k = 24` that gives rate `≥ 0.7364`. The **rigorous** bracket is
-> therefore `[0.7364, 0.9465]`, wider than the fitted one, with both ends
-> theorems.
+> bound. At `k = 24` that gives rate `≥ 0.7364`. The upper end is a bound too:
+> `a_k ≤ N_k ≤ C(⌊kα⌋,k) ≤ λ^k` at every `k`, by the binomial entropy
+> inequality — no asymptotics needed, unlike the measured `N_k ~ C·λ^k·k^(−3/2)`
+> of `GROUND_TRUTH.md` §5. So the **rigorous** bracket is `[0.7364, 0.9465]`,
+> both ends theorems, wider than the fitted one. Narrowing it to meet the fit
+> is the open problem.
 
 ⚠️ **A second correction.** Even if the rate is the conjectured `λ/3`, the
 polynomial factor is `k^(−2.2)`, **not** the `k^(−3/2)` recorded earlier —

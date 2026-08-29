@@ -249,3 +249,69 @@ def pytest_approx(x, tol=1e-4):
         def __eq__(self, other):
             return abs(other - x) < tol
     return _A()
+
+
+# ---------------------------------------------------------------------------
+# The upper end, now proved too:  a_k <= N_k <= C(floor(k*alpha), k) <= lambda^k
+#
+# This closes the bracket.  Unlike GROUND_TRUTH's N_k ~ C*lambda^k*k^(-3/2),
+# which is measured, every step here is a bound that holds at every k.
+# ---------------------------------------------------------------------------
+
+
+def test_the_chain_bound_holds_at_every_depth():
+    """a_k <= N_k <= C(floor(k*alpha), k) <= lambda^k."""
+    import json as _json
+
+    from collatz_maxodd.backtree import chain_bound_holds
+
+    a = _json.loads((ROOT / "web" / "asym.json").read_text())["a_k"]
+    for k in range(1, 16):
+        assert chain_bound_holds(k, a[k - 1]), k
+    for k in range(16, 61):
+        assert chain_bound_holds(k), k
+
+
+def test_the_entropy_step_is_what_makes_it_elementary():
+    """C(n,k) <= n^n / (k^k (n-k)^(n-k)), and that is increasing in n.
+
+    From 1 = (p+q)^n >= C(n,k) p^k q^(n-k) at p = k/n.  Evaluated at the real
+    point n = k*alpha it is exactly lambda^k, so floor(k*alpha) <= k*alpha
+    gives the bound with no asymptotics and no Stirling.
+    """
+    import math
+
+    alpha = math.log2(3.0)
+    lam = alpha ** alpha / (alpha - 1.0) ** (alpha - 1.0)
+
+    def f(n, k):                       # the entropy bound, at real n
+        return n ** n / (k ** k * (n - k) ** (n - k))
+
+    for k in range(2, 40):
+        n = math.floor(k * alpha)
+        assert math.comb(n, k) <= f(n, k) * (1 + 1e-9), k      # entropy bound
+        assert f(n, k) <= f(k * alpha, k) * (1 + 1e-9), k      # increasing in n
+        assert f(k * alpha, k) == pytest_approx(lam ** k, tol=lam ** k * 1e-9)
+
+
+def test_the_bracket_is_now_rigorous_at_both_ends():
+    """0.7364 <= tail rate <= 0.9465, both ends proved.
+
+    Lower: supermultiplicativity + Fekete (this file, above).
+    Upper: a_k <= lambda^k, so mu <= lambda.
+    The published [0.8958, 0.9465] sits strictly inside, and its lower end
+    remains a model fit -- it is not implied by either bound.
+    """
+    import math
+
+    from collatz_maxodd.backtree import _LAMBDA
+
+    a = json.loads((ROOT / "web" / "asym.json").read_text())["a_k"]
+    lower = max(a[k - 1] ** (1 / k) for k in range(1, len(a) + 1)) / 3
+    upper = _LAMBDA / 3
+    assert lower == pytest_approx(0.7364)
+    assert upper == pytest_approx(0.9465)
+    lo_fit, hi_fit = _explore()["fekete"]["published_bracket"]
+    assert lower < lo_fit and hi_fit == pytest_approx(upper)
+    # every computed a_k respects the upper bound
+    assert all(a[k - 1] <= _LAMBDA ** k for k in range(1, len(a) + 1))

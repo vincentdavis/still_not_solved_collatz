@@ -3078,19 +3078,24 @@ document.getElementById("as-fekete").innerHTML =
   "lower bound and they can only improve. At <code>k = " + EX.fekete.k_max + "</code> that is " +
   "<b>" + EX.fekete.best_rigorous_lower_rate + "</b>." +
   "<div class='mono' style='margin:12px 0;font-size:.86em;line-height:1.9'>" +
-  "proved &nbsp;&nbsp;&nbsp;&nbsp;<span style='color:var(--violet)'><b>≥ " +
-  EX.fekete.best_rigorous_lower_rate + "</b></span> &nbsp;— this section<br>" +
-  "upper &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;≤ " + EX.fekete.published_bracket[1] +
-  " &nbsp;— <code>a<sub>k</sub> ≤ N<sub>k</sub></code> is proved, but <code>μ ≤ λ</code> also " +
-  "needs an asymptotic this project <em>measures</em><br>" +
-  "fitted &nbsp;&nbsp;&nbsp;&nbsp;[" + EX.fekete.published_bracket[0] + ", " +
-  EX.fekete.published_bracket[1] + "] &nbsp;— lower end is where the models sit</div>" +
-  "So be exact about which end is what. The quoted lower end is a fitted model parameter. " +
-  "The upper end leans on <code>lim N<sub>k</sub><sup>1/k</sup> = λ</code>, which this project " +
-  "confirms numerically rather than proves. <b>Only the 0.7364 is proved outright</b> — and " +
-  "the argument is a standard Fekete one, almost certainly folklore in the " +
-  "Applegate–Lagarias / Wirsching literature. It is written out because the page was " +
-  "leaning on it as an observation.";
+  "<span style='color:var(--violet)'>rigorous &nbsp;<b>[" + EX.fekete.best_rigorous_lower_rate +
+  ", " + EX.fekete.rigorous_upper_rate + "]</b></span> &nbsp;— both ends proved<br>" +
+  "fitted &nbsp;&nbsp;&nbsp;[" + EX.fekete.published_bracket[0] + ", " +
+  EX.fekete.published_bracket[1] + "] &nbsp;— strictly narrower; its lower end is a model fit</div>" +
+  "The upper end took a second pass. Saying <code>a<sub>k</sub> ≤ N<sub>k</sub></code> is not enough " +
+  "— <code>μ ≤ λ</code> also needs <code>lim N<sub>k</sub><sup>1/k</sup> = λ</code>, which this " +
+  "project only <em>measures</em>, and the first draft of this note claimed &ldquo;both ends " +
+  "theorems&rdquo; before it had earned that. It is closable elementarily: a live vector has " +
+  "strictly increasing partial sums capped by <code>⌊kα⌋</code>, so " +
+  "<code>N<sub>k</sub> ≤ C(⌊kα⌋, k)</code>; the binomial entropy bound " +
+  "<code>C(n,k) ≤ n<sup>n</sup>/(k<sup>k</sup>(n−k)<sup>n−k</sup>)</code> is increasing in " +
+  "<code>n</code>; and at <code>n = kα</code> it is <em>exactly</em> <code>λ<sup>k</sup></code>. " +
+  "So <code>a<sub>k</sub> ≤ λ<sup>k</sup></code> at every <code>k</code> — no asymptotics, no " +
+  "Stirling, no limit theorem." +
+  "<br><br>So the bracket is closed at both ends, and it is <em>wider</em> than the one usually " +
+  "quoted. Narrowing it to meet the fitted interval is the open problem. Both arguments are " +
+  "standard Fekete-and-entropy and almost certainly folklore in the Applegate–Lagarias / Wirsching " +
+  "literature; they are written out because the page was leaning on them as observations.";
 
 (function pincer(){
   var P = EX.pincer;

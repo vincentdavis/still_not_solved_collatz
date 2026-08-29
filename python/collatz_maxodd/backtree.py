@@ -28,11 +28,15 @@ Nothing here is new.
 
 from __future__ import annotations
 
+import math
 from fractions import Fraction
 from functools import lru_cache
 from typing import Iterator, Sequence
 
 from .syracuse import BackStep, check_q, predecessor_at
+
+_ALPHA = math.log2(3.0)
+_LAMBDA = _ALPHA ** _ALPHA / (_ALPHA - 1.0) ** (_ALPHA - 1.0)
 
 __all__ = [
     "floor_bound",
@@ -181,6 +185,39 @@ def admissible_halving_vectors(
 
 
 @lru_cache(maxsize=None)
+def entropy_bound(k: int) -> float:
+    """``C(floor(k*alpha), k)`` bounded by ``lambda^k``, the elementary way.
+
+    ``C(n, k) <= n^n / (k^k (n-k)^(n-k))`` -- take ``1 = (p+q)^n >= C(n,k) p^k
+    q^(n-k)`` at ``p = k/n``.  That right-hand side is increasing in ``n`` (its
+    log-derivative is ``log(n/(n-k)) > 0``), and at ``n = k*alpha`` it is
+    exactly ``lambda^k``.  Since ``floor(k*alpha) <= k*alpha``, the chain
+
+        a_k  <=  N_k  <=  C(floor(k*alpha), k)  <=  lambda^k
+
+    holds for EVERY k, with no asymptotics and no Stirling.  Returns the middle
+    quantity's bound ``lambda^k``; see :func:`chain_bound_holds`.
+    """
+    return _LAMBDA ** k
+
+
+def chain_bound_holds(k: int, a_k: int | None = None) -> bool:
+    """Check ``a_k <= N_k <= C(floor(k*alpha), k) <= lambda^k`` at depth ``k``.
+
+    This is the upper half of the rigorous bracket on the death-depth tail
+    rate: it gives ``a_k^(1/k) <= lambda`` for every ``k``, hence
+    ``mu = lim a_k^(1/k) <= lambda`` and rate ``<= lambda/3``.  Unlike the
+    asymptotic ``N_k ~ C*lambda^k*k^(-3/2)`` recorded in GROUND_TRUTH, which is
+    measured, this is a bound.  See docs/EXPLORE.md.
+    """
+    n = math.floor(k * _ALPHA)
+    nk = count_admissible_halving_vectors(k)
+    ck = math.comb(n, k)
+    if a_k is not None and not a_k <= nk:
+        return False
+    return nk <= ck <= _LAMBDA ** k
+
+
 def count_admissible_halving_vectors(depth: int) -> int:
     """``N(k)``: number of symbolic (large-``M``) admissible vectors at depth ``k``.
 

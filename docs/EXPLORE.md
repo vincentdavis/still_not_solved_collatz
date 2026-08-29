@@ -140,20 +140,51 @@ mu  >=  a_24^(1/24)  =  2.2093        tail rate  =  mu/3  >=  0.7364
 
 Combined with the standing upper bound `a_k ≤ N_k` (giving `mu ≤ λ = 2.8395`):
 
+### And the upper end, closed the same afternoon
+
+The first draft of this section labelled the upper end "proved (`a_k ≤ N_k`)",
+which was wrong: `μ ≤ λ` *also* needs `lim N_k^(1/k) = λ`, and `GROUND_TRUTH.md`
+§5 gets that **empirically**. A review caught it. It turns out to be closable
+elementarily, in four steps, with no asymptotics and no Stirling.
+
+1. **`a_k ≤ N_k`.** A live halving vector pins its residue — each step's
+   divisibility condition fixes one more 3-adic digit — and every surviving
+   residue has at least one. So residues inject into vectors.
+2. **`N_k ≤ C(⌊kα⌋, k)`**, `α = log₂3`. A live vector has strictly increasing
+   partial sums `1 ≤ B_1 < … < B_k` with `B_k ≤ ⌊kα⌋`. Drop the earlier caps
+   and what is left is a `k`-subset of `{1, …, ⌊kα⌋}`.
+3. **`C(n,k) ≤ n^n / (k^k (n−k)^(n−k))`.** From `1 = (p+q)^n ≥ C(n,k)p^k q^(n−k)`
+   at `p = k/n`. One line.
+4. **That bound is increasing in `n`** — its log-derivative is `log(n/(n−k)) > 0`
+   — and at the real point `n = kα` it is *exactly* `λ^k`:
+
+```
+(kα)^(kα) / (k^k · (k(α−1))^(k(α−1)))  =  [α^α/(α−1)^(α−1)]^k  =  λ^k
+```
+
+Since `⌊kα⌋ ≤ kα`, chaining gives **`a_k ≤ N_k ≤ C(⌊kα⌋,k) ≤ λ^k` at every
+`k`** — so `a_k^(1/k) ≤ λ`, hence `μ ≤ λ` and rate `≤ λ/3 = 0.9465`.
+
+No limit theorem for `N_k` is needed; the bound is exact at every `k`. Verified
+in `backtree.chain_bound_holds` for `k ≤ 60` (and `C(⌊kα⌋,k)/λ^k` sits around
+0.02–0.09, so there is real room).
+
+### The bracket, closed
+
 | | rate | status |
 |---|---|---|
-| lower | **0.7364** | **proved** (this section) |
-| upper | **0.9465** | `a_k ≤ N_k` is proved; `μ ≤ λ` also needs `lim N_k^(1/k) = λ`, which `GROUND_TRUTH.md` §5 gets **empirically** |
-| published bracket | `[0.8958, 0.9465]` | lower end is a **model fit** |
+| lower | **0.7364** | **proved** — supermultiplicativity + Fekete |
+| upper | **0.9465** | **proved** — `a_k ≤ λ^k` |
+| published bracket | `[0.8958, 0.9465]` | lower end is a **model fit**, and is *not* implied by either bound |
 
-So `[0.896, 0.947]` is not an interval of proof, and saying so is the point. But
-be exact about which end: the lower one is a fitted model parameter, and the
-upper one leans on a numerically-confirmed asymptotic for `N_k` rather than a
-bound. **Only the 0.7364 is proved outright here.**
+So the rigorous interval is `[0.7364, 0.9465]`, both ends theorems — which is
+what the first draft claimed before it had earned it. The quoted `[0.896, 0.947]`
+is strictly narrower and its lower end is still where the fitted models sit, not
+a bound. Narrowing the rigorous interval to meet it is the open problem.
 
-That upper end looks closable — `N_k` is supermultiplicative too, and the
-elementary count `N_k ≤ ⌊αk⌋·C(⌊αk⌋, k−1)` should give `μ ≤ λ` directly — but
-this repository does not do it, so it stays measured.
+(If you want the upper end without real numbers at all — the discipline the Lean
+side keeps — `λ < 2.84` gives `a_k ≤ 2.84^k` and rate `≤ 0.94667`, rational and
+barely weaker.)
 
 `deathdepth.splice` implements `Φ`. `test_explore.py` checks it lands in the
 survivors and is injective — including at `(j,k) = (5,6)`, `(6,5)` and `(4,7)`.
