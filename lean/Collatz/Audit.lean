@@ -31,6 +31,7 @@ import Collatz.Reach
 import Collatz.Periodic
 import Collatz.Halving
 import Collatz.Census
+import Collatz.QTransfer
 
 /-! ## Definitions (`Collatz/Odd.lean`) -/
 #print axioms Collatz.v2
@@ -394,3 +395,17 @@ header says why each one is not a theorem. -/
 #print axioms Collatz.cycle17_not_an_exact_hit
 #print axioms Collatz.trivial_L_BB
 #print axioms Collatz.q1_burst_is_exactly_the_trivial_cycle
+#print axioms Collatz.scanQ
+#print axioms Collatz.liveQ
+#print axioms Collatz.aaQ
+#print axioms Collatz.transferOK
+#print axioms Collatz.aaQ_one
+#print axioms Collatz.qtransfer_5
+#print axioms Collatz.qtransfer_7
+#print axioms Collatz.qtransfer_25
+#print axioms Collatz.qtransfer_neg_one
+#print axioms Collatz.aaQ_5
+#print axioms Collatz.aaQ_7_4
+#print axioms Collatz.aaQ_25_4
+#print axioms Collatz.aaQ_neg_one_4
+#print axioms Collatz.witness_minus_q

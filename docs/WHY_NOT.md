@@ -113,6 +113,43 @@ box dimension `log₃λ`, somewhere in `[0.87, 0.95]` on the computed range —
 **positive**, hence uncountable, hence never empty; and **below 1**, hence
 density zero. Both halves of "density zero but nonempty" in one number.
 
+## The sieve cannot even see `q` — the transfer theorem
+
+Added after the direction survey; reproduce with
+`uv run pytest python/tests/test_qtransfer.py`. This section upgrades the wall
+above from "the sieve never empties" to something stronger: **the sieve's
+statistics cannot distinguish a cycling system from a conjecturally cycle-free
+one.**
+
+> **Theorem (q-transfer).** For every odd `q` with `3 ∤ q`, either sign,
+> `S_k(q) = q · S_k(1) (mod 3^k)` — so `a_k(q) = a_k(1)` for all `k`.
+
+*Proof.* Liveness of `M` to depth `k` is `3^t | 2^{B_t} M − c_t(q)` for
+`t ≤ k` plus the q-free caps `2^{B_t} ≤ 3^t`. The constant is linear in `q`
+(`c_t = 2^{b_t} c_{t−1} + 3^{t−1} q`, `c_0 = 0`, so `c_t(q) = q·c_t(1)`);
+hence `M` is live for `q` iff `q^{−1}M` is live for `1`, and multiplication by
+the unit `q` bijects `Z/3^k`. ∎
+
+Checked as *set equality* for `k ≤ 10`, `q ∈ {5, 7, 11, 25, −1, −5}`;
+machine-checked exhaustively at `k ≤ 4` for `q = 5, 7, 25` and `q ≡ −1`
+(`lean/Collatz/QTransfer.lean`, kernel only). The forward 2-adic sieve scales
+the same way (`a ≤ 12` checked), so its 1.80-bit ceiling is q-blind too.
+
+Every number this project's sieve produces — `a_k`, `μ`, the death-rate
+bracket, the `0.2863` forward density — is therefore **identical at `q = 5`**,
+where the real cycle `{19, 31, 49}` exists. A hypothesis expressible in sieve
+statistics alone is q-uniform, and at `q = 5` it would prove a falsehood.
+
+Phrase the corollary correctly: the `q = 5` cycle does **not** survive the
+magnitude-free sieve — its maximum `49` dies at depth 8, because its own
+halving vector violates the cap (the §6 ✗1 counterexample). The cycle lives
+*below the sieve's asymptotic regime*, which is the sharpest possible statement
+of where magnitude enters: the exact sieve transfers only along `M ↦ qM`, and
+that map has no integrality-preserving inverse.
+
+The executable five-test gate built from this theorem (and its sign, completion,
+density and uniformity cousins) is **docs/FILTER.md**.
+
 ## Prior art
 
 The rational form of a cycle is Böhm & Sontacchi (1978); the 3-adic reading of

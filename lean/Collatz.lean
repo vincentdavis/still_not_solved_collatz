@@ -19,6 +19,7 @@ import Collatz.Reach
 import Collatz.Periodic
 import Collatz.Halving
 import Collatz.Census
+import Collatz.QTransfer
 import Collatz.Pigeonhole
 import Collatz.Equivalence
 import Collatz.Bridge

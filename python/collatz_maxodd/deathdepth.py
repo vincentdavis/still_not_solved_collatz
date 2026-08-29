@@ -183,32 +183,86 @@ def tail_ratios(a: list[int]) -> Iterator[float]:
         yield cur / prev
 
 
-def live_chains(y: int, B: int, j: int, d: int) -> list[tuple[int, ...]]:
+def live_chains(y: int, B: int, j: int, d: int, q: int = 1) -> list[tuple[int, ...]]:
     """Every live halving vector of length ``d`` from residue ``y``.
 
     Live means each division by 3 is exact and the magnitude-free cap
     ``2^{B_t} <= 3^t`` holds at every step.  Used by :func:`splice`, which is
     the constructive heart of the supermultiplicativity proof; for counting use
     :func:`surviving_residue_count`, which is far faster.
+
+    ``q`` may be any odd integer not divisible by 3, **either sign** — the
+    magnitude-free sieve uses no positivity, unlike every theorem in
+    :mod:`collatz_maxodd.sieve` (whose ``check_q`` rightly insists on ``q > 0``).
+    The parity of each ``b`` is forced by ``2^b y = q (mod 3)``; intermediate
+    ``y`` may go negative for ``q < 0`` or ``q > y``, which is harmless here
+    because only residues mod powers of 3 are ever consulted.
     """
     if d == 0:
         return [()]
     if y % 3 == 0:
         return []
     out: list[tuple[int, ...]] = []
-    b = 2 if y % 3 == 1 else 1
+    b = 2 if y % 3 == q % 3 else 1
     while (1 << (B + b)) <= 3 ** (j + 1):
-        num = (1 << b) * y - 1
+        num = (1 << b) * y - q
         if num % 3 == 0:
-            for tail in live_chains(num // 3, B + b, j + 1, d - 1):
+            for tail in live_chains(num // 3, B + b, j + 1, d - 1, q):
                 out.append((b,) + tail)
         b += 2
     return out
 
 
-def survives(r: int, k: int) -> bool:
+def survives(r: int, k: int, q: int = 1) -> bool:
     """Does the residue ``r`` survive the magnitude-free sieve to depth ``k``?"""
-    return bool(live_chains(r, 0, 0, k))
+    return bool(live_chains(r, 0, 0, k, q))
+
+
+def surviving_residues(K: int, q: int = 1) -> list[list[int]]:
+    """The survivor sets ``S_k(q)`` themselves, for ``k = 1..K``.
+
+    ``S_k(q)`` is the set of residues mod ``3^k`` surviving the magnitude-free
+    sieve to depth ``k``; ``len`` of each level reproduces ``a_k``.  Same DFS as
+    :func:`surviving_residue_count`, generalized to any odd ``q`` with
+    ``3 ∤ q`` (either sign) by carrying ``q`` through the ``c`` recursion
+    ``c' = 2^b c + 3^j q``.
+
+    **The q-transfer theorem** (docs/FILTER.md, test A): ``S_k(q) = q·S_k(1)``
+    pointwise mod ``3^k``, so ``a_k(q) = a_k(1)`` for every admissible ``q`` —
+    the sieve's statistics are exactly ``q``-blind.  ``python/tests/
+    test_qtransfer.py`` checks the set equality; the proof is ten lines
+    (``c_t`` is linear in ``q``, the caps are ``q``-free, and multiplication by
+    the unit ``q`` bijects ``Z/3^k``).
+    """
+    if K < 1:
+        raise ValueError("K must be >= 1")
+    if q % 2 == 0 or q % 3 == 0:
+        raise ValueError("q must be odd and not divisible by 3")
+    pow3 = [3 ** j for j in range(K + 2)]
+    cap = [(3 ** j).bit_length() - 1 for j in range(K + 2)]
+    qmod3 = q % 3
+    out: list[list[int]] = [[] for _ in range(K + 1)]
+    stack: list[tuple[int, int, tuple[tuple[int, int], ...]]] = [(0, 0, ((0, 0),))]
+    while stack:
+        j, m, chains = stack.pop()
+        if j == K:
+            continue
+        p3, lim = pow3[j], cap[j + 1]
+        for t in (0, 1, 2):
+            mp = m + p3 * t
+            new: list[tuple[int, int]] = []
+            for B, c in chains:
+                u = (((1 << B) * mp - c) // p3) % 3
+                if u == 0:
+                    continue
+                b = 2 if u == qmod3 else 1      # need (-1)^b * u == q (mod 3)
+                while B + b <= lim:
+                    new.append((B + b, (1 << b) * c + p3 * q))
+                    b += 2
+            if new:
+                out[j + 1].append(mp)
+                stack.append((j + 1, mp, tuple(new)))
+    return [sorted(level) for level in out[1:]]
 
 
 def splice(r: int, j: int, s: int, k: int) -> int:
