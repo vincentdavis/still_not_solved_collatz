@@ -1,6 +1,6 @@
 # The strategy filter
 
-Reproduce with `uv run pytest python/tests/test_qtransfer.py` (36 tests) and
+Reproduce with `uv run pytest python/tests/test_qtransfer.py` (37 tests) and
 `lean/check.sh` (`Collatz/QTransfer.lean`).
 
 Five tests a proposed proof strategy must pass **before any work starts**. Each
@@ -127,7 +127,7 @@ verified convergence bound `X₀` (Barina), and archimedean/valuation bounds on
 |---|---|---|---|---|---|---|
 | spectral / transfer-operator bounds on `μ` | ✗ | — | ✗ | — | — | measurement only; can never finish |
 | BRW / branching-model rates for the tail | ✗ | ✗ | — | ✗ | — | model only; its numbers are never bounds |
-| automaticity of the sieve (`μ` algebraic) | ✗ | — | ✗ | — | ✗¹ | dead twice over (also killed empirically: no linear recurrence, order ≤ 11 at `k ≤ 24`) |
+| automaticity of the sieve (`μ` algebraic) | ✗ | — | ✗ | — | ✗¹ | dead twice over (also killed empirically: no linear recurrence of order ≤ 11 fits `a_1..a_24` — witness: `test_qtransfer.py::test_no_linear_recurrence_order_11`) |
 | residue-only factorization constraints | ✗ | — | ✗ | — | — | congruence sieve in disguise |
 | magnitude factorization (largest-prime-factor) | ✓ | ✓ | ✓ | ✓ | ✓ | Baker in disguise — admissible, currently weak |
 | Baker / continued-fraction elimination | ✓ | ✓ | ✓ | ✓ | ✓ | **the only known coupler** — see the Hercher ladder |

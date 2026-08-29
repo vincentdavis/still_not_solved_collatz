@@ -216,8 +216,9 @@ that used to stand here):
 
 - **Barina**, *J. Supercomputing* 81 (2025) art. 810: convergence verified
   below `2^71 = 2048·2^60` — the figure **in the paper**. The project page
-  (pcbarina.fit.vutbr.cz, retrieved 2025-01-15 state) reports `2075·2^60`,
-  which is not in print. Cite the paper for theorems.
+  (pcbarina.fit.vutbr.cz, retrieved 2026-08) reports `2075·2^60` as its
+  current limit, not in print (the page dates the `2^71` milestone
+  2025-01-15). Cite the paper for theorems.
 - **Hercher**, *JIS* 26 (2023) Art. 23.3.5, Thm 23: **no m-cycles with
   `m ≤ 91`** — unconditional already at his `X₀ = 695·2^60`.
 - **Hercher, Cor. 29**: `K > 1.375×10¹¹` odd elements, **conditional on
@@ -583,7 +584,8 @@ Hercher's m-cycle elimination pipeline (Thm 16/21/27 + Lemma 22 + the
 S&dW Thm 3 ceiling), reimplemented in exact rational arithmetic with every
 inequality certified by directed rounding. **Regression first**: at his
 `X₀ = 695·2^60` the module reproduces the printed Theorem-23 ladder exactly —
-`m₂ = 47, 67, 77, 82, 86, 88, 91` and every K rung down to the digit
+`m₂ = 47, 67, 77, 82, 86, 88, 91` and every K rung, exact denominators
+agreeing with all the digits the paper prints
 (`5 267 319 278 509 397 → … → 7 941 964 418 702 608 664 581`), killing
 `m ≤ 91`. Two independent published computations also reproduce: Remark 28's
 `2836·2^60` threshold (ours: `2835.29·2^60`, his integer round-up), and
@@ -593,21 +595,32 @@ the best-approximation denominators.
 At `X₀ = 2^71` (Barina 2025, published figure) the honest verdict, exactly the
 referee's predicted fallback:
 
-- **m = 92 still stands.** The ladder stalls at `K > 2.0563×10²⁰` against a
-  ceiling of `3.43×10²⁰`: certifying `m₂ = 92` needs `K ≥ 3.07×10²⁰`, and at
+- **m = 92 still stands.** The ladder stalls at `K ≥ 2.0563×10²⁰` against a
+  ceiling of `3.43×10²⁰`: certifying `m₂ = 92` needs
+  `K ≥ 309 300 189 283 732 030 081 ≈ 3.093×10²⁰` (an audit caught a
+  hand-rounded `3.07×10²⁰` here that had dropped the `162/97` factor), and at
   `m₂ = 91` the width's `X₀` term cannot get under the next rung's gap
-  (`6.245×10⁻⁴³`). Sharp cost statement, by exact binary search:
-  **eliminating m = 92 needs `X₀ ≥ 15905·2^60 ≈ 1.83×10²² ≈ 2^74`** —
-  7.8× the published verification frontier (boundary verified both sides).
+  (`6.245×10⁻⁴³`). Cost statement, **scoped to this pipeline**: it eliminates
+  m = 92 exactly from `X₀ = 15905·2^60 ≈ 1.83×10²² ≈ 2^74` up — 7.8× the
+  published frontier. Two audit-taught honesty limits: minimality holds by
+  *exhaustive scan* (`u ≤ 17500`, single flip at 15905), not binary search
+  alone — the verdict is only piecewise monotone in `X₀`, since the Thm-21
+  premise's `log₂` term grows with it; and it is a *pipeline threshold*, not
+  a necessity theorem — uncertified sharp evaluation of the same theorems
+  crosses near `1.5×10⁴·2^60`, and Cor-29-grade program constants would need
+  less still.
 - **Four strictly improved Table-1 rows** (published: `m ≤ 98 → 7.76×10¹⁹`,
   `m ≤ 117 → 2.74×10¹⁹`, `m ≤ 276 → 4.68×10¹⁸`):
-  `m ≤ 100 ⟹ K > 2.0563×10²⁰`, `m ≤ 124 ⟹ K > 7.7692×10¹⁹`,
-  `m ≤ 187 ⟹ K > 2.7444×10¹⁹`, `m ≤ 276+ ⟹ K > 4.64×10¹⁸` — each a
-  theorem given the imported inputs, each Barina-driven (at `695·2^60` the
-  m = 92 ladder stalls a full rung lower, matching the published table).
+  `m ≤ 100 ⟹ K ≥ 2.0563×10²⁰`, `m ≤ 124 ⟹ K ≥ 7.7692×10¹⁹`,
+  `m ≤ 187 ⟹ K ≥ 2.7444×10¹⁹`, and `277 ≤ m ≤ 400 (checked) ⟹
+  K ≥ 4.6403×10¹⁸` against the published `3.97×10¹⁷` for that range
+  (188–276 keep the published `4.68×10¹⁸`, which the ladder does not beat) —
+  each a theorem given the imported inputs, each Barina-driven (at
+  `695·2^60` the m = 92 ladder stalls a full rung lower, matching the
+  published table).
 - **The all-m rung economics.** The scalable Thm-27 route gives
-  `K ≥ 72 057 431 991` at every current `X₀` — Hercher's own "for all m" row,
-  digit for digit. The next rung, `K ≥ 137 528 045 312` (his `1.375×10¹¹`),
+  `K ≥ 72 057 431 991` at every current `X₀` — Hercher's own "for all m" row
+  (he prints `7.20×10¹⁰`; all printed digits agree). The next rung, `K ≥ 137 528 045 312` (his `1.375×10¹¹`),
   needs `X₀ ≥ 2836·2^60`; Barina's `2048·2^60` is short of it, so Cor. 29's
   frozen five-week C++ certificate (condition `1536·2^60`, met) remains the
   only unconditional route to `1.375×10¹¹` today. When public verification
@@ -639,7 +652,7 @@ style — not attempted.
 | q-transfer: `S_k(q) = q·S_k(1)`, `a_k` q-blind (docs/FILTER.md) | ✓ (`k ≤ 10`, six `q`) | ✓ `QTransfer.lean` (`k ≤ 4`, four offsets incl. `q ≡ −1`) |
 | over-dispersion, tail rate, box dimension | ✓ | ✗ — infeasible in-kernel, open, unresolved limit |
 
-Lean total: **316 declarations**, all certifying `[propext, Quot.sound]` or
+Lean total: **317 declarations**, all certifying `[propext, Quot.sound]` or
 `[propext]` — no `sorry`, no `Classical.choice`, no Mathlib.
 
 ### A duplication that was removed

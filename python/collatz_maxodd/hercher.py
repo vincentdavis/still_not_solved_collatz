@@ -41,10 +41,10 @@ THE INGREDIENTS, with their sources pinned:
   with ``m <= 98`` has ``K > 7.76e19`` (proved at ``X_0 = 695 * 2^60``; lower
   bounds only improve with ``X_0``).
 * **X_0**: Barina, *J. Supercomputing* 81 (2025) art. 810 verifies convergence
-  below ``2^71 = 2048 * 2^60`` (the *published* figure).  The project page
-  (https://pcbarina.fit.vutbr.cz/, retrieved 2025-01-15 state) reports
-  ``2075 * 2^60``.  The two are distinguished everywhere below; headline
-  results use the published one.
+  below ``2^71 = 2048 * 2^60`` (the *published* figure; the page dates that
+  milestone 2025-01-15).  The project page (https://pcbarina.fit.vutbr.cz/,
+  retrieved 2026-08) reports ``2075 * 2^60`` as its current limit.  The two
+  are distinguished everywhere below; headline results use the published one.
 
 WHAT IS NEW HERE (and what is not).  Nothing in the mathematics is new: every
 theorem is Hercher's or Simons-de Weger's, and Remark 25/31 of Hercher's paper
@@ -53,8 +53,8 @@ this module adds is the *execution* of that prediction with the 2025 bound —
 ``X_0`` grew by a factor ``2048/695 = 2.95`` since publication — plus a
 regression harness that first reproduces the paper's own printed iterates at
 ``X_0 = 695 * 2^60`` before touching the new value.  Results appear in
-docs/GROUND_TRUTH.md §8; the honest failure mode of any run is recorded next
-to the claim it fails.
+docs/GROUND_TRUTH.md §7 ("The Hercher ladder, re-run"); the honest failure
+mode of any run is recorded next to the claim it fails.
 
 Everything decision-bearing is an inequality between exact rationals; where a
 transcendental quantity appears (``log2 3``, ``ln 2``, ``2^v``, ``x^delta``)
@@ -90,7 +90,8 @@ __all__ = [
 HERCHER_PUBLICATION_X0 = 695 * 2**60
 #: The figure in Barina's *published* 2025 paper (J. Supercomputing 81:810).
 BARINA_PAPER_X0 = 2048 * 2**60  # = 2^71
-#: The figure on Barina's project page (retrieved 2025-01-15).  Not in print.
+#: The figure on Barina's project page (current limit, retrieved 2026-08).
+#: Not in print — the paper's own figure is BARINA_PAPER_X0.
 BARINA_PAGE_X0 = 2075 * 2**60
 
 #: S&dW 2010 Thm 3: K < 1.4784 * m * delta^m for 91 <= m <= 515619.
@@ -194,7 +195,15 @@ def _pow2_lower(v: Fraction) -> Fraction:
 
 def _rpow_lower(x: Fraction, exp_lo: Fraction) -> Fraction:
     """A rational lower bound for ``x^e`` with ``x > 1``, ``e >= exp_lo > 0``:
-    ``2^floor(e_lo * log2_lo(x))``."""
+    ``2^floor(e_lo * log2_lo(x))``.
+
+    ``x > 1`` is load-bearing: for ``x < 1`` the direction FLIPS (log2 x < 0),
+    so it is asserted rather than assumed — the audit showed the bad case is
+    reachable through ``window_width`` only at absurd ``X0 <= 3``, which the
+    ``X0 > 765`` gate now excludes, but the certification should not hang on
+    that chain silently."""
+    if x <= 1:
+        raise ValueError("_rpow_lower needs x > 1; the bound flips below 1")
     lx = log2_bounds(x, 96)[0]
     e = (exp_lo * lx).numerator // (exp_lo * lx).denominator
     return Fraction(2) ** e
@@ -206,13 +215,14 @@ def _rpow_lower(x: Fraction, exp_lo: Fraction) -> Fraction:
 
 
 def simplest_in_open(a: Fraction, b: Fraction) -> Fraction:
-    """The unique smallest-denominator fraction in the open interval ``(a, b)``.
+    """A smallest-denominator fraction in the open interval ``(a, b)``.
 
     Exact Stern-Brocot / continued-fraction walk; ``0 <= a < b`` required.
     Every rational in ``(a, b)`` has denominator ``>=`` the result's — this is
     Hercher's Lemma 22 in executable form (and the classical "simplest
     rational" algorithm).  Minimality is exercised against brute force in the
-    tests.
+    tests.  (Not always unique: an interval containing two integers has many
+    denominator-1 members; the intervals this module builds never do.)
     """
     if not 0 <= a < b:
         raise ValueError("need 0 <= a < b")
@@ -293,7 +303,22 @@ def window_width(
     only when ``allow_cor19`` and ``X0 >= 695*2^60`` — Corollary 19, whose
     constant ``7/5`` is frozen at the published ``X_0`` (Remark 31) and is
     used here solely to regress against Table 1.
+
+    ``X0 > 765`` is required: Hercher's Remark 31 records that every
+    X0-generic case analysis (Lemma 26 behind Theorem 27 included) needs it.
+    Real inputs are ~10^21, so the gate only guards against nonsense calls —
+    which, per the audit, are also the only calls that could reach
+    ``_rpow_lower`` below 1.
+
+    NOT monotone in ``X0`` in general: the Theorem-21 premise contains
+    ``log2((162/97) X0)``, which GROWS with ``X0``, so the certified ``m_2``
+    can DROP as ``X0`` rises and the width can jump up (demonstrated:
+    at ``K = 7 941 964 418 702 608 664 581``, ``m = 99``, the width jumps by
+    1.64x as ``X0`` crosses ~6090*2^60).  With ``m_2`` fixed it IS
+    non-increasing in ``X0`` and in ``K`` — piecewise monotone only.
     """
+    if X0 <= 765:
+        raise ValueError("X0 > 765 required (Hercher Remark 31 side condition)")
     dlo, dhi = delta_bounds(fbits)
     ln2lo = ln2_bounds()[0]
     inv3ln2K = 1 / (3 * ln2lo * K)
@@ -369,7 +394,11 @@ def ladder(
     """Iterate width -> Lemma 22 -> new K until the bound stops improving.
 
     Every rung is a theorem: "an m-cycle (exactly ``m`` minima) with all
-    elements above ``X0`` has ``K >`` this rung", given ``K > K_start``.
+    elements above ``X0`` has ``K >=`` this rung", given ``K > K_start``.
+    (``>=``, not ``>``: Lemma 22 bounds the REDUCED denominator of
+    ``(K+L)/K``, and ``K`` is a multiple of it — equality is possible when
+    ``gcd(K, L) = 1``.  ``eliminate`` only needs ``>=``: its contradiction is
+    ``K >= rung > ceiling_upper >= true ceiling > K``.)
     ``stop_at`` (normally the S&dW ceiling) halts the climb once crossed —
     further rungs would be vacuous for a dead ``m``.
     """
@@ -398,8 +427,13 @@ class Verdict(NamedTuple):
 
 
 def _start_for(m: int) -> int:
-    """The best imported starting lower bound on K for exactly-``m`` cycles."""
-    best = SDW_LOWER_K_91_PLUS if SDW_CEILING_RANGE[0] <= m else 0
+    """The best imported starting lower bound on K for exactly-``m`` cycles.
+
+    The S&dW bracket row holds only for ``91 <= m <= 515619`` — both ends
+    checked (the audit caught a version that ignored the upper end; it was
+    masked by ``sdw_ceiling`` raising first, but latent for direct callers).
+    """
+    best = SDW_LOWER_K_91_PLUS if SDW_CEILING_RANGE[0] <= m <= SDW_CEILING_RANGE[1] else 0
     for bound_m, k in COR24_STARTS:
         if m <= bound_m and k > best:
             best = k
@@ -495,13 +529,30 @@ def rung_table(max_denominator: int = 10**25, fbits: int = 320) -> list[dict]:
 
 
 def required_x0_for_next_m(
-    m: int, *, lo_units: int = 1, hi_units: int = 10**7, fbits: int = 320
+    m: int,
+    *,
+    lo_units: int = 1,
+    hi_units: int = 10**7,
+    fbits: int = 320,
+    certify: bool = False,
 ) -> int:
     """The smallest ``X_0`` (in units of ``2^60``) at which ``eliminate(m)``
-    succeeds — the verification cost of pushing the theorem one more ``m``.
+    succeeds — the verification cost at which THIS pipeline pushes the
+    theorem one more ``m``.  Two honesty limits, both audit-taught:
 
-    Binary search over ``X_0 = u * 2^60``; monotone because every width above
-    shrinks (weakly) as ``X_0`` grows and every start/ceiling is ``X_0``-free.
+    * **This is the certified pipeline's threshold, not a necessity claim
+      about mathematics.**  Sharper arithmetic or program-grade constants
+      (Cor. 29-style case analysis) eliminate the same ``m`` at smaller
+      ``X_0`` — an uncertified sharp evaluation of the very same theorems
+      puts m = 92 near ``1.5e4 * 2^60`` against this function's 15905.
+    * **Binary search alone does not certify minimality**, because the
+      verdict is only piecewise monotone in ``X_0`` (see ``window_width``:
+      the Theorem-21 premise's ``log2`` term grows with ``X_0``).  The search
+      finds a candidate; ``certify=True`` then re-runs ``eliminate`` at EVERY
+      integer ``u`` below it (exhaustive, slow — minutes for m = 92) and
+      raises if any smaller ``u`` already succeeds.  An exhaustive scan for
+      m = 92 over ``u <= 17500`` found the verdict flip exactly once, at
+      15905, so the default remains fast search + spot checks in the tests.
     """
     if eliminate(m, hi_units * 2**60, fbits=fbits).dead is False:
         raise ValueError(f"m={m} not eliminated even at X0 = {hi_units}*2^60")
@@ -512,4 +563,10 @@ def required_x0_for_next_m(
             hi = mid
         else:
             lo = mid + 1
+    if certify:
+        for u in range(max(lo_units, 766 // 2**60 + 1), lo):
+            if eliminate(m, u * 2**60, fbits=fbits).dead:
+                raise AssertionError(
+                    f"non-monotone flip: m={m} already eliminated at u={u} < {lo}"
+                )
     return lo

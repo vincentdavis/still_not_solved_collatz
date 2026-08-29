@@ -44,7 +44,7 @@ LITERATURE = {
     "verification_limit": {
         "value": 2075 * 2**60,
         "approx": 2.3923121220592075e21,
-        "source": "D. Barina, J. Supercomputing 81, 810 (2025); project page pcbarina.fit.vutbr.cz, retrieved 2026-08-26",
+        "source": "project page pcbarina.fit.vutbr.cz, current limit, retrieved 2026-08-26; the published paper (D. Barina, J. Supercomputing 81, 810 (2025)) states 2^71 = 2048*2^60",
         "meaning": "all n < 2075*2^60 verified to reach 1; hence any nontrivial q=1 cycle has minimum element > this",
     },
     "min_odd_elements": {

@@ -404,6 +404,7 @@ header says why each one is not a theorem. -/
 #print axioms Collatz.qtransfer_7
 #print axioms Collatz.qtransfer_25
 #print axioms Collatz.qtransfer_neg_one
+#print axioms Collatz.qtransfer_shallow
 #print axioms Collatz.aaQ_5
 #print axioms Collatz.aaQ_7_4
 #print axioms Collatz.aaQ_25_4

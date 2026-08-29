@@ -96,7 +96,17 @@ for m_hi, expect in ((100, 205_632_218_873_398_596_256),
                      (187, 27_444_133_206_411_171_953)):
     assert eliminate(m_hi, BARINA_PAPER_X0).K_final == expect
     assert eliminate(m_hi + 1, BARINA_PAPER_X0).K_final != expect
-    rows.append({"m_le": m_hi, "K": str(expect), "K_float": float(expect)})
+    rows.append({"label": f"m ≤ {m_hi}", "K": str(expect), "K_float": float(expect)})
+
+# the fourth improved row: 188..276 keep the published 4.68e18 start, then
+# 277 onward (checked to 400) the ladder climbs a rung above the published
+# 3.97e17 for that range
+assert eliminate(188, BARINA_PAPER_X0).K_final == 4_680_000_000_000_000_000
+row4 = 4_640_282_259_296_926_456
+for m in (277, 400):
+    assert eliminate(m, BARINA_PAPER_X0).K_final == row4
+rows.append({"label": "277 ≤ m ≤ 400 (checked)", "K": str(row4),
+             "K_float": float(row4)})
 
 for x0 in (HERCHER_PUBLICATION_X0, BARINA_PAPER_X0, BARINA_PAGE_X0):
     assert allm_bound(x0)[0] == 72_057_431_991
@@ -127,9 +137,10 @@ hercher = {
     },
     "new_rows": rows,
     "published_rows": [
-        {"m_le": 98, "K_float": 7.76e19},
-        {"m_le": 117, "K_float": 2.74e19},
-        {"m_le": 276, "K_float": 4.68e18},
+        {"label": "m ≤ 98", "K_float": 7.76e19},
+        {"label": "m ≤ 117", "K_float": 2.74e19},
+        {"label": "m ≤ 117", "K_float": 2.74e19},
+        {"label": "m ≤ 3079", "K_float": 3.97e17},
     ],
     "allm": 72_057_431_991,
     "next_rung": {"K": 137_528_045_312, "x0_units": float(units), "x0_printed": 2836},

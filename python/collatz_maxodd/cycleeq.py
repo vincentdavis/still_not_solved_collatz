@@ -30,9 +30,10 @@ elements and ``B`` halvings:
 
 Current published inputs (for the report), with the chain stated exactly:
 Barina, *J. Supercomputing* 81 (2025) art. 810, verifies Collatz convergence
-for all ``n < 2^71 = 2048 * 2^60`` (the figure IN THE PAPER); his project page
-(pcbarina.fit.vutbr.cz, retrieved 2025-01-15 state) reports ``2075 * 2^60``,
-which is not in print.  Hercher, *JIS* 26 (2023) Art. 23.3.5: no ``m``-cycles
+for all ``n < 2^71 = 2048 * 2^60`` (the figure IN THE PAPER; the page dates
+that milestone 2025-01-15); his project page (pcbarina.fit.vutbr.cz, retrieved
+2026-08) reports ``2075 * 2^60`` as its current limit, which is not in print.
+Hercher, *JIS* 26 (2023) Art. 23.3.5: no ``m``-cycles
 with ``m <= 91`` (Thm 23, unconditional at his ``X_0 = 695 * 2^60``), and
 ``K > 1.375e11`` odd elements *conditional on* ``X_0 >= 1536 * 2^60 = 3*2^69``
 (Cor. 29) — a condition Barina's paper discharges, so the length bound is now
@@ -67,8 +68,8 @@ __all__ = [
     "BARINA_2025_PAPER_LIMIT",
 ]
 
-#: Barina's PROJECT-PAGE figure (pcbarina.fit.vutbr.cz, 2025-01-15 state):
-#: convergence verified for all n < 2075 * 2^60.  Not in print — the published
+#: Barina's PROJECT-PAGE figure (pcbarina.fit.vutbr.cz, current limit as
+#: retrieved 2026-08): convergence verified for all n < 2075 * 2^60.  Not in print — the published
 #: paper stops at :data:`BARINA_2025_PAPER_LIMIT`.  Kept as this module's
 #: working limit for the *report* only; anything labeled a theorem should cite
 #: the paper figure.

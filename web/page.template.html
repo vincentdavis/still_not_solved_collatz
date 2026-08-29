@@ -3223,9 +3223,9 @@ document.getElementById("as-fekete").innerHTML =
 
 /* ═══ Q-TRANSFER + THE HERCHER LADDER ══════════════════════════ */
 var QH = D.qhercher, QT = QH.qtransfer, HL = QH.hercher;
-function sci(x){
+function sci(x, d){
   var e = Math.floor(Math.log10(x));
-  return (x/Math.pow(10,e)).toFixed(2) + "×10<sup>" + e + "</sup>";
+  return (x/Math.pow(10,e)).toFixed(d || 2) + "×10<sup>" + e + "</sup>";
 }
 
 document.getElementById("qt-check").innerHTML =
@@ -3291,21 +3291,22 @@ document.getElementById("hl-cross").innerHTML =
   "best-approximation denominators. Different teams, different decades, different algorithms.";
 
 document.getElementById("hl-verdict").innerHTML =
-  "<b>m = 92 still stands.</b> At X₀ = " + HL.x0.paper + " the ladder stalls at K &gt; " +
+  "<b>m = 92 still stands.</b> At X₀ = " + HL.x0.paper + " the ladder stalls at K ≥ " +
   sci(HL.m92.stall_float) + " against a ceiling of " + sci(HL.m92.ceiling) + ": certifying " +
-  "m₂ = 92 needs K ≥ 3.07×10<sup>20</sup>, and one rung short, the window cannot squeeze under " +
-  "the next gap. The exact cost, by certified binary search: <b>eliminating m = 92 needs " +
-  "X₀ ≥ " + fmt(HL.m92.cost_units_2p60) + "·2⁶⁰ ≈ " + sci(HL.m92.cost_float) + " ≈ 2⁷⁴</b> — " +
-  "7.8× today's verified frontier. Sharp, falsifiable, and waiting on nothing but compute.";
+  "m₂ = 92 needs K ≥ 3.09×10<sup>20</sup>, and one rung short, the window cannot squeeze under " +
+  "the next gap. The cost, scoped honestly: <b>this certified pipeline eliminates m = 92 " +
+  "exactly from X₀ = " + fmt(HL.m92.cost_units_2p60) + "·2⁶⁰ ≈ " + sci(HL.m92.cost_float) +
+  " ≈ 2⁷⁴ up</b> — 7.8× today's verified frontier. A pipeline threshold, not a necessity " +
+  "theorem (sharper arithmetic crosses near 1.5×10<sup>4</sup>·2⁶⁰; minimality is by " +
+  "exhaustive scan, since the verdict is only piecewise monotone in X₀ — an audit caught " +
+  "both caveats). Sharp, falsifiable, and waiting on nothing but compute.";
 
 (function(){
   var pub = HL.published_rows;
   var body = HL.new_rows.map(function(r, i){
-    return "<tr><td>m ≤ " + r.m_le + "</td><td class='mono'>K &gt; " + sci(r.K_float) +
+    return "<tr><td>" + r.label + "</td><td class='mono'>K ≥ " + sci(r.K_float, 4) +
            "</td><td class='mono' style='color:var(--ink-3)'>" +
-           (i === 0 ? "m ≤ 98: K &gt; " + sci(pub[0].K_float)
-                    : i === 1 ? "m ≤ 117: K &gt; " + sci(pub[1].K_float)
-                              : "m ≤ 117: K &gt; " + sci(pub[1].K_float)) + "</td></tr>";
+           pub[i].label + ": K &gt; " + sci(pub[i].K_float) + "</td></tr>";
   }).join("");
   document.querySelector("#hl-rows tbody").innerHTML = body;
 })();

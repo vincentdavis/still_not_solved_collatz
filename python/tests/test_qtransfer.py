@@ -205,6 +205,46 @@ def test_sign_audit_min_and_max_structure():
 
 
 # ---------------------------------------------------------------------------
+# the filter table's empirical footnote, witnessed (docs/FILTER.md)
+# ---------------------------------------------------------------------------
+
+A_24 = [
+    1, 2, 3, 6, 10, 22, 50, 104, 254, 538, 1302, 3202, 7553, 19206, 44732,
+    113034, 262243, 660954, 1693714, 4204015, 10995110, 26812105, 69626820,
+    182840849,
+]  # docs/DEATH_DEPTH.md / tools/gen_asym_data.py (which pins k <= 18 to the DFS)
+
+
+def test_no_linear_recurrence_order_11():
+    """FILTER.md's automaticity kill, witnessed in-repo: no linear recurrence
+    of order <= 11 fits a_1..a_24 (exact rational Gaussian elimination —
+    the Hankel matrix with rows (a_i, ..., a_{i+11}) has full column rank,
+    so no nontrivial relation among its columns exists, and any order-<=-11
+    recurrence would be one).  So mu is very unlikely to be an automaton's
+    Perron root, and the bracket will not collapse by soficity."""
+    from fractions import Fraction
+
+    assert A_24[:12] == surviving_residue_count(12)  # pin the data to the DFS
+    r = 11
+    rows = [[Fraction(A_24[i + j]) for j in range(r + 1)]
+            for i in range(len(A_24) - r)]
+    rank, col = 0, 0
+    while col <= r and rank < len(rows):
+        piv = next((k for k in range(rank, len(rows)) if rows[k][col]), None)
+        if piv is None:
+            col += 1
+            continue
+        rows[rank], rows[piv] = rows[piv], rows[rank]
+        for k in range(len(rows)):
+            if k != rank and rows[k][col]:
+                f = rows[k][col] / rows[rank][col]
+                rows[k] = [a - f * b for a, b in zip(rows[k], rows[rank])]
+        rank += 1
+        col += 1
+    assert rank == r + 1  # full column rank: no recurrence of order <= 11
+
+
+# ---------------------------------------------------------------------------
 # guard: the exact sieve does NOT residue-transfer (where magnitude enters)
 # ---------------------------------------------------------------------------
 

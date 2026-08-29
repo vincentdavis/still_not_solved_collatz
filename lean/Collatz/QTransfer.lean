@@ -83,14 +83,26 @@ def transferOK (qr k : Nat) : Nat → Bool
 theorem aaQ_one : aaQ 1 1 = 1 ∧ aaQ 1 2 = 2 ∧ aaQ 1 3 = 3 ∧ aaQ 1 4 = 6 := by
   refine ⟨?_, ?_, ?_, ?_⟩ <;> decide
 
-/-! **The q-transfer, exhaustively at `k = 4`** — all 81 residues, four
-    offsets.  `qr = 80 ≡ −1 (mod 3 ^ 4)` is the `3x − 1` system: the sieve
-    cannot tell it from Collatz either. -/
+/-! **The q-transfer, exhaustively at every depth `k ≤ 4`** — all residues
+    mod `3 ^ k` for `k = 1, 2, 3, 4`, four offsets.  `qr = 80 ≡ −1 (mod 3^k)`
+    for every `k ≤ 4` (`80 = 3^4 − 1`, and `80 mod 3^k = 3^k − 1`), so the
+    fourth offset is the `3x − 1` system: the sieve cannot tell it from
+    Collatz either. -/
 
 theorem qtransfer_5 : transferOK 5 4 (3 ^ 4) = true := by decide
 theorem qtransfer_7 : transferOK 7 4 (3 ^ 4) = true := by decide
 theorem qtransfer_25 : transferOK 25 4 (3 ^ 4) = true := by decide
 theorem qtransfer_neg_one : transferOK 80 4 (3 ^ 4) = true := by decide
+
+/-- Depths 1–3 as well, for all four offsets: depth-4 transfer does not
+    formally entail the shallower set equalities (an audit point), so each
+    depth is checked outright. -/
+theorem qtransfer_shallow :
+    (transferOK 5 1 (3 ^ 1) && transferOK 5 2 (3 ^ 2) && transferOK 5 3 (3 ^ 3)
+      && transferOK 7 1 (3 ^ 1) && transferOK 7 2 (3 ^ 2) && transferOK 7 3 (3 ^ 3)
+      && transferOK 25 1 (3 ^ 1) && transferOK 25 2 (3 ^ 2) && transferOK 25 3 (3 ^ 3)
+      && transferOK 80 1 (3 ^ 1) && transferOK 80 2 (3 ^ 2) && transferOK 80 3 (3 ^ 3))
+      = true := by decide
 
 /-! Hence equal survivor counts — `a_k` is q-blind at every checked depth. -/
 

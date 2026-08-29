@@ -10,10 +10,11 @@ must appear among the rung denominators, and Hercher's Remark 28 threshold
 
 THE 2025 RESULT (the honest one — the referee's predicted fallback, not the
 bet): Barina's published ``X_0 = 2^71`` does NOT eliminate m = 92.  The ladder
-stalls at ``K > 2.0563×10^20`` against a ceiling of ``3.43×10^20``, and the
-exact verification cost of m = 92 is ``X_0 ≥ 15905·2^60 ≈ 1.83×10^22``.  What
-the new ``X_0`` does buy is four strictly improved Table-1 rows (see
-``test_new_rows``).
+stalls at ``K >= 2.0563×10^20`` against a ceiling of ``3.43×10^20``; this
+pipeline's threshold for m = 92 is ``X_0 = 15905·2^60 ≈ 1.83×10^22`` (a
+pipeline threshold, not a necessity theorem — sharper arithmetic crosses near
+``1.5×10^4·2^60``).  What the new ``X_0`` does buy is four strictly improved
+Table-1 rows (see ``test_new_rows``).
 """
 
 from __future__ import annotations
@@ -157,10 +158,12 @@ def test_m92_survives_barina_2025():
     """The honest headline: X_0 = 2^71 does NOT eliminate m = 92.
 
     The ladder stalls one rung short: to certify m_2 = 92 the premise needs
-    K >= 3.07e20, but the best reachable rung is 2.0563e20, and at m_2 = 91
-    the X_0 term of the width (~3.15/X_0) cannot get under the next rung's
-    gap (6.245e-43).  So Hercher's m <= 91 stands, and the stall value is
-    itself a theorem: any 92-cycle has K > 2.0563×10^20.
+    K >= 3.093e20 (exactly 309 300 189 283 732 030 081 — an audit caught the
+    hand-rounded 3.07e20 that dropped the 162/97 factor), but the best
+    reachable rung is 2.0563e20, and at m_2 = 91 the X_0 term of the width
+    (~3.15/X_0) cannot get under the next rung's gap (6.245e-43).  So
+    Hercher's m <= 91 stands, and the stall value is itself a theorem: any
+    92-cycle has K >= 2.0563×10^20.
     """
     v = eliminate(92, BARINA_PAPER_X0)
     assert not v.dead
@@ -191,19 +194,60 @@ def test_new_rows():
     # m <= 187: K > 2.7444e19  (the 2.74e19 band stretches 117 -> 187)
     for m in (125, 187):
         assert eliminate(m, BARINA_PAPER_X0).K_final == 27_444_133_206_411_171_953
+    # 188..276: the ladder adds nothing over the published 4.68e18 start
     assert eliminate(188, BARINA_PAPER_X0).K_final == 4_680_000_000_000_000_000
+    # the fourth improved row: 277 <= m (checked to 400): K > 4.6403e18,
+    # where the published table has only 3.97e17 (its m <= 3079 row)
+    for m in (277, 400):
+        assert eliminate(m, BARINA_PAPER_X0).K_final == 4_640_282_259_296_926_456
+    assert eliminate(277, HERCHER_PUBLICATION_X0).K_final != 4_640_282_259_296_926_456
 
 
 def test_m92_verification_cost():
-    """m = 92 falls exactly at X_0 = 15905·2^60 ~ 1.83e22 (~2^74) — the
-    sharp conditional the run was guaranteed to deliver either way."""
+    """This pipeline eliminates m = 92 exactly from X_0 = 15905·2^60 up.
+
+    Scoped claims only (both audit-taught): (a) it is the CERTIFIED
+    pipeline's threshold, not a necessity theorem — uncertified sharp
+    evaluation of the same theorems crosses near 1.5e4·2^60; (b) the verdict
+    is only piecewise monotone in X_0, so minimality is certified by the
+    ``certify`` scan (windowed here; an exhaustive scan to u = 17500 found
+    the single flip at 15905), not by binary search alone."""
     u = required_x0_for_next_m(92)
     assert u == 15905
     assert eliminate(92, u * 2**60).dead
     assert not eliminate(92, (u - 1) * 2**60).dead
-    # monotone beyond the boundary (spot checks)
+    # certify-scan a window below the threshold: no earlier dead island
+    assert required_x0_for_next_m(92, lo_units=15800, certify=True) == 15905
+    # spot checks across the domain, including the premise-flip region ~407
+    for uu in (407, 408, 1_000, 10_000):
+        assert not eliminate(92, uu * 2**60).dead
     for uu in (20_000, 10**6):
         assert eliminate(92, uu * 2**60).dead
+
+
+def test_m92_premise_threshold_exact():
+    """The Thm-21 premise first certifies m_2 = 92 at
+    K = 309 300 189 283 732 030 081 ~ 3.093e20 (X_0 = 2^71) — above the
+    2.0563e20 stall rung and below the 3.43e20 ceiling, which is exactly why
+    m = 92 deadlocks."""
+    from collatz_maxodd.hercher import _premised_m2
+
+    K = 309_300_189_283_732_030_081
+    assert _premised_m2(K, 92, BARINA_PAPER_X0, 320) == 92
+    assert _premised_m2(K - 1, 92, BARINA_PAPER_X0, 320) == 91
+
+
+def test_window_width_not_monotone_in_x0():
+    """The audit's counterexample, kept as a regression: the Thm-21 premise
+    contains log2((162/97) X_0), which GROWS with X_0, so the certified m_2
+    can drop and the width can JUMP as X_0 rises.  This is why binary search
+    alone cannot certify required_x0_for_next_m's minimality."""
+    K, m = 7_941_964_418_702_608_664_581, 99
+    x0 = 7_021_099_234_927_433_994_869
+    w_lo = window_width(K, m, x0)
+    w_hi = window_width(K, m, x0 + 1)
+    assert w_hi.m2 < w_lo.m2
+    assert w_hi.value > w_lo.value
 
 
 # ---------------------------------------------------------------------------
@@ -234,14 +278,13 @@ def test_remark_28_threshold_reproduces():
     assert 1536 * 2**60 <= BARINA_PAPER_X0  # Cor 29's condition is met
 
 
-def test_window_width_is_monotone_where_claimed():
-    """Widths shrink (weakly) in K and in X_0 — the directions the ladder and
-    the binary search rely on."""
+def test_window_width_is_monotone_in_k():
+    """Widths shrink (weakly) in K — the direction the ladder relies on.
+    (In X_0 they are only PIECEWISE monotone: see
+    test_window_width_not_monotone_in_x0.)"""
     w1 = window_width(10**15, 92, BARINA_PAPER_X0).value
     w2 = window_width(10**16, 92, BARINA_PAPER_X0).value
     assert w2 <= w1
-    w3 = window_width(10**15, 92, 4 * BARINA_PAPER_X0).value
-    assert w3 <= w1
 
 
 def test_enclosure_never_strengthens():
