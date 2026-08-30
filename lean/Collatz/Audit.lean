@@ -32,6 +32,7 @@ import Collatz.Periodic
 import Collatz.Halving
 import Collatz.Census
 import Collatz.QTransfer
+import Collatz.Words
 
 /-! ## Definitions (`Collatz/Odd.lean`) -/
 #print axioms Collatz.v2
@@ -410,3 +411,27 @@ header says why each one is not a theorem. -/
 #print axioms Collatz.aaQ_25_4
 #print axioms Collatz.aaQ_neg_one_4
 #print axioms Collatz.witness_minus_q
+
+/-! ## `Collatz/Words.lean` -/
+#print axioms Collatz.wcap
+#print axioms Collatz.wjump
+#print axioms Collatz.chainCAux
+#print axioms Collatz.chainC
+#print axioms Collatz.wadmAux
+#print axioms Collatz.wadm
+#print axioms Collatz.wliveAux
+#print axioms Collatz.wlive
+#print axioms Collatz.scanW
+#print axioms Collatz.foldW
+#print axioms Collatz.NN
+#print axioms Collatz.wcap_vals
+#print axioms Collatz.wjump_one_or_two
+#print axioms Collatz.wjump_no_11
+#print axioms Collatz.NN_vals
+#print axioms Collatz.first_collision
+#print axioms Collatz.realization_unique_k4
+#print axioms Collatz.all_ones_pins_minus_one
+#print axioms Collatz.extension_count_witness
+#print axioms Collatz.sign_law_witness
+#print axioms Collatz.deficit_moments_k5
+#print axioms Collatz.deficit_bracket_k5

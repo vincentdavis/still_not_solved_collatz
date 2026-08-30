@@ -633,6 +633,33 @@ only realistic kernel target is Lemma 22 over `Q` with a hypothesized rational
 bracket on `log₂3`, which would sit beside `Length.lean`'s "Baker assumed"
 style — not attempted.
 
+### The word → residue classification and the sign law (`docs/WORDS.md`)
+
+The collision-classification run (2026-08-30; every proof re-derived by an
+independent adversarial checker before entry). The map
+`Phi_k(b) = c_k·2^{−B_k} mod 3^k` realizes **every** halving word at exactly
+one residue — the uncapped core is Wirsching's (LNM 1681); the Sturmian-capped
+image count `a_k = |Phi_k(A_k)|` and everything below are this repo's. Proved
+(W-lemmas, docs/WORDS.md): realization + prefix collapse; slope-blindness
+(the all-ones chain at `−1`, defect exactly `k(α−1)`); the bump law (even
+last-letter bumps preserve `Phi` — the mod-`3^k` shadow of `z ↦ 4z+1` — odd
+bumps shift exactly the top digit); cap saturation (`B ≥ f(k)−1`, sharp);
+extension count `= N_{k−1}`; leafless; forced doubling `a_{k+1} ≥ 2a_k`
+exactly at Sturmian jump-2 levels (sharp at jump-1 levels).
+
+**Theorem A (new):** `jump(k) = 1 ⟹ N_k² > N_{k−1}N_{k+1}` for every `k ≥ 2`
+— half of the observed sign law `sign(N_k² − N_{k−1}N_{k+1}) = + ⟺ jump(k)=1`
+(zero violations to `k = 2216` on independently recomputed A100982 data; the
+law was found nowhere in the literature). The jump-2 half is proved
+**equivalent** to the deficit bound `c_n = μ(μ+1) − Var < 2` (Conjecture B;
+verified to `n ≈ 1200`, obstruction named). Collisions are classified by a
+prefix-free tail criterion; proved bounds `a_k ≤ 2N_{k−1} − [jump-in=1]N_{k−2}`
+and the window ladder — all rate-locked to `N` by the **no-rate-gain theorem**,
+so `mu ≤ lambda` remains the only proved rate bound and the three natural
+merging routes are closed by theorems, not ignorance. Status: **P/C mixed,
+labeled per item** (`python/tests/test_words.py`, 26 tests;
+`lean/Collatz/Words.lean`, kernel witnesses).
+
 ### Verification status
 
 | result | Python | Lean |
@@ -650,9 +677,10 @@ style — not attempted.
 | census: `q ∣ 2^B − 3^L`, the burst, `q=1`'s unique burst | ✓ | ✓ `Census.lean` |
 | the death-depth counts `a_k` (`k ≤ 4`) | ✓ | ✓ `Census.lean` |
 | q-transfer: `S_k(q) = q·S_k(1)`, `a_k` q-blind (docs/FILTER.md) | ✓ (`k ≤ 10`, six `q`) | ✓ `QTransfer.lean` (`k ≤ 4`, four offsets incl. `q ≡ −1`) |
+| words: realization, bump law, sign law (docs/WORDS.md) | ✓ (`test_words.py`, 26 tests) | ✓ `Words.lean` (first collision, uniqueness at `k=4`, sign law `k ≤ 8`, deficit `n=5`) |
 | over-dispersion, tail rate, box dimension | ✓ | ✗ — infeasible in-kernel, open, unresolved limit |
 
-Lean total: **317 declarations**, all certifying `[propext, Quot.sound]` or
+Lean total: **339 declarations**, all certifying `[propext, Quot.sound]` or
 `[propext]` — no `sorry`, no `Classical.choice`, no Mathlib.
 
 ### A duplication that was removed

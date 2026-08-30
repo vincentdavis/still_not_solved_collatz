@@ -1243,6 +1243,51 @@ footer{border-top:1px solid var(--rule);padding-top:28px;font-size:.84rem;color:
 </section>
 
 
+<!-- ══ WORDS ═════════════════════════════════════════════════════ -->
+<section>
+  <div class="eyebrow">The classification</div>
+  <h2>Words, residues, and where the arithmetic hides</h2>
+  <div class="prose stack">
+    <p>Classify trajectories by <b>what happens between consecutive odd numbers</b>: the halving
+    word <code>(b₁…b_k)</code>. Every word obeying the size caps is live at <b>exactly one</b>
+    residue mod <code>3^k</code> — the uncapped core of this is Wirsching&rsquo;s (1998), and the
+    forward mirror is Terras&rsquo;s 1976 bijection mod <code>2^k</code>. So live chains number
+    exactly <code>N_k</code>, the lattice-path count, and the survivor count <code>a_k</code> is
+    the <em>image size</em> of the word→residue map: <b>all arithmetic content of the sieve
+    beyond pure combinatorics is in which words collide</b>.</p>
+  </div>
+
+  <div class="frame" style="text-align:center;padding:26px 18px">
+    <div class="mono" style="font-size:clamp(.86rem,2.1vw,1.05rem);line-height:2;color:var(--ink)">
+      Φ<sub>k</sub>(b) &nbsp;=&nbsp; c<sub>k</sub>·2<sup>−B<sub>k</sub></sup> (mod 3<sup>k</sup>)
+      &nbsp;&nbsp;—&nbsp;&nbsp; <span style="color:var(--violet)">one word, one residue</span>
+    </div>
+    <div style="font-size:.78rem;color:var(--ink-3);margin-top:8px" id="wd-real"></div>
+  </div>
+
+  <div class="note" id="wd-bump"></div>
+
+  <div class="prose stack">
+    <p>And the word counts bend to the <b>binary digits of <code>log₂3</code></b>. Whether the
+    sequence <code>N_k</code> is locally log-convex or log-concave is decided by whether the
+    Beatty cap <code>⌊k·log₂3⌋</code> steps by 1 or by 2:</p>
+  </div>
+
+  <div class="frame" style="text-align:center;padding:26px 18px">
+    <div class="mono" style="font-size:clamp(.8rem,2vw,1.02rem);line-height:2;color:var(--ink)">
+      sign(N<sub>k</sub><sup>2</sup> − N<sub>k−1</sub>N<sub>k+1</sub>) &nbsp;=&nbsp; +
+      &nbsp;&nbsp;⟺&nbsp;&nbsp; ⌊(k+1)log₂3⌋ − ⌊k·log₂3⌋ = 1
+    </div>
+    <div style="font-size:.78rem;color:var(--ink-3);margin-top:8px" id="wd-law"></div>
+  </div>
+
+  <div class="note" id="wd-thmA"></div>
+  <div class="note warn" id="wd-conjB"></div>
+  <div class="note kill" id="wd-rate"></div>
+  <div class="note" style="border-color:var(--violet)" id="wd-lean"></div>
+</section>
+
+
 <!-- ══ STATUS ════════════════════════════════════════════════════ -->
 <section>
   <div class="eyebrow">Bookkeeping</div>
@@ -3270,6 +3315,63 @@ document.getElementById("qt-lean").innerHTML =
   "3<sup>t</sup>) and the kernel checks the transfer exhaustively over every residue mod 3<sup>" +
   QT.lean_depth + "</sup> for offsets " + QT.lean_offsets.join(", ") +
   " — plus the survivor counts and the −q witness. Zero axioms beyond propext.";
+
+var WD = D.words;
+document.getElementById("wd-real").innerHTML =
+  "chains = N<sub>k</sub> = " + WD.N.slice(0, 8).join(", ") + ", … (OEIS A100982); " +
+  "a<sub>k</sub> = " + WD.a.slice(0, 8).join(", ") + ", …; collisions N<sub>k</sub> − a<sub>k</sub> = " +
+  WD.collisions.slice(0, 10).join(", ") + ", … (now known to k = 21)";
+
+document.getElementById("wd-bump").innerHTML =
+  "<b>The first collision, explained.</b> The words (" + WD.first_collision.words[0].join(",") +
+  ") and (" + WD.first_collision.words[1].join(",") + ") both land on <b>" +
+  WD.first_collision.residue + " ≡ −1 (mod " + WD.first_collision.mod + ")</b> — the same witness " +
+  "class as everything else in this project. The mechanism is a proved <b>bump law</b>: raising " +
+  "the last letter by any <em>even</em> amount never changes the residue (it is the mod-3<sup>k</sup> " +
+  "shadow of the classical merging of z and 4z+1), while an odd bump shifts exactly the top 3-adic " +
+  "digit. By depth 12 the fiber sizes reach " +
+  Object.keys(WD.fiber_hist_12).slice(-1)[0] + " (histogram pinned in the tests), and the minimal " +
+  "rewrite window connecting a fiber grows like k − 3: collisions are <em>not</em> a bounded-window " +
+  "phenomenon.";
+
+document.getElementById("wd-law").innerHTML =
+  "zero violations, zero ties, k = 2…" + WD.sign_law_checked_to +
+  " — re-verified from a fresh DP at build time (independent OEIS data agrees); the collision " +
+  "<em>rate</em> obeys the same phase lock " + WD.phase_lock.hits + "/" + WD.phase_lock.hits +
+  " for k = " + WD.phase_lock.lo + "…" + WD.phase_lock.hi;
+
+document.getElementById("wd-thmA").innerHTML =
+  "<b>Theorem A (proved; new).</b> The jump-1 half holds for <em>every</em> k ≥ 2: " +
+  "N<sub>k</sub><sup>2</sup> &gt; N<sub>k−1</sub>N<sub>k+1</sub> whenever the cap steps by 1. " +
+  "The proof finds the right coordinates: in <em>slack</em> variables X = ⌊k·log₂3⌋ − B<sub>k</sub> " +
+  "the level recursion is a pure tail-sum operator — the staircase truncation dissolves — so the " +
+  "profiles are log-concave, and a geometric-domination bound (E[X(X−1)] &lt; 2μ² for discrete " +
+  "log-concave laws; the geometric law is the equality case) closes it. Adversarially re-derived " +
+  "line by line before entry.";
+
+document.getElementById("wd-conjB").innerHTML =
+  "<b>Conjecture B (the other half, open).</b> The jump-2 direction is proved <em>equivalent</em> " +
+  "to one clean inequality: the slack deficit c<sub>n</sub> = μ(μ+1) − Var stays below 2. Verified " +
+  "exactly to n = " + WD.deficit_checked_to + " at build time (sup " + WD.deficit_sup + " on this " +
+  "range; the binding class sits near 0.57 with margin ≈ 1.43 and a decreasing trend). The named " +
+  "obstruction: c &lt; 2 is <em>false</em> for general log-concave profiles, so no local argument " +
+  "suffices — a proof must track an invariant along the Sturmian orbit of log₂3.";
+
+document.getElementById("wd-rate").innerHTML =
+  "<b>What this cannot do — proved, not suspected.</b> Every fixed-window merging bound is " +
+  "rate-locked to N<sub>k</sub> (the sandwich N<sub>k−m</sub> ≤ U<sup>(m)</sup> ≤ 2·3<sup>m−1</sup>" +
+  "N<sub>k−m</sub>); uncapped windows saturate <em>all</em> units mod 3<sup>m</sup>; and the " +
+  "survivor tree contains full ternary subtrees of depth ≥ 5. So bounded windows, slack-free " +
+  "merging, and uniform branching are each <b>closed by a theorem</b> as routes to a growth rate " +
+  "below λ — the proved bounds (e.g. a<sub>k</sub> ≤ 2N<sub>k−1</sub> − [step 1]·N<sub>k−2</sub>) " +
+  "improve constants only. And by q-transfer, everything on this card is steering, never a finisher.";
+
+document.getElementById("wd-lean").innerHTML =
+  "<b>Machine-checked.</b> <code>lean/Collatz/Words.lean</code> (" + WD.lean_decls + " declarations): " +
+  "the kernel scans all 81 residues to confirm the first collision&rsquo;s two words are each live " +
+  "<em>only</em> at −1 mod 81, evaluates N<sub>1..7</sub> by enumeration, checks the sign law for " +
+  "k ≤ 8 and the n = 5 deficit bracket W₅ = 48 &lt; 288, and pins the no-11 structure of the jump " +
+  "word. Zero axioms beyond propext.";
 
 (function(){
   var body = HL.regression.m2.map(function(m2, i){
