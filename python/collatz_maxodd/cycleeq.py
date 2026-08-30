@@ -199,7 +199,9 @@ def best_upper_approximations(
     Generated from the convergents and semiconvergents
     ``(p_{k-1} + i*p_k) / (q_{k-1} + i*q_k)``, which is the standard complete
     candidate set for one-sided best approximations; the running record filter
-    then keeps exactly the best ones.  Starts ``2/1, 8/5, 65/41, 485/306, ...``.
+    then keeps exactly the best ones.  Starts ``2/1, 5/3, 8/5, 27/17, 46/29,
+    65/41, ...`` (semiconvergents included, unlike the two-sided convergent
+    list).
 
     These denominators are the only candidates for the cycle length ``L`` in
     :func:`smallest_admissible_length`: if some ``L`` satisfies the squeeze then

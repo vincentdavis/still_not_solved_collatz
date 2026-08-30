@@ -90,7 +90,9 @@ finishing-relevant theorem in it consumes positivity.
 
 `−1 ∈ Z₃` survives every congruence depth (docs/WHY_NOT.md, `all_digits_two`),
 and over `Z₂` the 3x+1 map is conjugate to the shift (Bernstein & Lagarias,
-*Canad. J. Math.* 48 (1996) 1154–1169), with uncountably many 2-adic cycles.
+*Canad. J. Math.* 48 (1996) 1154–1169), with a 2-adic cycle for every finite
+parity word — the countably many rationals `c_L/(2^B − 3^L)` — plus
+uncountably many divergent orbits.
 Any argument stable under either completion admits those points. "Must use
 archimedean size" is a theorem-shaped constraint, not advice.
 
