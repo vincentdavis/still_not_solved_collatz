@@ -5,7 +5,7 @@ every PROVED item below was written by one agent and then re-derived line by
 line by an independent adversarial checker, with every load-bearing number
 recomputed from fresh code; the checkers' corrections are incorporated (and
 noted where they changed a statement).  Witnesses: `python/tests/test_words.py`
-(26 tests) and `lean/Collatz/Words.lean`.  Labels follow the house scheme:
+(32 tests) and `lean/Collatz/Words.lean`.  Labels follow the house scheme:
 **PROVED** (complete proof, adversarially checked), **COMPUTED** (exact, this
 project), **CONJECTURE** (witnessed, unproved), **CITED**.
 
@@ -287,6 +287,120 @@ All PROVED unless marked; complete census to `k = 16` (double-verified;
 * Nearby-but-generic: log-concavity via lattice paths (e.g. Liang–Sagan,
   arXiv:2408.02782 — generic technology, nothing Beatty-slaved).
 
+## 11. Attacking Conjecture B directly — exact dynamics, the V-free reduction, and what fails
+
+**Provenance.** Solo attack of 2026-09-08 (no agent fleet; every identity below
+was derived by hand and then verified in exact rational arithmetic along the
+orbit — labels say to what range).  Not yet independently refereed.
+
+### 11.1 The exact level dynamics — PROVED
+
+Let `M_k(n) = Σ_x C(x,k) g_n(x)` be the binomial moments of the slack profile
+(`M_0 = N_n`, `M_1 = N_n μ_n`; combinatorially, `M_k` counts pairs (admissible
+word, k-subset of its slack units); in tails, `M_k = Σ_{a_1..a_k ≥ 1} T_n(a_1+…+a_k)`
+by the hockey-stick identity).  The level maps are **linear** on the moment
+sequence:
+
+    jump(n) = 1 (U):    M_k(n+1) = M_k + M_{k+1}
+    jump(n) = 2 (DU):   M_k(n+1) = M_{k−1} + 2 M_k + M_{k+1}      (M_{−1} = 0)
+
+Equivalently, with `G_n(z) = Σ_x g_n(x) z^x`:  `G_{n+1}(z) = (N_n − z^{jump(n)} G_n(z)) / (1 − z)`
+(both jump types in one formula; the dossier's two forms are its two cases).
+*Proof.* U: `M'_k = Σ_x C(x,k) T(x) = Σ_y g(y) Σ_{x≤y} C(x,k) = Σ_y g(y) C(y+1,k+1) = M_{k+1} + M_k`.
+DU is head-duplication after U: `M_k(Dh) = M_k(h) + M_{k−1}(h)` for `k ≥ 1` (shift
+identity `C(y+1,k) = C(y,k) + C(y,k−1)`) and `= h(0) + M_0(h) = 2N + M_1` for `k = 0`
+since `h(0) = T(0) = N`.  ∎  (Verified exact for `n < 60`, `k ≤ 7`.)
+
+**Consequences (exact, verified `n < 60`):**
+* `μ_n = N_{n+1}/N_n − jump(n)`; the μ-laws `U: μ' = μ − c/(2(1+μ))`,
+  `DU: μ' = μ + (2−c)/(2(2+μ))` (from `k = 0, 1` of the tower); so **reduced
+  Conjecture B ⟺ μ rises at every jump-2 step and drops by < 1 at every (1,2) step**.
+* The deficit at a DU-image, with `ρ₀ = (1+μ)/(2+μ)`, `μ' = μ_{Ug}`:
+
+      c(DU g) = 2(1+μ)(1+μ′)(1+μ−μ′)/(2+μ)² + ρ₀ · c(U g)
+
+  (from `k ≤ 2` of the tower); since `c(Ug) > 0` and `μ′ ≤ μ`:  `c(DU g) ≥ 2ρ₀²`.
+* **Dyadic mass conservation** (unrolling the cocycle at `z = 2`, where the
+  alternating signs cancel):
+
+      Σ_{w ∈ A_n} 2^{−B_n(w)}  +  Σ_{i=1}^{n−1} N_i 2^{−m_{i+1}}  =  1/2 ,
+
+  because an admissible `i`-word loses exactly `Σ_{b > m_{i+1} − B_i} 2^{−(B_i+b)} = 2^{−m_{i+1}}`
+  of measure to over-cap extensions — independently of its own `B_i`.  The
+  words are a prefix code of dyadic intervals; the cap kills a fixed measure per
+  word per level.  (Exact `n ≤ 80`; `Words.lean` checks `n ≤ 7` by `decide`.)
+  The live mass decays like `Σ N_i 2^{−m_{i+1}} ~ (λ/3)^i = 0.9465^i` — the
+  tail-rate bracket's upper end reappears as the dyadic death rate.
+
+### 11.2 Nonincreasing profiles: the κ-hierarchy — PROVED
+
+Every orbit profile with `n ≥ 2` is a tail sum, hence **nonincreasing**, and
+`DU g = U(shift g)` is one too.  A nonincreasing pmf on `{0..M}` is a mixture
+of uniforms `Unif{0..L}` (weights `(L+1)(p(L) − p(L+1)) ≥ 0`), so with
+`Var(mixture) ≥ E_L[Var_L]` and Jensen:
+
+    c  =  μ(μ+1) − Var  ≤  (2/3) μ(μ+1)          (uniform: equality).
+
+More generally the `k`-fold tail sum of a uniform, `p_{k,L}(x) = C(L−x+k−1, k−1)`,
+has binomial moments `M_j = C(L+k, j+k)` (Vandermonde), hence `μ = L/(k+1)` and
+
+    c(p_{k,L})  =  2 μ(μ+1) / (k+2)          exactly,
+
+and mixtures of `k`-fold tail sums satisfy `c ≤ 2μ(μ+1)/(k+2)`.  On the orbit
+(COMPUTED, `30 ≤ n ≤ 1200`): `κ = c/(μ(μ+1))` is `0.23–0.30` at U-images,
+`0.38–0.43` at first DU-images, `0.41–0.45` at second — the U-images behave
+like ~6-fold tail sums.
+
+### 11.3 The V-free reduction — PROVED implication
+
+The static "variational fact V" (`sup c(Uh) < 2` over capped log-concave `h`)
+is **not needed**.  From 11.2, `c < 2 ⟸ μ(μ+1) < 3 ⟺ μ < (√13 − 1)/2 = 1.30278`,
+and `c < 2μ + 2 ⟸ μ < 3`.  Hence
+
+    reduced Conjecture B  ⟸  μ_n < 1.30278 at every (2,2)-level  and  μ_n < 3 at every (1,2)-level.
+
+COMPUTED margins (`n ≤ 1500`): (2,2)-levels have `μ ∈ [0.93, 1.12]`; (1,2)-levels
+`μ ∈ [1.20, 1.47]`.  Two further explicit bounds hold with room: from
+`m_3 ≥ 0`, `c(U h) ≤ 2[((μ+m_2)/(1+μ))² − m_2/(1+μ)]` (max `1.586` over
+(1,2)-levels `n ≤ 2000`); two levels back, using the in-house `m_3 ≤ μ m_2`,
+max `1.819` (with Brenti's `m_3 ≤ m_2²/μ`: `1.631`).  **The whole conjecture is
+now a bound on the mean slack at (2,2)-levels** — exactly gap G, in its
+sharpest form: `μ ≤ 1.30` there.
+
+### 11.4 What fails, with numbers — COMPUTED
+
+Every induction that propagates *bounds* through the exact laws diverges by
+compounding, because the laws consume one higher moment per step and
+log-concavity supplies only one-sided closure:
+* pure-μ induction (c ≥ 0 at U-images): first failure at `n = 104`, `μ`-bound → 57 by 4000 steps;
+* (μ, c)-box induction with the Brenti lower bound `c(Ug) ≥ c·μ′/(μ(1+μ))` (valid on the orbit, ratio ≥ 1.28): explodes within 50 steps;
+* three-box (`X = U-images, Y = DU(X), Z = DU(Y)`) invariance: fails at every inflation — the c-images are 2–3× too wide while the μ-images are nearly invariant;
+* the 2-memory log-concave recursion `μ_n ≤ r(0)/(1 − r(1))` with `r(0), r(1)` exact in `(ρ_{n−1}, ρ_{n−2})`: within 13% at every step, divergent when iterated.
+
+### 11.5 The decisive dynamical fact — COMPUTED, and it overturns Route 3
+
+Route 3 of the paused attack claimed the geometric family is a *neutral*
+direction (so no contraction certificate could exist).  For the actual
+composite dynamics along the jump word this is **false**: a ±1% geometric tilt
+of the true profile at `n₀ = 100` (or 400) decays —
+
+    |δμ|:  1.7×10⁻² (s = 0) → 6.6×10⁻⁴ (100) → 1.4×10⁻⁵ (1000) → 4.6×10⁻⁷ (6000),
+
+with local decay exponent rising from ≈ 0.8 to ≈ 1.9 (polynomial, steepening);
+head-only and random perturbations decay far faster.  The orbit is an
+attractor of the U/DU dynamics; the contraction is nonlinear and non-uniform
+(linear neutrality of `U` alone is real, the `D` steps and the finite-support
+edge break it slowly).  Consequence for a proof: a truncated cap-vector
+dynamics (upper bounds on the ratio profile `r(0..K)`, monotone under `U` and
+`DU`, tail closed by log-concavity) tracks the orbit exactly up to a per-step
+injection `~ b^K`, and the injected error decays like `s^{−1.4…−1.9}` — summable.
+A certified proof therefore looks like: phase-partitioned invariant boxes of
+width `~ 2^{−K/2}` for the cap vector, verified once in exact rationals over the
+finitely many Sturmian return words.  That is a real project, not a lemma.
+
+**Standing gap (sharpest form):** prove `μ_n ≤ 1.30` at every (2,2)-level.
+Everything else in the reduced Conjecture B is now proved.
+
 ## 10. Verification
 
 | item | Python (`test_words.py`) | Lean (`Words.lean`) |
@@ -299,5 +413,6 @@ All PROVED unless marked; complete census to `k = 16` (double-verified;
 | W5/W6 children | min = 1 / 2 per jump, witnesses pinned | — |
 | Theorem A chain | identity, criterion, strict LC (`k <= 200`), law to 400 | sign-law witness `k <= 12` by `decide` |
 | Conjecture B | `0 < c_n < 2`, `n <= 300`; `W_5 = 48` | `W_5 = 48 < 288` by `decide` |
+| §11 exact dynamics | moment tower, μ-laws, c(DU), mass conservation (`n < 60`/`≤ 40`), κ-hierarchy, V-free bound, tilt decay | mass conservation `n ≤ 7` by `decide` |
 | C-lemmas | parity rule, closed form, min-prefix, LTE, saturation, rigidity fixture | first-collision equality by `decide` |
 | TF / phase lock / Zarubin | exact ranges as scoped | — |

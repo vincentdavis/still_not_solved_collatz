@@ -657,8 +657,22 @@ prefix-free tail criterion; proved bounds `a_k ≤ 2N_{k−1} − [jump-in=1]N_{
 and the window ladder — all rate-locked to `N` by the **no-rate-gain theorem**,
 so `mu ≤ lambda` remains the only proved rate bound and the three natural
 merging routes are closed by theorems, not ignorance. Status: **P/C mixed,
-labeled per item** (`python/tests/test_words.py`, 26 tests;
+labeled per item** (`python/tests/test_words.py`, 32 tests;
 `lean/Collatz/Words.lean`, kernel witnesses).
+
+*Conjecture B attack (2026-09-08, docs/WORDS.md §11):* the level dynamics
+is a proved linear tower on binomial moments (`U: M_k ↦ M_k + M_{k+1}`,
+`DU: M_k ↦ M_{k−1} + 2M_k + M_{k+1}`), giving the exact μ-laws, an exact
+formula for `c` at DU-images, and a dyadic **mass-conservation law**
+`Σ_w 2^{−B_n(w)} + Σ_{i<n} N_i 2^{−m_{i+1}} = 1/2`.  Every orbit profile is
+nonincreasing, hence `c ≤ (2/3)μ(μ+1)` (κ-hierarchy `2/(k+2)` for k-fold tail
+sums, exact), so the unproved variational fact V is unnecessary: **reduced
+Conjecture B ⟸ μ < 1.30278 at (2,2)-levels** (orbit: `μ ≤ 1.12` there).  Four
+bound-propagation inductions diverge by compounding (documented); the
+claimed neutral direction of the dynamics is refuted — tilt perturbations
+decay polynomially (exponent → ≈ 1.9) — so a certified truncated-cap
+invariant is the identified proof program.  Gap G, sharpest form: `μ_n ≤ 1.30`
+at every (2,2)-level.
 
 ### Verification status
 
@@ -680,7 +694,7 @@ labeled per item** (`python/tests/test_words.py`, 26 tests;
 | words: realization, bump law, sign law (docs/WORDS.md) | ✓ (`test_words.py`, 26 tests) | ✓ `Words.lean` (first collision, uniqueness at `k=4`, sign law `k ≤ 8`, deficit `n=5`) |
 | over-dispersion, tail rate, box dimension | ✓ | ✗ — infeasible in-kernel, open, unresolved limit |
 
-Lean total: **339 declarations**, all certifying `[propext, Quot.sound]` or
+Lean total: **341 declarations**, all certifying `[propext, Quot.sound]` or
 `[propext]` — no `sorry`, no `Classical.choice`, no Mathlib.
 
 ### A duplication that was removed

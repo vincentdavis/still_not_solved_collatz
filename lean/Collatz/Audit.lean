@@ -435,3 +435,5 @@ header says why each one is not a theorem. -/
 #print axioms Collatz.sign_law_witness
 #print axioms Collatz.deficit_moments_k5
 #print axioms Collatz.deficit_bracket_k5
+#print axioms Collatz.deadMass
+#print axioms Collatz.dyadic_mass_conservation_witness

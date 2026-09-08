@@ -9,11 +9,16 @@ agents (prover + adversarial checker) before being pinned.
 from __future__ import annotations
 
 import pytest
+from math import comb
 
 from collatz_maxodd.backtree import c_constant, floor_bound
 from collatz_maxodd.deathdepth import live_chains, surviving_residues
 from collatz_maxodd.words import (
+    binomial_moments,
     bump_last,
+    dyadic_live_mass,
+    moment_step,
+    mu_c,
     deficit_in_range,
     fibers,
     jump,
@@ -396,6 +401,132 @@ def test_zarubin_recursion_witness():
     N = n_words(121)
     for k in range(1, 121):
         assert zarubin_rhs(k, N) == N[k - 1]
+
+
+# ---------------------------------------------------------------------------
+# Section 11: exact level dynamics, the V-free reduction, and the kappa bounds
+# ---------------------------------------------------------------------------
+
+
+def test_moment_tower_and_gf_cocycle_exact():
+    """U: M'_k = M_k + M_{k+1}; DU: M'_k = M_{k-1} + 2M_k + M_{k+1}; and the GF
+    cocycle G_{k+1}(z) = (N_k - z^j G_k)/(1-z), exact at z = 3, n < 60."""
+    from fractions import Fraction as F
+
+    profs = word_profiles(61)
+    for n in range(1, 60):
+        assert moment_step(binomial_moments(n, 8), jump(n)) == binomial_moments(n + 1, 7)
+        z = F(3)
+        G = sum(v * z ** (floor_bound(n) - B) for B, v in profs[n - 1].items())
+        G2 = sum(v * z ** (floor_bound(n + 1) - B) for B, v in profs[n].items())
+        assert (sum(profs[n - 1].values()) - z ** jump(n) * G) / (1 - z) == G2
+
+
+def test_mu_laws_and_c_of_du_image():
+    """mu_n = N_{n+1}/N_n - jump(n); U: mu' = mu - c/(2(1+mu)); DU: mu' = mu +
+    (2-c)/(2(2+mu)); and the exact c(DU g) formula, n < 60."""
+    from fractions import Fraction as F
+
+    N = n_words(61)
+    for n in range(2, 60):
+        mu, c = mu_c(n)
+        assert mu == F(N[n], N[n - 1]) - jump(n)
+        mu2, c2 = mu_c(n + 1)
+        muU = mu - c / (2 * (1 + mu))
+        if jump(n) == 1:
+            assert mu2 == muU
+        else:
+            assert mu2 == mu + (2 - c) / (2 * (2 + mu))
+            M = binomial_moments(n, 4)
+            MU = moment_step(M, 1)
+            muU2 = F(MU[1], MU[0])
+            cU = 2 * (muU2 * muU2 - F(MU[2], MU[0]))
+            assert muU2 == muU
+            rho0 = (1 + mu) / (2 + mu)
+            assert c2 == 2 * (1 + mu) * (1 + muU) * (1 + mu - muU) / (2 + mu) ** 2 + rho0 * cU
+
+
+def test_dyadic_mass_conservation():
+    """sum_w 2^{-B_n(w)} + sum_{i<n} N_i 2^{-m_{i+1}} = 1/2, exact n <= 40, plus a
+    DP-free check by enumeration at n = 8."""
+    from fractions import Fraction as F
+
+    N = [1] + n_words(41)
+    for n in range(1, 41):
+        dead = sum(F(N[i], 2 ** floor_bound(i + 1)) for i in range(1, n))
+        assert dyadic_live_mass(n) + dead == F(1, 2)
+    assert dyadic_live_mass(8) == sum(F(1, 2 ** sum(w)) for w in words(8)) == F(367, 4096)
+
+
+def test_nonincreasing_profiles_and_kappa_hierarchy():
+    """Every orbit profile (n >= 2) is nonincreasing, hence c <= (2/3) mu(mu+1);
+    k-fold tail sums of a uniform have c = 2 mu(mu+1)/(k+2) exactly (k <= 5);
+    orbit U-images sit far below the bound (kappa <= 0.31 at n in 30..300)."""
+    from fractions import Fraction as F
+
+    profs = word_profiles(301)
+    for n in range(2, 301):
+        g = [profs[n - 1][B] for B in sorted(profs[n - 1], reverse=True)]  # slack order
+        assert all(a >= b for a, b in zip(g, g[1:]))
+        mu, c = mu_c(n)
+        assert c <= F(2, 3) * mu * (mu + 1)
+        if jump(n - 1) == 1 and n >= 30:
+            assert c / (mu * (mu + 1)) <= F(31, 100)
+    for k in range(1, 6):
+        for L in (3, 7, 12):
+            p = {x: 1 for x in range(L + 1)}
+            for _ in range(k - 1):
+                p = {x: sum(p[y] for y in p if y >= x) for x in p}
+            N = sum(p.values())
+            mu = F(sum(x * v for x, v in p.items()), N)
+            m2 = F(sum(comb(x, 2) * v for x, v in p.items()), N)
+            assert 2 * (mu * mu - m2) == F(2, k + 2) * mu * (mu + 1)
+
+
+def test_v_free_reduction_two_step_bound():
+    """c at a (2,2)-level is bounded by an explicit function of (mu, m2) two
+    levels back (m3 >= 0 and the in-house m3 <= mu m2): max < 2 over n <= 300."""
+    from fractions import Fraction as F
+
+    worst = F(0)
+    for n in range(2, 300):
+        if not (jump(n) == 2 and jump(n + 1) == 1):
+            continue
+        N, M1, M2 = binomial_moments(n, 3)
+        u, v = F(M1, N), F(M2, N)
+        muh = (1 + 2 * u + v) / (2 + u)
+        m2h = (u + 2 * v + u * v) / (2 + u)
+        bound = 2 * (((muh + m2h) / (1 + muh)) ** 2 - m2h / (1 + muh))
+        worst = max(worst, bound)
+    assert F(3, 2) < worst < 2
+
+
+def test_tilt_perturbation_decays():
+    """The geometric-tilt direction is NOT neutral for the composite dynamics:
+    a 1% tilt at n0 = 100 loses > 99% of its effect on mu within 300 steps."""
+    n0 = 100
+    profs = word_profiles(n0 + 1)
+    g0 = [0.0] * (floor_bound(n0) - n0 + 1)
+    for B, v in profs[n0 - 1].items():
+        g0[floor_bound(n0) - B] = float(v)
+
+    def run(g, steps):
+        out = []
+        for s in range(steps):
+            out.append(sum(x * v for x, v in enumerate(g)) / sum(g))
+            T, acc = [0.0] * len(g), 0.0
+            for x in range(len(g) - 1, -1, -1):
+                acc += g[x]
+                T[x] = acc
+            g = T if jump(n0 + s) == 1 else [T[0]] + T
+            m = max(g)
+            g = [v / m for v in g]
+        return out
+
+    base = run(g0, 301)
+    tilt = run([v * 1.01 ** x for x, v in enumerate(g0)], 301)
+    d0, d300 = abs(tilt[0] - base[0]), abs(tilt[300] - base[300])
+    assert d0 > 1e-3 and d300 < d0 / 100
 
 
 if __name__ == "__main__":

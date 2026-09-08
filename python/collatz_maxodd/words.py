@@ -53,6 +53,7 @@ CONJECTURE, not an input.
 
 from __future__ import annotations
 
+from fractions import Fraction
 from math import comb
 from typing import Iterator, Sequence
 
@@ -76,6 +77,10 @@ __all__ = [
     "window1_bound",
     "zarubin_rhs",
     "bump_last",
+    "binomial_moments",
+    "moment_step",
+    "mu_c",
+    "dyadic_live_mass",
 ]
 
 
@@ -254,3 +259,53 @@ def bump_last(bs: Sequence[int], j: int) -> tuple[int, ...]:
     if not bs or bs[-1] + j < 1:
         raise ValueError("last letter must stay >= 1")
     return tuple(bs[:-1]) + (bs[-1] + j,)
+
+
+# ---------------------------------------------------------------------------
+# exact level dynamics (docs/WORDS.md section 11)
+# ---------------------------------------------------------------------------
+
+
+def binomial_moments(n: int, K: int) -> list[int]:
+    """``[M_0, ..., M_{K-1}]`` with ``M_k = sum_x C(x, k) g_n(x)`` -- binomial
+    moments of the slack profile (``M_0 = N_n``, ``M_1 = N_n * mu_n``).
+
+    Combinatorially ``M_k`` counts (admissible word, k-subset of its slack
+    units); in tails, ``M_k = sum_{a_1..a_k >= 1} T_n(a_1 + ... + a_k)``.
+    """
+    m = floor_bound(n)
+    return [sum(comb(m - B, k) * c for B, c in word_profile(n).items())
+            for k in range(K)]
+
+
+def moment_step(M: Sequence[int], j: int) -> list[int]:
+    """The PROVED level dynamics on binomial moments (one fewer returned):
+
+        jump 1 (tail sum U):          M'_k = M_k + M_{k+1}
+        jump 2 (head-duplicated DU):  M'_k = M_{k-1} + 2 M_k + M_{k+1}   (M_{-1} = 0)
+
+    Equivalent to the GF cocycle ``G_{k+1}(z) = (N_k - z^j G_k(z)) / (1 - z)``.
+    """
+    K = len(M) - 1
+    if j == 1:
+        return [M[k] + M[k + 1] for k in range(K)]
+    return [(M[k - 1] if k else 0) + 2 * M[k] + M[k + 1] for k in range(K)]
+
+
+def mu_c(n: int) -> tuple[Fraction, Fraction]:
+    """``(mu_n, c_n)`` exactly: mean slack and deficit ``c = 2(mu^2 - m_2)``."""
+    N, M1, M2 = binomial_moments(n, 3)
+    mu = Fraction(M1, N)
+    return mu, 2 * (mu * mu - Fraction(M2, N))
+
+
+def dyadic_live_mass(n: int) -> Fraction:
+    """``sum over admissible words of 2^{-B_n(w)}`` -- the 2-adic measure of
+    the live word tree.  PROVED conservation law (Kraft-type):
+
+        dyadic_live_mass(n) + sum_{i=1}^{n-1} N_i 2^{-floor((i+1) alpha)} = 1/2,
+
+    because each admissible ``i``-word loses exactly ``2^{-m_{i+1}}`` of mass to
+    over-cap extensions at step ``i+1``, independently of its own ``B_i``.
+    """
+    return sum(Fraction(c, 2**B) for B, c in word_profile(n).items())

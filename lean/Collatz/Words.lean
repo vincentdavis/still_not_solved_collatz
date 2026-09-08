@@ -158,4 +158,19 @@ theorem deficit_bracket_k5 :
     2 * 6 * 6 + 6 * 12 = 48 + 8 * 12 ∧ 0 < 48 ∧ 48 < 2 * (12 * 12) := by
   decide
 
+/-- Dead dyadic mass by level `n`: `sum_{i=1}^{n-1} N_i · 2^{m_n − m_{i+1}}` (scaled
+    by `2^{m_n}` to stay in `Nat`).  Each admissible `i`-word loses exactly
+    `2^{-m_{i+1}}` of 2-adic measure to over-cap extensions at step `i+1`. -/
+def deadMass (n : Nat) : Nat :=
+  (List.range (n - 1)).foldl (fun acc i => acc + NN (i + 1) * 2 ^ (wcap n - wcap (i + 2))) 0
+
+/-- DYADIC MASS CONSERVATION (docs/WORDS.md §11), scaled by `2^{m_n}`:
+    `sum_w 2^{m_n − B_n(w)} + deadMass n = 2^{m_n − 1}` at `n = 4, 5, 6, 7`. -/
+theorem dyadic_mass_conservation_witness :
+    foldW (fun B => 2 ^ (wcap 4 - B)) 4 0 0 + deadMass 4 = 2 ^ (wcap 4 - 1) ∧
+      foldW (fun B => 2 ^ (wcap 5 - B)) 5 0 0 + deadMass 5 = 2 ^ (wcap 5 - 1) ∧
+      foldW (fun B => 2 ^ (wcap 6 - B)) 6 0 0 + deadMass 6 = 2 ^ (wcap 6 - 1) ∧
+      foldW (fun B => 2 ^ (wcap 7 - B)) 7 0 0 + deadMass 7 = 2 ^ (wcap 7 - 1) := by
+  decide
+
 end Collatz

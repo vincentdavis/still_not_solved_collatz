@@ -235,8 +235,8 @@ ALL CHECKS PASSED
 warning in Lean. `check.sh` is the real gate, and it has five steps: clean build
 with zero warnings, a source scan for unsoundness escape hatches
 (`sorry`/`axiom`/`native_decide`/`set_option`/`unsafe`/…), a forced-rebuild
-axiom audit (339 declarations: 238 on `[propext, Quot.sound]`, 30 on `[propext]`,
-71 on none; no `sorryAx`, no `Classical.choice`), a coverage check that every
+axiom audit (341 declarations: 238 on `[propext, Quot.sound]`, 30 on `[propext]`,
+73 on none; no `sorryAx`, no `Classical.choice`), a coverage check that every
 named declaration is actually audited, and a Mathlib-free check. It has been
 verified to *fail* on four deliberately injected defects, including a
 build-passing `sorry`.

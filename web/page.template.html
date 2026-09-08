@@ -3353,9 +3353,17 @@ document.getElementById("wd-conjB").innerHTML =
   "<b>Conjecture B (the other half, open).</b> The jump-2 direction is proved <em>equivalent</em> " +
   "to one clean inequality: the slack deficit c<sub>n</sub> = μ(μ+1) − Var stays below 2. Verified " +
   "exactly to n = " + WD.deficit_checked_to + " at build time (sup " + WD.deficit_sup + " on this " +
-  "range; the binding class sits near 0.57 with margin ≈ 1.43 and a decreasing trend). The named " +
-  "obstruction: c &lt; 2 is <em>false</em> for general log-concave profiles, so no local argument " +
-  "suffices — a proof must track an invariant along the Sturmian orbit of log₂3.";
+  "range). A direct attack (Sept 2026) then reduced it further: the level dynamics is an exact " +
+  "linear tower on binomial moments, every profile is a tail sum and hence <em>nonincreasing</em>, " +
+  "which forces c ≤ (2/3)·μ(μ+1) outright — so the whole conjecture collapses to a bound on the " +
+  "<b>mean slack at (2,2)-levels: μ &lt; " + WD.dyn.mu22_threshold + "</b>. The orbit sits at μ ≤ " +
+  WD.dyn.mu22_max_600 + " there (n ≤ 600, exact), with the tail-sum images behaving like sixfold-smoothed " +
+  "profiles (κ ≤ " + WD.dyn.kappa_u_max_600 + "). The same attack found an exact dyadic " +
+  "<b>mass-conservation law</b> for the word tree (checked n ≤ " + WD.dyn.mass_checked_to + ", and in " +
+  "Lean to n = 7), showed that four natural bound-propagation inductions diverge by compounding, and " +
+  "refuted the claimed neutral direction of the dynamics — perturbations decay polynomially — which " +
+  "makes a certified truncated-cap invariant the identified proof program. Standing gap, sharpest form: " +
+  "μ ≤ 1.30 at every (2,2)-level.";
 
 document.getElementById("wd-rate").innerHTML =
   "<b>What this cannot do — proved, not suspected.</b> Every fixed-window merging bound is " +

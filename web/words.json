@@ -1,4 +1,11 @@
 {
+ "dyn": {
+  "mass_checked_to": 59,
+  "mu22_max_600": 1.1108,
+  "mu12_max_600": 1.4627,
+  "mu22_threshold": 1.30278,
+  "kappa_u_max_600": 0.3043
+ },
  "N": [
   1,
   2,

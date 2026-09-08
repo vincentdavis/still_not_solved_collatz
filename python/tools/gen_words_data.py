@@ -24,7 +24,11 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
 from collatz_maxodd.backtree import floor_bound  # noqa: E402
 from collatz_maxodd.deathdepth import surviving_residues  # noqa: E402
 from collatz_maxodd.words import (  # noqa: E402
+    binomial_moments,
     bump_last,
+    dyadic_live_mass,
+    moment_step,
+    mu_c,
     fibers,
     jump,
     n_words,
@@ -116,8 +120,33 @@ NZ = n_words(121)
 for k in range(1, 121):
     assert zarubin_rhs(k, NZ) == NZ[k - 1]
 
+# ------------------------------------------------- section 11: exact dynamics
+N_all = [1] + n_words(61)
+for n in range(1, 60):
+    assert moment_step(binomial_moments(n, 6), jump(n)) == binomial_moments(n + 1, 5)
+    assert dyadic_live_mass(n) + sum(Fraction(N_all[i], 2 ** floor_bound(i + 1)) for i in range(1, n)) == Fraction(1, 2)
+mu22_max = Fraction(0); mu12_max = Fraction(0); kappa_u_max = Fraction(0)
+for n in range(30, 601):
+    mu, c = mu_c(n)
+    assert c <= Fraction(2, 3) * mu * (mu + 1)          # nonincreasing-profile bound
+    if jump(n) == 2 and jump(n + 1) == 2:
+        mu22_max = max(mu22_max, mu)
+    if jump(n) == 1 and jump(n + 1) == 2:
+        mu12_max = max(mu12_max, mu)
+    if jump(n - 1) == 1:
+        kappa_u_max = max(kappa_u_max, c / (mu * (mu + 1)))
+assert mu22_max * (mu22_max + 1) < 3                     # the V-free target, in range
+assert mu12_max < 3
+
 # --------------------------------------------------------------------- out
 out = {
+    "dyn": {
+        "mass_checked_to": 59,
+        "mu22_max_600": round(float(mu22_max), 4),
+        "mu12_max_600": round(float(mu12_max), 4),
+        "mu22_threshold": 1.30278,
+        "kappa_u_max_600": round(float(kappa_u_max), 4),
+    },
     "N": N_21,
     "a": A_24,
     "collisions": collisions,

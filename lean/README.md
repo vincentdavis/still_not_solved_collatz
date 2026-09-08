@@ -12,7 +12,7 @@ lake build      # zero errors, zero warnings
 
 **Status: no `sorry` anywhere.** `#print axioms` runs at build time on **every
 named declaration** — every theorem, every definition, the `Cycle` structure
-itself, and every `Cycle` instance (339 declarations, `Collatz/Audit.lean`).
+itself, and every `Cycle` instance (341 declarations, `Collatz/Audit.lean`).
 All report `[propext, Quot.sound]`, `[propext]`, or nothing — no `sorryAx`, and
 no `Classical.choice`.
 
