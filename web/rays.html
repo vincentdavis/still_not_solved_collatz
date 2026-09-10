@@ -71,12 +71,13 @@ td.pad i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-righ
   </header>
   <p class="lede">Every even number sits on exactly one <em>ray</em> <code>y·2<sup>x</sup></code> with <code>y</code> odd.
   Halving slides a number down its ray toward the base <code>y</code>; the <code>3n+1</code> step lifts an odd base
-  onto some other ray. Rays for the odd roots 1–19 are drawn below; the rings are where <code>3n+1</code> lands, colored by whether the reduced odd <code>S(n) = (3n+1)/2<sup>x</sup></code> is larger or smaller than the <code>n</code> that jumped.</p>
+  onto some other ray. Rays for the odd roots <span id="rootspan">1–19</span> are drawn below; the rings are where <code>3n+1</code> lands, colored by whether the reduced odd <code>S(n) = (3n+1)/2<sup>x</sup></code> is larger or smaller than the <code>n</code> that jumped.</p>
 
   <div class="controls" role="group" aria-label="Chart controls">
     <div class="seg" role="group" aria-label="Vertical scale">
       <button id="lin" aria-pressed="true">Linear</button><button id="log" aria-pressed="false">log₂</button>
     </div>
+    <label class="ctl">rays <input type="range" id="nr" min="2" max="50" value="10" aria-label="number of odd roots"><span class="mono" id="nrv">10 (y = 1…19)</span></label>
     <label class="ctl">x up to <input type="range" id="xr" min="3" max="12" value="5" aria-label="largest x"><span class="mono" id="xrv">5</span></label>
     <label class="ctl"><input type="checkbox" id="jumps" checked> 3n+1 jumps</label>
     <label class="ctl"><input type="checkbox" id="pads" checked> landing pads</label>
@@ -99,7 +100,7 @@ td.pad i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-righ
   <p class="note">Landing pads alternate along every live ray: <code>y·2<sup>x</sup> ≡ 1 (mod 3)</code> exactly when
   <code>y ≡ 1 (mod 3)</code> and <code>x</code> is even, or <code>y ≡ 2 (mod 3)</code> and <code>x</code> is odd.
   A root divisible by 3 never satisfies it — multiples of 3 have no odd predecessor — so those three rays are
-  drawn dashed. Bases 15 and 19 jump to the rays of 23 and 29, which lie outside the drawn set.
+  drawn dashed. <span id="outspan">Bases 15 and 19 jump to the rays of 23 and 29, which lie outside the drawn set.</span>
   <br><br><b>Rise or fall is decided by the height alone.</b> One halving gives <code>S(n) = (3n+1)/2 &gt; n</code>; two or more give
   <code>S(n) ≤ (3n+1)/4 &lt; n</code> for <code>n &gt; 1</code>. So every rising jump lands in the <code>x = 1</code> column — the sources <code>n ≡ 3 (mod 4)</code> —
   and every pad at height <code>x ≥ 2</code> is a descent; the only equality is the fixed point <code>1 → 4 → 1</code>.</p>
@@ -121,10 +122,9 @@ td.pad i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-righ
 
 <script>
 (function(){
-  var ODDS = [1,3,5,7,9,11,13,15,17,19];
   var W = 1000, H = 560, ML = 66, MR = 78, MT = 34, MB = 46;
   var svg = document.getElementById('svg'), tip = document.getElementById('tip');
-  var state = { log: false, X: 5, jumps: true, pads: true, hx: 1 };
+  var state = { log: false, X: 5, jumps: true, pads: true, hx: 1, N: 10 };
   var NS = 'http://www.w3.org/2000/svg';
   function el(n, a, txt){ var e = document.createElementNS(NS, n); for (var k in a) e.setAttribute(k, a[k]); if (txt != null) e.textContent = txt; return e; }
   function v2(n){ var c = 0; while (n % 2 === 0) { n /= 2; c++; } return c; }
@@ -136,7 +136,13 @@ td.pad i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-righ
 
   function render(){
     while (svg.childNodes.length > 1) svg.removeChild(svg.lastChild);
-    var X = state.X, maxV = 19 * Math.pow(2, X);
+    var ODDS = []; for (var i = 0; i < state.N; i++) ODDS.push(2 * i + 1);
+    var YMAX = 2 * state.N - 1, X = state.X, maxV = YMAX * Math.pow(2, X);
+    document.getElementById('rootspan').textContent = '1–' + YMAX;
+    document.getElementById('ttl').textContent = 'Rays y·2^x for odd y from 1 to ' + YMAX;
+    var out = ODDS.filter(function(n){ var v = 3 * n + 1; return v / Math.pow(2, v2(v)) > YMAX; });
+    document.getElementById('outspan').textContent = out.length === 0 ? 'Every drawn base lands on a drawn ray.' :
+      (out.length <= 6 ? 'Bases ' + out.join(', ') + ' jump to rays outside the drawn set.' : out.length + ' of the drawn bases jump to rays outside the drawn set.');
     var iw = W - ML - MR, ih = H - MT - MB;
     var px = function(x){ return ML + x / X * iw; };
     var py = state.log ? function(v){ return MT + ih - Math.log2(v) / Math.log2(maxV) * ih; }
@@ -206,6 +212,7 @@ td.pad i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-righ
     // direct end labels, nudged apart with leaders when they collide
     labels.sort(function(a, b){ return a.py - b.py; });
     var MINGAP = 14, lo = MT + 6;
+    if (labels.length * MINGAP > ih) { var st = Math.ceil(labels.length * MINGAP / ih), last = labels.length - 1; labels = labels.filter(function(L, i){ return i % st === 0 || i === last; }); }
     labels.forEach(function(L){ L.ly = Math.max(L.py, lo); lo = L.ly + MINGAP; });
     var over = labels[labels.length - 1].ly - (MT + ih + 6); if (over > 0) { labels.forEach(function(L){ L.ly -= over; }); for (var i = labels.length - 2; i >= 0; i--) labels[i].ly = Math.min(labels[i].ly, labels[i + 1].ly - MINGAP); }
     labels.forEach(function(L){
@@ -238,6 +245,7 @@ td.pad i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-righ
 
   document.getElementById('lin').onclick = function(){ state.log = false; this.setAttribute('aria-pressed', 'true'); document.getElementById('log').setAttribute('aria-pressed', 'false'); render(); };
   document.getElementById('log').onclick = function(){ state.log = true; this.setAttribute('aria-pressed', 'true'); document.getElementById('lin').setAttribute('aria-pressed', 'false'); render(); };
+  document.getElementById('nr').oninput = function(){ state.N = +this.value; document.getElementById('nrv').textContent = this.value + ' (y = 1…' + (2 * state.N - 1) + ')'; render(); };
   document.getElementById('xr').oninput = function(){ state.X = +this.value; document.getElementById('xrv').textContent = this.value; render(); };
   document.getElementById('jumps').onchange = function(){ state.jumps = this.checked; render(); };
   document.getElementById('pads').onchange = function(){ state.pads = this.checked; render(); };
