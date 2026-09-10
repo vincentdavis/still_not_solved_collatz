@@ -1,0 +1,282 @@
+<meta charset="utf-8">
+<title>Halving Surface</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+:root{
+  --paper:#E8EAE5; --surface:#F2F3EF; --ink:#171A1C; --ink-2:#4A5254; --ink-3:#79817F;
+  --rule:#C9CDC4; --grid:#DEE1DA; --axis:#9AA19C;
+  --ray:#2a78d6; --ray-dead:#86AAE3; --rise:#eb6834; --fall:#1baf7a; --fix:#79817F;
+  --sheet:#AFC7EC; --sheet-edge:#6E97D6; --focus:#24478F;
+  --f-sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#14171A; --surface:#1C2126; --ink:#E8EAE5; --ink-2:#A9B1AF; --ink-3:#6E7876;
+    --rule:#2B3138; --grid:#242A30; --axis:#5A636A;
+    --ray:#3987e5; --ray-dead:#4A6392; --rise:#d95926; --fall:#199e70; --fix:#8B9492;
+    --sheet:#2A3D5C; --sheet-edge:#3E5A86; --focus:#7FA8EE;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#14171A; --surface:#1C2126; --ink:#E8EAE5; --ink-2:#A9B1AF; --ink-3:#6E7876;
+  --rule:#2B3138; --grid:#242A30; --axis:#5A636A;
+  --ray:#3987e5; --ray-dead:#4A6392; --rise:#d95926; --fall:#199e70; --fix:#8B9492;
+  --sheet:#2A3D5C; --sheet-edge:#3E5A86; --focus:#7FA8EE;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-sans);font-size:15px;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding:28px 20px 56px;display:flex;flex-direction:column;gap:18px}
+.eyebrow{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+h1{margin:2px 0 0;font-size:clamp(1.6rem,3.4vw,2.2rem);font-weight:600;letter-spacing:-.01em;text-wrap:balance;line-height:1.15}
+.lede,.note{max-width:65ch;color:var(--ink-2);margin:0}
+.note{font-size:.9rem}
+code{font-family:var(--f-mono);font-size:.92em;color:var(--ink)}
+.controls{display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;font-size:.88rem;color:var(--ink-2)}
+.seg{display:inline-flex;border:1px solid var(--rule);border-radius:5px;overflow:hidden}
+.seg button{font:inherit;font-weight:500;background:transparent;color:var(--ink-2);border:0;padding:5px 12px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+button.plain{font:inherit;font-weight:500;background:transparent;color:var(--ink-2);border:1px solid var(--rule);border-radius:5px;padding:5px 12px;cursor:pointer}
+.seg button:focus-visible,button.plain:focus-visible,input:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+label.ctl{display:inline-flex;align-items:center;gap:8px}
+input[type=range]{width:140px;accent-color:var(--ray)}
+input[type=checkbox]{accent-color:var(--ray);width:15px;height:15px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:10px;position:relative}
+.stage{position:relative;width:100%;height:600px;overflow:hidden;border-radius:4px;background:var(--surface);cursor:grab}
+.stage:active{cursor:grabbing}
+.stage canvas{display:block;width:100%!important;height:100%!important}
+.labels{position:absolute;inset:0;pointer-events:none;font-family:var(--f-mono);font-size:12px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.labels div{position:absolute;transform:translate(-50%,-50%);white-space:nowrap}
+.labels div.axis{color:var(--ink-2);font-family:var(--f-sans);font-size:12px;letter-spacing:.02em}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--paper);padding:8px 10px;border-radius:5px;font-size:.8rem;line-height:1.35;max-width:270px;z-index:2}
+.tip .v{font-family:var(--f-mono);font-size:.9rem;font-weight:500}
+.tip .s{color:var(--rule);opacity:.9}
+.hint{position:absolute;right:12px;bottom:10px;font-size:.74rem;color:var(--ink-3);pointer-events:none}
+.legend{display:flex;flex-wrap:wrap;gap:8px 22px;font-size:.84rem;color:var(--ink-2);padding:8px 4px 2px}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%}
+.legend em{display:inline-block;width:26px;height:10px;border-radius:2px;background:var(--sheet);border:1px solid var(--sheet-edge)}
+.fallback{padding:40px;color:var(--ink-2)}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">The 2-adic skeleton of the Collatz graph, in three axes</div>
+    <h1>Halving Surface</h1>
+  </header>
+  <p class="lede">Same axes as the ray chart — <code>x</code> is the number of halvings, the vertical axis is the
+  value <code>y·2<sup>x</sup></code> — plus a third: the <b>reduced odd</b> <code>y</code>, the root a number halves down to.
+  Every integer point <code>(x, y·2<sup>x</sup>, y)</code> lies on the sheet <code>value = y·2<sup>x</sup></code>; each ray is a level
+  curve of that sheet at constant depth, and a <code>3n+1</code> jump now moves visibly <em>along the depth axis</em> —
+  toward a larger reduced odd (a rise) or a smaller one (a fall).</p>
+
+  <div class="controls" role="group" aria-label="Scene controls">
+    <label class="ctl">rays <input type="range" id="nr" min="2" max="40" value="10"><span class="mono" id="nrv">10 (y = 1…19)</span></label>
+    <label class="ctl">x up to <input type="range" id="xr" min="3" max="10" value="5"><span class="mono" id="xrv">5</span></label>
+    <span>value axis <span class="seg" role="group" aria-label="Value scale"><button id="vlin" aria-pressed="false">linear</button><button id="vlog" aria-pressed="true">log₂</button></span></span>
+    <span>odd axis <span class="seg" role="group" aria-label="Reduced-odd scale"><button id="zlin" aria-pressed="true">linear</button><button id="zlog" aria-pressed="false">log₂</button></span></span>
+    <label class="ctl"><input type="checkbox" id="sheet" checked> sheet</label>
+    <label class="ctl"><input type="checkbox" id="jumps" checked> 3n+1 jumps</label>
+    <label class="ctl"><input type="checkbox" id="pads" checked> landing pads</label>
+    <button class="plain" id="reset">Reset view</button>
+  </div>
+
+  <div class="card">
+    <div class="stage" id="stage">
+      <div class="labels" id="labels"></div>
+      <div class="tip" id="tip" hidden></div>
+      <div class="hint">drag to orbit · wheel to zoom</div>
+    </div>
+    <div class="legend" aria-label="Legend">
+      <span><em></em>the sheet <code>value = y·2<sup>x</sup></code></span>
+      <span><i style="background:var(--ray)"></i>ray, <code>3 ∤ y</code></span>
+      <span><i style="background:var(--ray-dead)"></i>dead-end ray, <code>3 | y</code></span>
+      <span><i style="background:var(--rise)"></i><b>rise</b>: jump toward a larger reduced odd (lands at height 1)</span>
+      <span><i style="background:var(--fall)"></i><b>fall</b>: toward a smaller one (height ≥ 2)</span>
+      <span><i style="background:var(--fix)"></i>fixed point <code>1 → 4 → 1</code></span>
+    </div>
+  </div>
+
+  <p class="note">With the value axis in <code>log₂</code> the sheet is <code>log₂(value) = x + log₂ y</code>: every ray is a straight line of
+  slope 1, all parallel, and the sheet is the same curve translated along <code>x</code>. All the arithmetic of the Collatz map is
+  in the arrows that hop between those parallel lines. Switch the odd axis to <code>log₂</code> as well and the sheet becomes a plane.
+  Hover any point for its identity; the pads at height <code>x = 1</code> are the only ones a jump can <em>rise</em> onto.</p>
+</div>
+
+<script>
+(function(){
+  var stage = document.getElementById('stage'), labelsEl = document.getElementById('labels'), tip = document.getElementById('tip');
+  if (!window.THREE) { stage.innerHTML = '<div class="fallback">The 3D renderer (three.js from cdnjs) did not load, so there is nothing to draw here. Reload once online.</div>'; return; }
+  var state = { N: 10, X: 5, vlog: true, zlog: false, sheet: true, jumps: true, pads: true };
+  var LX = 10, LZ = 8, LH = 5;
+  function v2(n){ var c = 0; while (n % 2 === 0) { n /= 2; c++; } return c; }
+  function isPad(y, x){ return x >= 1 && (y * Math.pow(2, x)) % 3 === 1; }
+  function fmt(n){ return n.toLocaleString('en-US'); }
+  function sup(x){ return String(x).replace(/[0-9]/g, function(d){ return '⁰¹²³⁴⁵⁶⁷⁸⁹'[+d]; }); }
+  function tok(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  function col(name){ return new THREE.Color(tok(name)); }
+
+  var renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  stage.insertBefore(renderer.domElement, labelsEl);
+  var scene = new THREE.Scene();
+  var camera = new THREE.PerspectiveCamera(38, 1, 0.1, 200);
+  var target = new THREE.Vector3(LX / 2, LH * 0.45, LZ / 2);
+  var orbit = { theta: 2.35, phi: 0.92, r: 21.5 };
+  var home = { theta: 2.35, phi: 0.92, r: 21.5 };
+  var root = new THREE.Group(); scene.add(root);
+  window.__view = function(t, p, r){ orbit.theta = t; orbit.phi = p; orbit.r = r; needs = true; };
+  var pointMeshes = [], pointIndex = [], labelItems = [], needs = true;
+
+  function resize(){ var w = stage.clientWidth, h = stage.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); needs = true; }
+  window.addEventListener('resize', resize);
+
+  function geom(){
+    var YMAX = 2 * state.N - 1, X = state.X, VMAX = YMAX * Math.pow(2, X), ZMAX = Math.ceil(1.5 * YMAX) + 1;
+    var xm = function(x){ return x / X * LX; };
+    var zm = state.zlog ? function(y){ return Math.log2(y) / Math.log2(ZMAX) * LZ; } : function(y){ return (y - 1) / (ZMAX - 1) * LZ; };
+    var hm = state.vlog ? function(v){ return Math.log2(v) / Math.log2(VMAX) * LH; } : function(v){ return v / VMAX * LH; };
+    return { YMAX: YMAX, X: X, VMAX: VMAX, ZMAX: ZMAX, xm: xm, zm: zm, hm: hm };
+  }
+
+  function build(){
+    while (root.children.length) root.remove(root.children[0]);
+    pointMeshes = []; pointIndex = []; labelItems = []; labelsEl.innerHTML = '';
+    scene.background = col('--surface');
+    var g = geom(), YMAX = g.YMAX, X = g.X, xm = g.xm, zm = g.zm, hm = g.hm;
+    var ODDS = []; for (var i = 0; i < state.N; i++) ODDS.push(2 * i + 1);
+    document.getElementById('nrv').textContent = state.N + ' (y = 1…' + YMAX + ')';
+
+    // lights
+    root.add(new THREE.HemisphereLight(0xffffff, 0x8899aa, 0.85));
+    var dl = new THREE.DirectionalLight(0xffffff, 0.55); dl.position.set(-6, 12, 8); root.add(dl);
+
+    // the sheet: value = y * 2^x over x in [0, X], y in [1, YMAX]
+    if (state.sheet) {
+      var NX = 5 * X + 1, NY = 81, pos = [], idx = [];
+      for (var a = 0; a < NX; a++) for (var b = 0; b < NY; b++) {
+        var x = a / (NX - 1) * X, y = 1 + b / (NY - 1) * (YMAX - 1);
+        pos.push(xm(x), hm(y * Math.pow(2, x)), zm(y));
+      }
+      for (var a = 0; a < NX - 1; a++) for (var b = 0; b < NY - 1; b++) { var p = a * NY + b; idx.push(p, p + NY, p + 1, p + 1, p + NY, p + NY + 1); }
+      var sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); sg.setIndex(idx); sg.computeVertexNormals();
+      root.add(new THREE.Mesh(sg, new THREE.MeshLambertMaterial({ color: col('--sheet'), side: THREE.DoubleSide, transparent: true, opacity: 0.9 })));
+      // cross-section curves at integer x (the columns where landing pads live)
+      for (var xi = 0; xi <= X; xi++) {
+        var pts = []; for (var b = 0; b < NY; b++) { var y = 1 + b / (NY - 1) * (YMAX - 1); pts.push(new THREE.Vector3(xm(xi), hm(y * Math.pow(2, xi)) + 0.01, zm(y))); }
+        root.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: col('--sheet-edge'), transparent: true, opacity: 0.7 })));
+      }
+    }
+
+    // rays as tubes (live) / dashed lines (dead), lifted a hair above the sheet
+    ODDS.forEach(function(y){
+      var pts = [], steps = 4 * X; for (var s = 0; s <= steps; s++) { var x = s / steps * X; pts.push(new THREE.Vector3(xm(x), hm(y * Math.pow(2, x)) + 0.02, zm(y))); }
+      if (y % 3 === 0) { var ln = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineDashedMaterial({ color: col('--ray-dead'), dashSize: 0.22, gapSize: 0.14 })); ln.computeLineDistances(); root.add(ln); }
+      else root.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), steps * 2, 0.022, 6, false), new THREE.MeshLambertMaterial({ color: col('--ray') })));
+    });
+
+    // lattice points, grouped by class for coloring: plain / dead / rise / fall / fix
+    var classes = { plain: [], dead: [], rise: [], fall: [], fix: [] };
+    ODDS.forEach(function(y){ for (var x = 0; x <= X; x++) {
+      var v = y * Math.pow(2, x), c = 'plain';
+      if (y % 3 === 0) c = 'dead';
+      if (state.pads && isPad(y, x)) { var n = (v - 1) / 3; c = y > n ? 'rise' : (y < n ? 'fall' : 'fix'); }
+      classes[c].push({ y: y, x: x, v: v, p: new THREE.Vector3(xm(x), hm(v) + 0.02, zm(y)) });
+    }});
+    var sphere = new THREE.SphereGeometry(0.06, 10, 8), big = new THREE.SphereGeometry(0.095, 12, 10), m4 = new THREE.Matrix4();
+    Object.keys(classes).forEach(function(c){
+      var list = classes[c]; if (!list.length) return;
+      var colName = { plain: '--ray', dead: '--ray-dead', rise: '--rise', fall: '--fall', fix: '--fix' }[c];
+      var mesh = new THREE.InstancedMesh(c === 'plain' || c === 'dead' ? sphere : big, new THREE.MeshLambertMaterial({ color: col(colName) }), list.length);
+      list.forEach(function(it, i){ m4.makeTranslation(it.p.x, it.p.y, it.p.z); mesh.setMatrixAt(i, m4); });
+      mesh.instanceMatrix.needsUpdate = true; mesh.userData.items = list; root.add(mesh); pointMeshes.push(mesh);
+    });
+
+    // 3n+1 jumps: from the base (0, n, n) to the pad (x*, 3n+1, S(n)); direction = sign(S(n) - n)
+    if (state.jumps) ODDS.forEach(function(n){
+      var v = 3 * n + 1, xs = v2(v), S = v / Math.pow(2, xs), d = S > n ? 'rise' : (S < n ? 'fall' : 'fix');
+      if (xs > X) return;
+      var P0 = new THREE.Vector3(xm(0), hm(n) + 0.03, zm(n)), P1 = new THREE.Vector3(xm(xs), hm(v) + 0.03, zm(S));
+      var mid = P0.clone().add(P1).multiplyScalar(0.5); mid.y += Math.max(0.45, P0.distanceTo(P1) * 0.28);
+      var curve = new THREE.QuadraticBezierCurve3(P0, mid, P1), mat = new THREE.MeshLambertMaterial({ color: col('--' + d) });
+      root.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 24, 0.028, 6, false), mat));
+      var tan = curve.getTangent(1).normalize(), cone = new THREE.Mesh(new THREE.ConeGeometry(0.075, 0.2, 10), mat);
+      cone.position.copy(P1).addScaledVector(tan, -0.1); cone.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), tan); root.add(cone);
+      if (S > YMAX) { var m = new THREE.Mesh(big, mat); m.position.copy(P1); root.add(m); labelItems.push({ p: P1.clone().add(new THREE.Vector3(0, 0.25, 0)), text: S + '·2' + sup(xs), cls: '' }); }
+    });
+
+    // axes, ticks, labels
+    var axisMat = new THREE.LineBasicMaterial({ color: col('--axis') });
+    function seg(a, b){ root.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([a, b]), axisMat)); }
+    var O = new THREE.Vector3(0, 0, 0);
+    seg(O, new THREE.Vector3(LX, 0, 0)); seg(O, new THREE.Vector3(0, LH, 0)); seg(O, new THREE.Vector3(0, 0, LZ));
+    for (var x = 0; x <= X; x++) { seg(new THREE.Vector3(xm(x), 0, 0), new THREE.Vector3(xm(x), 0, -0.18)); labelItems.push({ p: new THREE.Vector3(xm(x), -0.1, -0.5), text: String(x) }); }
+    labelItems.push({ p: new THREE.Vector3(LX / 2, -0.35, -1.25), text: 'x  (halvings above the base)', cls: 'axis' });
+    var zt = [1]; var zstep = Math.max(1, Math.round((g.ZMAX - 1) / 6 / 2)) * 2; for (var y = 1 + zstep; y <= g.ZMAX; y += zstep) zt.push(y);
+    if (state.zlog) { zt = [1]; for (var k = 1; Math.pow(2, k) - 1 <= g.ZMAX; k++) zt.push(Math.pow(2, k) - 1); }
+    zt.forEach(function(y){ seg(new THREE.Vector3(0, 0, zm(y)), new THREE.Vector3(-0.18, 0, zm(y))); labelItems.push({ p: new THREE.Vector3(-0.5, -0.05, zm(y)), text: String(y) }); });
+    labelItems.push({ p: new THREE.Vector3(-1.4, -0.3, LZ / 2), text: 'reduced odd y', cls: 'axis' });
+    var vt = [];
+    if (state.vlog) { var top = Math.log2(g.VMAX), st = top > 12 ? 4 : 2; for (var k = 0; k <= top; k += st) vt.push({ v: Math.pow(2, k), t: '2' + sup(k) }); }
+    else { var raw = g.VMAX / 5, mag = Math.pow(10, Math.floor(Math.log10(raw))), nice = [1, 2, 5, 10].map(function(m){ return m * mag; }).filter(function(s){ return s >= raw; })[0]; for (var t = nice; t <= g.VMAX; t += nice) vt.push({ v: t, t: fmt(t) }); }
+    vt.forEach(function(it){ seg(new THREE.Vector3(0, hm(it.v), 0), new THREE.Vector3(-0.18, hm(it.v), 0)); labelItems.push({ p: new THREE.Vector3(-0.6, hm(it.v), -0.1), text: it.t }); });
+    labelItems.push({ p: new THREE.Vector3(-0.9, LH + 0.35, 0), text: 'value y·2ˣ' + (state.vlog ? ' (log₂)' : ''), cls: 'axis' });
+    ODDS.forEach(function(y){ if (ODDS.length <= 22 || y % 6 === 1 || y === YMAX) labelItems.push({ p: new THREE.Vector3(xm(X) + 0.45, hm(y * Math.pow(2, X)) + 0.05, zm(y)), text: 'y=' + y }); });
+    labelItems.forEach(function(it){ var d = document.createElement('div'); if (it.cls) d.className = it.cls; d.textContent = it.text; labelsEl.appendChild(d); it.el = d; });
+    needs = true;
+  }
+
+  function placeCamera(){
+    var sp = Math.sin(orbit.phi), x = target.x + orbit.r * sp * Math.sin(orbit.theta), z = target.z + orbit.r * sp * Math.cos(orbit.theta), y = target.y + orbit.r * Math.cos(orbit.phi);
+    camera.position.set(x, y, z); camera.lookAt(target);
+  }
+  function render(){
+    placeCamera(); renderer.render(scene, camera);
+    var w = stage.clientWidth, h = stage.clientHeight, v = new THREE.Vector3();
+    labelItems.forEach(function(it){ v.copy(it.p).project(camera); var vis = v.z < 1; it.el.style.display = vis ? '' : 'none'; if (vis) { it.el.style.left = (v.x + 1) / 2 * w + 'px'; it.el.style.top = (1 - v.y) / 2 * h + 'px'; } });
+  }
+  (function loop(){ if (needs) { needs = false; render(); } requestAnimationFrame(loop); })();
+
+  // orbit: drag rotates, wheel zooms, touch pinch zooms
+  var drag = null, pinch = null;
+  stage.addEventListener('mousedown', function(e){ drag = { x: e.clientX, y: e.clientY, t: orbit.theta, p: orbit.phi }; });
+  window.addEventListener('mousemove', function(e){ if (!drag) return; orbit.theta = drag.t - (e.clientX - drag.x) * 0.006; orbit.phi = Math.min(1.5, Math.max(0.15, drag.p - (e.clientY - drag.y) * 0.005)); needs = true; });
+  window.addEventListener('mouseup', function(){ drag = null; });
+  stage.addEventListener('wheel', function(e){ e.preventDefault(); orbit.r = Math.min(60, Math.max(6, orbit.r * (1 + e.deltaY * 0.0012))); needs = true; }, { passive: false });
+  stage.addEventListener('touchstart', function(e){ if (e.touches.length === 1) drag = { x: e.touches[0].clientX, y: e.touches[0].clientY, t: orbit.theta, p: orbit.phi }; else if (e.touches.length === 2) pinch = { d: Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY), r: orbit.r }; }, { passive: true });
+  stage.addEventListener('touchmove', function(e){ if (e.touches.length === 1 && drag) { orbit.theta = drag.t - (e.touches[0].clientX - drag.x) * 0.006; orbit.phi = Math.min(1.5, Math.max(0.15, drag.p - (e.touches[0].clientY - drag.y) * 0.005)); needs = true; } else if (e.touches.length === 2 && pinch) { var d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); orbit.r = Math.min(60, Math.max(6, pinch.r * pinch.d / d)); needs = true; } e.preventDefault(); }, { passive: false });
+  stage.addEventListener('touchend', function(){ drag = null; pinch = null; });
+
+  // hover: raycast the lattice points
+  var ray = new THREE.Raycaster(), mouse = new THREE.Vector2();
+  stage.addEventListener('mousemove', function(e){
+    if (drag) { tip.hidden = true; return; }
+    var r = renderer.domElement.getBoundingClientRect(); mouse.x = ((e.clientX - r.left) / r.width) * 2 - 1; mouse.y = -((e.clientY - r.top) / r.height) * 2 + 1;
+    ray.setFromCamera(mouse, camera); var hit = ray.intersectObjects(pointMeshes)[0];
+    if (!hit || hit.instanceId == null) { tip.hidden = true; return; }
+    var it = hit.object.userData.items[hit.instanceId], y = it.y, x = it.x, val = it.v;
+    var html = '<div class="v">' + y + '·2' + sup(x) + ' = ' + fmt(val) + '</div><div class="s">reduced odd ' + y + ', height ' + x + '</div>';
+    if (x === 0) { var v = 3 * y + 1, xs = v2(v), S = v / Math.pow(2, xs); html += '<div>base: 3·' + y + '+1 = ' + v + ' = ' + S + '·2' + sup(xs) + ' — ' + (S > y ? 'rises to ' : S < y ? 'falls to ' : 'returns to ') + S + '</div>'; }
+    else if (isPad(y, x)) { var n = (val - 1) / 3; html += '<div>landing pad from ' + n + ': ' + (y > n ? 'a rise' : y < n ? 'a fall' : 'the fixed point') + '</div>'; }
+    tip.innerHTML = html; tip.hidden = false;
+    tip.style.left = Math.min(e.clientX - r.left + 14, r.width - 280) + 'px'; tip.style.top = Math.max(4, e.clientY - r.top - 12) + 'px';
+  });
+  stage.addEventListener('mouseleave', function(){ tip.hidden = true; });
+
+  // controls
+  function press(onId, offId, key, val){ document.getElementById(onId).onclick = function(){ state[key] = val; this.setAttribute('aria-pressed', 'true'); document.getElementById(offId).setAttribute('aria-pressed', 'false'); build(); }; }
+  press('vlin', 'vlog', 'vlog', false); press('vlog', 'vlin', 'vlog', true); press('zlin', 'zlog', 'zlog', false); press('zlog', 'zlin', 'zlog', true);
+  document.getElementById('nr').oninput = function(){ state.N = +this.value; build(); };
+  document.getElementById('xr').oninput = function(){ state.X = +this.value; document.getElementById('xrv').textContent = this.value; build(); };
+  ['sheet', 'jumps', 'pads'].forEach(function(id){ document.getElementById(id).onchange = function(){ state[id] = this.checked; build(); }; });
+  document.getElementById('reset').onclick = function(){ orbit.theta = home.theta; orbit.phi = home.phi; orbit.r = home.r; needs = true; };
+  var mq = window.matchMedia('(prefers-color-scheme: dark)'); if (mq.addEventListener) mq.addEventListener('change', build);
+  new MutationObserver(build).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+  resize(); build();
+})();
+</script>
