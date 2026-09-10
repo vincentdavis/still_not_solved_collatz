@@ -1,0 +1,222 @@
+<meta charset="utf-8">
+<title>Halving Rays</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --paper:#E8EAE5; --surface:#F2F3EF; --ink:#171A1C; --ink-2:#4A5254; --ink-3:#79817F;
+  --rule:#C9CDC4; --grid:#DEE1DA; --axis:#B4B9AD;
+  --ray:#2a78d6; --ray-dead:#86AAE3; --jump:#D62F82; --jump-w:rgba(214,47,130,.10);
+  --focus:#24478F;
+  --f-sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#14171A; --surface:#1C2126; --ink:#E8EAE5; --ink-2:#A9B1AF; --ink-3:#6E7876;
+    --rule:#2B3138; --grid:#242A30; --axis:#3A424A;
+    --ray:#3987e5; --ray-dead:#4A6392; --jump:#d55181; --jump-w:rgba(213,81,129,.16);
+    --focus:#7FA8EE;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#14171A; --surface:#1C2126; --ink:#E8EAE5; --ink-2:#A9B1AF; --ink-3:#6E7876;
+  --rule:#2B3138; --grid:#242A30; --axis:#3A424A;
+  --ray:#3987e5; --ray-dead:#4A6392; --jump:#d55181; --jump-w:rgba(213,81,129,.16);
+  --focus:#7FA8EE;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-sans);font-size:15px;line-height:1.5}
+.wrap{max-width:1080px;margin:0 auto;padding:28px 20px 56px;display:flex;flex-direction:column;gap:18px}
+.eyebrow{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+h1{margin:2px 0 0;font-size:clamp(1.6rem,3.4vw,2.2rem);font-weight:600;letter-spacing:-.01em;text-wrap:balance;line-height:1.15}
+.lede{max-width:65ch;color:var(--ink-2);margin:0}
+.lede code,.note code,.tip code{font-family:var(--f-mono);font-size:.92em;color:var(--ink)}
+.controls{display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;font-size:.88rem;color:var(--ink-2)}
+.seg{display:inline-flex;border:1px solid var(--rule);border-radius:5px;overflow:hidden}
+.seg button{font:inherit;font-weight:500;background:transparent;color:var(--ink-2);border:0;padding:5px 12px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.seg button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+label.ctl{display:inline-flex;align-items:center;gap:8px}
+input[type=range]{width:150px;accent-color:var(--ray)}
+input[type=checkbox]{accent-color:var(--jump);width:15px;height:15px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:12px 10px 8px;position:relative}
+.chart{position:relative;width:100%}
+svg{display:block;width:100%;height:auto}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--paper);padding:8px 10px;border-radius:5px;font-size:.8rem;line-height:1.35;max-width:260px;box-shadow:0 8px 24px -14px rgba(0,0,0,.6);z-index:2}
+.tip .v{font-family:var(--f-mono);font-size:.9rem;font-weight:500}
+.tip .s{color:var(--rule);opacity:.9}
+.legend{display:flex;flex-wrap:wrap;gap:8px 22px;font-size:.84rem;color:var(--ink-2);padding:2px 4px}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.legend svg{width:34px;height:14px}
+.note{max-width:65ch;color:var(--ink-2);font-size:.9rem;margin:0}
+details{border-top:1px solid var(--rule);padding-top:10px}
+summary{cursor:pointer;color:var(--ink-2);font-weight:500;font-size:.9rem}
+.tbl{overflow-x:auto;margin-top:10px}
+table{border-collapse:collapse;font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:.82rem;white-space:nowrap}
+th,td{padding:4px 10px;text-align:right;border-bottom:1px solid var(--grid);color:var(--ink)}
+th{color:var(--ink-3);font-weight:500}
+td.dead{color:var(--ink-3)}
+td.pad{color:var(--jump);font-weight:500}
+@media (prefers-reduced-motion:no-preference){.seg button{transition:background .12s}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">The 2-adic skeleton of the Collatz graph</div>
+    <h1>Halving Rays</h1>
+  </header>
+  <p class="lede">Every even number sits on exactly one <em>ray</em> <code>y·2<sup>x</sup></code> with <code>y</code> odd.
+  Halving slides a number down its ray toward the base <code>y</code>; the <code>3n+1</code> step lifts an odd base
+  onto some other ray. Rays for the odd roots 1–19 are drawn below; the pink marks are where <code>3n+1</code> lands.</p>
+
+  <div class="controls" role="group" aria-label="Chart controls">
+    <div class="seg" role="group" aria-label="Vertical scale">
+      <button id="lin" aria-pressed="true">Linear</button><button id="log" aria-pressed="false">log₂</button>
+    </div>
+    <label class="ctl">x up to <input type="range" id="xr" min="3" max="12" value="5" aria-label="largest x"><span class="mono" id="xrv">5</span></label>
+    <label class="ctl"><input type="checkbox" id="jumps" checked> 3n+1 jumps</label>
+    <label class="ctl"><input type="checkbox" id="pads" checked> landing pads</label>
+  </div>
+
+  <div class="card">
+    <div class="chart">
+      <svg id="svg" viewBox="0 0 1000 560" role="img" aria-labelledby="ttl"><title id="ttl">Rays y·2^x for odd y from 1 to 19</title></svg>
+      <div class="tip" id="tip" hidden></div>
+    </div>
+    <div class="legend" aria-label="Legend">
+      <span><svg viewBox="0 0 34 14"><line x1="2" y1="7" x2="32" y2="7" stroke="var(--ray)" stroke-width="2" stroke-linecap="round"/><circle cx="17" cy="7" r="4" fill="var(--ray)" stroke="var(--surface)" stroke-width="2"/></svg>ray <code>y·2<sup>x</sup></code>, <code>3 ∤ y</code></span>
+      <span><svg viewBox="0 0 34 14"><line x1="2" y1="7" x2="32" y2="7" stroke="var(--ray-dead)" stroke-width="2" stroke-dasharray="5 4" stroke-linecap="round"/></svg>dead-end ray, <code>3 | y</code> — nothing ever lands on it</span>
+      <span><svg viewBox="0 0 34 14"><circle cx="17" cy="7" r="4" fill="var(--ray)"/><circle cx="17" cy="7" r="6.5" fill="none" stroke="var(--jump)" stroke-width="2"/></svg>landing pad: <code>y·2<sup>x</sup> = 3n+1</code> for an odd <code>n</code></span>
+      <span><svg viewBox="0 0 34 14"><path d="M3 12 Q 17 -4 29 7" fill="none" stroke="var(--jump)" stroke-width="1.8"/><path d="M29 7 l-5 -2 l1 5 z" fill="var(--jump)"/></svg>the <code>3n+1</code> jump from a base</span>
+    </div>
+  </div>
+
+  <p class="note">Landing pads alternate along every live ray: <code>y·2<sup>x</sup> ≡ 1 (mod 3)</code> exactly when
+  <code>y ≡ 1 (mod 3)</code> and <code>x</code> is even, or <code>y ≡ 2 (mod 3)</code> and <code>x</code> is odd.
+  A root divisible by 3 never satisfies it — multiples of 3 have no odd predecessor — so those three rays are
+  drawn dashed. Bases 15 and 19 jump to the rays of 23 and 29, which lie outside the drawn set.</p>
+
+  <details>
+    <summary>Values as a table</summary>
+    <div class="tbl"><table id="tbl"></table></div>
+  </details>
+</div>
+
+<script>
+(function(){
+  var ODDS = [1,3,5,7,9,11,13,15,17,19];
+  var W = 1000, H = 560, ML = 66, MR = 78, MT = 34, MB = 46;
+  var svg = document.getElementById('svg'), tip = document.getElementById('tip');
+  var state = { log: false, X: 5, jumps: true, pads: true };
+  var NS = 'http://www.w3.org/2000/svg';
+  function el(n, a, txt){ var e = document.createElementNS(NS, n); for (var k in a) e.setAttribute(k, a[k]); if (txt != null) e.textContent = txt; return e; }
+  function v2(n){ var c = 0; while (n % 2 === 0) { n /= 2; c++; } return c; }
+  function isPad(y, x){ return x >= 1 && (y * Math.pow(2, x)) % 3 === 1; }
+  function fmt(n){ return n.toLocaleString('en-US'); }
+  function sup(x){ return String(x).replace(/[0-9]/g, function(d){ return '⁰¹²³⁴⁵⁶⁷⁸⁹'[+d]; }); }
+
+  function render(){
+    while (svg.childNodes.length > 1) svg.removeChild(svg.lastChild);
+    var X = state.X, maxV = 19 * Math.pow(2, X);
+    var iw = W - ML - MR, ih = H - MT - MB;
+    var px = function(x){ return ML + x / X * iw; };
+    var py = state.log ? function(v){ return MT + ih - Math.log2(v) / Math.log2(maxV) * ih; }
+                       : function(v){ return MT + ih - v / maxV * ih; };
+
+    // gridlines + y ticks (one scale; every label names a value the chart reaches)
+    var ticks = [];
+    if (state.log) { var top = Math.log2(maxV), step = top > 11 ? 2 : 1; for (var k = 0; k <= top; k += step) ticks.push(Math.pow(2, k)); }
+    else { var raw = maxV / 6, mag = Math.pow(10, Math.floor(Math.log10(raw))), nice = [1,2,5,10].map(function(m){return m*mag;}).filter(function(s){return s >= raw;})[0];
+           for (var t = nice; t <= maxV; t += nice) ticks.push(t); }
+    ticks.forEach(function(v){
+      var yy = py(v);
+      svg.appendChild(el('line', {x1: ML, x2: W - MR, y1: yy, y2: yy, stroke: 'var(--grid)', 'stroke-width': 1}));
+      svg.appendChild(el('text', {x: ML - 10, y: yy + 4, 'text-anchor': 'end', fill: 'var(--ink-3)', 'font-size': 12, 'font-family': 'var(--f-mono)'},
+        state.log ? '2' + sup(Math.round(Math.log2(v))) : fmt(v)));
+    });
+    // baseline + x ticks
+    svg.appendChild(el('line', {x1: ML, x2: W - MR, y1: MT + ih, y2: MT + ih, stroke: 'var(--axis)', 'stroke-width': 1}));
+    for (var x = 0; x <= X; x++) {
+      svg.appendChild(el('text', {x: px(x), y: MT + ih + 20, 'text-anchor': 'middle', fill: 'var(--ink-3)', 'font-size': 12, 'font-family': 'var(--f-mono)'}, x));
+    }
+    svg.appendChild(el('text', {x: (ML + W - MR) / 2, y: H - 6, 'text-anchor': 'middle', fill: 'var(--ink-3)', 'font-size': 12}, 'x  (number of halvings above the base)'));
+    svg.appendChild(el('text', {x: ML - 10, y: 14, 'text-anchor': 'end', fill: 'var(--ink-3)', 'font-size': 12}, state.log ? 'y·2ˣ  (log₂ axis)' : 'y·2ˣ'));
+
+    // jumps (drawn under the rays so rays stay on top; arrowheads drawn after)
+    var defs = el('defs'); var mk = el('marker', {id: 'ah', viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: 'auto-start-reverse'});
+    mk.appendChild(el('path', {d: 'M0 0 L10 5 L0 10 z', fill: 'var(--jump)'})); defs.appendChild(mk); svg.appendChild(defs);
+    var jumpLayer = el('g', {'aria-hidden': 'true'});
+    if (state.jumps) ODDS.forEach(function(n){
+      var v = 3 * n + 1, xs = v2(v), ys = v / Math.pow(2, xs);
+      if (v > maxV) return;
+      var x0 = px(0), y0 = py(n), x1 = px(xs), y1 = py(v);
+      var cx = (x0 + x1) / 2, cy = Math.min(y0, y1) - Math.max(18, Math.abs(y0 - y1) * 0.35);
+      jumpLayer.appendChild(el('path', {d: 'M' + x0 + ' ' + y0 + ' Q' + cx + ' ' + cy + ' ' + x1 + ' ' + y1, fill: 'none', stroke: 'var(--jump)', 'stroke-width': 1.6, 'marker-end': 'url(#ah)', opacity: .9}));
+      if (ODDS.indexOf(ys) < 0) {
+        jumpLayer.appendChild(el('circle', {cx: x1, cy: y1, r: 4, fill: 'var(--jump)', stroke: 'var(--surface)', 'stroke-width': 2}));
+        jumpLayer.appendChild(el('text', {x: x1 + 9, y: y1 + 4, fill: 'var(--ink-2)', 'font-size': 11, 'font-family': 'var(--f-mono)'}, ys + '·2' + sup(xs)));
+      }
+    });
+    svg.appendChild(jumpLayer);
+
+    // rays
+    var hits = el('g'); var labels = [];
+    ODDS.forEach(function(y){
+      var dead = y % 3 === 0, col = dead ? 'var(--ray-dead)' : 'var(--ray)';
+      var d = ''; for (var x = 0; x <= X; x++) d += (x ? ' L' : 'M') + px(x) + ' ' + py(y * Math.pow(2, x));
+      var pa = {d: d, fill: 'none', stroke: col, 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round'};
+      if (dead) pa['stroke-dasharray'] = '6 5';
+      svg.appendChild(el('path', pa));
+      for (var x = 0; x <= X; x++) {
+        var val = y * Math.pow(2, x), cx = px(x), cy = py(val);
+        svg.appendChild(el('circle', {cx: cx, cy: cy, r: 4, fill: col, stroke: 'var(--surface)', 'stroke-width': 2}));
+        if (state.pads && isPad(y, x)) svg.appendChild(el('circle', {cx: cx, cy: cy, r: 7, fill: 'none', stroke: 'var(--jump)', 'stroke-width': 2}));
+        var h = el('circle', {cx: cx, cy: cy, r: 12, fill: 'transparent', 'data-y': y, 'data-x': x, style: 'cursor:crosshair'});
+        hits.appendChild(h);
+      }
+      labels.push({y: y, py: py(y * Math.pow(2, X)), dead: dead});
+    });
+    // direct end labels, nudged apart with leaders when they collide
+    labels.sort(function(a, b){ return a.py - b.py; });
+    var MINGAP = 14, lo = MT + 6;
+    labels.forEach(function(L){ L.ly = Math.max(L.py, lo); lo = L.ly + MINGAP; });
+    var over = labels[labels.length - 1].ly - (MT + ih + 6); if (over > 0) { labels.forEach(function(L){ L.ly -= over; }); for (var i = labels.length - 2; i >= 0; i--) labels[i].ly = Math.min(labels[i].ly, labels[i + 1].ly - MINGAP); }
+    labels.forEach(function(L){
+      var xe = px(X);
+      if (Math.abs(L.ly - L.py) > 1) svg.appendChild(el('line', {x1: xe + 6, y1: L.py, x2: xe + 22, y2: L.ly, stroke: 'var(--axis)', 'stroke-width': 1}));
+      svg.appendChild(el('text', {x: xe + 26, y: L.ly + 4, fill: L.dead ? 'var(--ink-3)' : 'var(--ink-2)', 'font-size': 12, 'font-family': 'var(--f-mono)'}, 'y = ' + L.y));
+    });
+    svg.appendChild(hits);
+
+    // hover
+    hits.addEventListener('mousemove', function(ev){
+      var t = ev.target; if (!t.dataset || t.dataset.y == null) return;
+      var y = +t.dataset.y, x = +t.dataset.x, val = y * Math.pow(2, x), html = '<div class="v">' + y + '·2' + sup(x) + ' = ' + fmt(val) + '</div>';
+      if (x === 0) { var v = 3 * y + 1, xs = v2(v), ys = v / Math.pow(2, xs); html += '<div>base of ray ' + y + '</div><div class="s">3·' + y + '+1 = ' + v + ' = ' + ys + '·2' + sup(xs) + ' → ray ' + ys + '</div>'; }
+      else if (isPad(y, x)) { html += '<div>landing pad: 3·' + ((val - 1) / 3) + ' + 1 = ' + fmt(val) + '</div><div class="s">halves back to ' + y + ' in ' + x + ' step' + (x > 1 ? 's' : '') + '</div>'; }
+      else { html += '<div class="s">not a 3n+1 value' + (y % 3 === 0 ? ' (3 | ' + y + ')' : '') + ' · halves to ' + y + ' in ' + x + ' step' + (x > 1 ? 's' : '') + '</div>'; }
+      tip.innerHTML = html; tip.hidden = false;
+      var r = svg.getBoundingClientRect(), sx = r.width / W, sy = r.height / H;
+      var left = (+t.getAttribute('cx')) * sx + 14, top = (+t.getAttribute('cy')) * sy - 10;
+      if (left + 270 > r.width) left -= 290; if (top < 4) top = 4;
+      tip.style.left = left + 'px'; tip.style.top = top + 'px';
+    });
+    hits.addEventListener('mouseleave', function(){ tip.hidden = true; });
+
+    // table
+    var t = '<tr><th>y \\ x</th>'; for (var x = 0; x <= X; x++) t += '<th>' + x + '</th>'; t += '</tr>';
+    ODDS.forEach(function(y){ t += '<tr><th>' + y + '</th>'; for (var x = 0; x <= X; x++) { var v = y * Math.pow(2, x); t += '<td class="' + (y % 3 === 0 ? 'dead' : (isPad(y, x) ? 'pad' : '')) + '">' + fmt(v) + '</td>'; } t += '</tr>'; });
+    document.getElementById('tbl').innerHTML = t;
+  }
+
+  document.getElementById('lin').onclick = function(){ state.log = false; this.setAttribute('aria-pressed', 'true'); document.getElementById('log').setAttribute('aria-pressed', 'false'); render(); };
+  document.getElementById('log').onclick = function(){ state.log = true; this.setAttribute('aria-pressed', 'true'); document.getElementById('lin').setAttribute('aria-pressed', 'false'); render(); };
+  document.getElementById('xr').oninput = function(){ state.X = +this.value; document.getElementById('xrv').textContent = this.value; render(); };
+  document.getElementById('jumps').onchange = function(){ state.jumps = this.checked; render(); };
+  document.getElementById('pads').onchange = function(){ state.pads = this.checked; render(); };
+  render();
+})();
+</script>
