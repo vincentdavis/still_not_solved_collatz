@@ -1,0 +1,208 @@
+<meta charset="utf-8">
+<title>Parity Atlas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --paper:#E8EAE5; --surface:#F2F3EF; --ink:#171A1C; --ink-2:#4A5254; --ink-3:#79817F;
+  --rule:#C9CDC4; --grid:#DEE1DA;
+  --rise:#eb6834; --fall:#1baf7a; --slide:#b9e4d3; --unknown:#C9CDC4; --stop:#171A1C; --ray:#2a78d6; --focus:#24478F;
+  --f-sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#14171A; --surface:#1C2126; --ink:#E8EAE5; --ink-2:#A9B1AF; --ink-3:#6E7876;
+    --rule:#2B3138; --grid:#242A30;
+    --rise:#d95926; --fall:#199e70; --slide:#245a47; --unknown:#3A424A; --stop:#E8EAE5; --ray:#3987e5; --focus:#7FA8EE;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#14171A; --surface:#1C2126; --ink:#E8EAE5; --ink-2:#A9B1AF; --ink-3:#6E7876;
+  --rule:#2B3138; --grid:#242A30;
+  --rise:#d95926; --fall:#199e70; --slide:#245a47; --unknown:#3A424A; --stop:#E8EAE5; --ray:#3987e5; --focus:#7FA8EE;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-sans);font-size:15px;line-height:1.5}
+.wrap{max-width:1080px;margin:0 auto;padding:28px 20px 56px;display:flex;flex-direction:column;gap:18px}
+.eyebrow{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+h1{margin:2px 0 0;font-size:clamp(1.6rem,3.4vw,2.2rem);font-weight:600;letter-spacing:-.01em;text-wrap:balance;line-height:1.15}
+.lede,.note{max-width:65ch;color:var(--ink-2);margin:0}
+.note{font-size:.9rem}
+code{font-family:var(--f-mono);font-size:.92em;color:var(--ink)}
+.controls{display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;font-size:.88rem;color:var(--ink-2)}
+.seg{display:inline-flex;border:1px solid var(--rule);border-radius:5px;overflow:hidden}
+.seg button{font:inherit;font-weight:500;background:transparent;color:var(--ink-2);border:0;padding:5px 12px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.seg button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+label.ctl{display:inline-flex;align-items:center;gap:8px}
+input[type=range]{width:150px;accent-color:var(--ray)}
+input[type=checkbox]{accent-color:var(--ray);width:15px;height:15px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:12px;position:relative}
+.stat{font-size:.86rem;color:var(--ink-2);margin:0 0 8px 2px}
+.stat b{color:var(--ink)}
+.atlas{position:relative;width:100%}
+canvas{display:block;width:100%;height:auto}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--paper);padding:8px 10px;border-radius:5px;font-size:.8rem;line-height:1.4;max-width:320px;z-index:2}
+.tip .v{font-family:var(--f-mono);font-size:.86rem;font-weight:500}
+.tip .s{color:var(--rule);opacity:.9}
+.word{font-family:var(--f-mono);letter-spacing:.08em}
+.legend{display:flex;flex-wrap:wrap;gap:8px 22px;font-size:.84rem;color:var(--ink-2);padding:10px 4px 0}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.legend i{display:inline-block;width:14px;height:14px;border-radius:2px}
+details{border-top:1px solid var(--rule);padding-top:10px}
+summary{cursor:pointer;color:var(--ink-2);font-weight:500;font-size:.9rem}
+.tbl{overflow-x:auto;margin-top:10px;max-height:420px;overflow-y:auto}
+table{border-collapse:collapse;font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:.8rem;white-space:nowrap}
+th,td{padding:3px 10px;text-align:right;border-bottom:1px solid var(--grid);color:var(--ink)}
+th{color:var(--ink-3);font-weight:500;position:sticky;top:0;background:var(--surface)}
+td.w{text-align:left;letter-spacing:.06em}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Terras, drawn: what n mod 2ᵏ decides</div>
+    <h1>Parity Atlas</h1>
+  </header>
+  <p class="lede">Each row is one odd residue class <code>n ≡ r (mod 2<sup>k</sup>)</code>; each column is one step of
+  <code>T(n) = (3n+1)/2</code> or <code>n/2</code>. Every number in the class takes <em>exactly</em> these first <code>k</code> steps —
+  that is Terras's theorem — and every length-<code>k</code> word that starts with an odd step appears in exactly one row.
+  A rise is an orange single (one halving), a fall is an aqua cell followed by its extra halvings as pale slide cells.</p>
+
+  <div class="controls" role="group" aria-label="Atlas controls">
+    <label class="ctl">k = <input type="range" id="kr" min="3" max="10" value="7" aria-label="steps determined"><span class="mono" id="krv">7</span> steps, <span class="mono" id="rows">64</span> classes</label>
+    <span>row order <span class="seg" role="group" aria-label="Row order"><button id="o2" aria-pressed="true">2-adic</button><button id="on" aria-pressed="false">numeric</button><button id="ow" aria-pressed="false">by word</button></span></span>
+    <label class="ctl"><input type="checkbox" id="stops" checked> mark coefficient stopping time</label>
+    <label class="ctl"><input type="checkbox" id="drift" checked> drift bar</label>
+  </div>
+
+  <div class="card">
+    <p class="stat" id="stat"></p>
+    <div class="atlas" id="atlas">
+      <canvas id="cv"></canvas>
+      <div class="tip" id="tip" hidden></div>
+    </div>
+    <div class="legend" aria-label="Legend">
+      <span><i style="background:var(--rise)"></i>odd step that <b>rises</b> (next value odd again: height 1)</span>
+      <span><i style="background:var(--fall)"></i>odd step that <b>falls</b> (next value even: height ≥ 2)</span>
+      <span><i style="background:var(--slide)"></i>the extra halvings of a fall</span>
+      <span><i style="background:var(--unknown)"></i>odd step whose direction lies beyond column k</span>
+      <span><i style="background:var(--stop);border-radius:50%;width:8px;height:8px"></i>coefficient stopping time: the word alone forces value &lt; start</span>
+    </div>
+  </div>
+
+  <p class="note">In <b>2-adic order</b> rows are sorted by the bits of <code>r</code> from the least significant up, so column
+  <code>j</code> is constant on blocks of <code>2<sup>k−j</sup></code> adjacent rows: the atlas is the binary tree of residues.
+  The top half (<code>r ≡ 1 mod 4</code>) falls first, the bottom half (<code>r ≡ 3 mod 4</code>) rises first — your mod-4 split;
+  the quarters refine it mod 8, and so on. A row's word gives <code>3<sup>t</sup>/2<sup>j</sup></code> after <code>j</code> steps
+  with <code>t</code> odd steps; the coefficient stopping time is the first <code>j</code> with <code>3<sup>t</sup> &lt; 2<sup>j</sup></code>.
+  Terras proved the fraction of classes settled by step <code>k</code> tends to 1 — watch the header count grow with <code>k</code>.
+  (Whether the true stopping time always equals the coefficient stopping time is Terras's still-open conjecture.)</p>
+
+  <details>
+    <summary>The rows as a table</summary>
+    <div class="tbl"><table id="tbl"></table></div>
+  </details>
+</div>
+
+<script>
+(function(){
+  var LOG2_3 = Math.log2(3);
+  var state = { k: 7, order: '2adic', stops: true, drift: true };
+  var cv = document.getElementById('cv'), ctx = cv.getContext('2d'), tip = document.getElementById('tip'), wrapEl = document.getElementById('atlas');
+  var rowsData = [], geo = {};
+  function tok(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+  function fmt(n){ return n.toLocaleString('en-US'); }
+
+  function classRow(r, k){
+    // T-step parities for the class r mod 2^k: computed on the representative r (Terras: identical for the whole class)
+    var v = r, par = [], t = 0, stop = null;
+    for (var j = 1; j <= k; j++) {
+      var odd = v % 2 === 1; par.push(odd ? 1 : 0);
+      if (odd) { v = (3 * v + 1) / 2; t++; } else v = v / 2;
+      if (stop === null && Math.pow(3, t) < Math.pow(2, j)) stop = j;
+    }
+    // Syracuse steps: heights of completed odd steps, plus a trailing incomplete one
+    var heights = [], i = 0;
+    while (i < k) { if (par[i] === 1) { var h = 1, m = i + 1; while (m < k && par[m] === 0) { h++; m++; } heights.push({ h: h, complete: m < k || (m === k && false) }); i = m; } else i++; }
+    if (heights.length) heights[heights.length - 1].complete = false; // the last run may continue past column k
+    for (var q = 0; q < heights.length - 1; q++) heights[q].complete = true;
+    return { r: r, par: par, t: t, drift: t * LOG2_3 - k, stop: stop, heights: heights };
+  }
+  function bitrev(x, bits){ var y = 0; for (var i = 0; i < bits; i++) { y = (y << 1) | (x & 1); x >>= 1; } return y; }
+
+  function build(){
+    var k = state.k, n = 1 << (k - 1), mod = 1 << k;
+    rowsData = []; for (var i = 0; i < n; i++) rowsData.push(classRow(2 * i + 1, k));
+    if (state.order === '2adic') rowsData.sort(function(a, b){ return bitrev((a.r - 1) / 2, k - 1) - bitrev((b.r - 1) / 2, k - 1); });
+    else if (state.order === 'word') rowsData.sort(function(a, b){ return a.par.join('') < b.par.join('') ? 1 : -1; });
+    document.getElementById('krv').textContent = k; document.getElementById('rows').textContent = fmt(n);
+    var settled = rowsData.filter(function(x){ return x.stop !== null; }).length, rises = 0, oddsteps = 0;
+    rowsData.forEach(function(x){ x.heights.forEach(function(hh){ if (hh.complete) { oddsteps++; if (hh.h === 1) rises++; } }); });
+    document.getElementById('stat').innerHTML = 'mod <b>' + fmt(mod) + '</b>: <b>' + fmt(n) + '</b> odd classes, <b>' + fmt(n) + '</b> distinct words — one each. Settled by step ' + k + ' (coefficient stopping time ≤ ' + k + '): <b>' + fmt(settled) + '</b> of ' + fmt(n) + ' (' + (100 * settled / n).toFixed(1) + '%). Among completed odd steps, rises are <b>' + (oddsteps ? (100 * rises / oddsteps).toFixed(1) : '—') + '%</b>.';
+    draw(); table();
+  }
+
+  function draw(){
+    var k = state.k, n = rowsData.length, W = wrapEl.clientWidth, dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var labelW = k >= 9 ? 44 : 60, driftW = state.drift ? 70 : 0, top = 22;
+    var cell = Math.max(6, Math.min(84, Math.floor((W - labelW - driftW - 8) / k)));
+    var rh = Math.max(1, Math.min(22, Math.floor(700 / n)));
+    var H = top + n * rh + 6;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = tok('--surface'); ctx.fillRect(0, 0, W, H);
+    var C = { rise: tok('--rise'), fall: tok('--fall'), slide: tok('--slide'), unknown: tok('--unknown'), stop: tok('--stop'), ink3: tok('--ink-3'), ink2: tok('--ink-2'), grid: tok('--grid') };
+    geo = { labelW: labelW, cell: cell, rh: rh, top: top, k: k };
+    ctx.font = '11px ' + tok('--f-mono'); ctx.fillStyle = C.ink3; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for (var j = 0; j < k; j++) ctx.fillText(String(j + 1), labelW + j * cell + cell / 2, 10);
+    ctx.textAlign = 'right';
+    var labelEvery = rh >= 9 ? 1 : Math.ceil(10 / rh);
+    var gap = rh >= 4 ? 1 : 0, cgap = cell >= 8 ? 1 : 0;
+    rowsData.forEach(function(row, i){
+      var y = top + i * rh;
+      if (i % labelEvery === 0 && rh * labelEvery >= 9) { ctx.fillStyle = C.ink3; ctx.fillText(String(row.r), labelW - 8, y + rh / 2); }
+      for (var j = 0; j < k; j++) {
+        var p = row.par[j], color;
+        if (p === 1) color = j + 1 < k ? (row.par[j + 1] === 1 ? C.rise : C.fall) : C.unknown;
+        else color = C.slide;
+        ctx.fillStyle = color; ctx.fillRect(labelW + j * cell, y, cell - cgap, rh - gap);
+      }
+      if (state.stops && row.stop !== null) { ctx.fillStyle = C.stop; var cx = labelW + (row.stop - 1) * cell + cell / 2, cy = y + rh / 2, rr = Math.min(3, rh / 3, cell / 4); ctx.beginPath(); ctx.arc(cx, cy, Math.max(0.6, rr), 0, 6.283); ctx.fill(); }
+      if (state.drift) { var x0 = labelW + k * cell + 10, mid = x0 + 30, len = Math.min(30, Math.abs(row.drift) * 6); ctx.fillStyle = row.drift >= 0 ? C.rise : C.fall; if (row.drift >= 0) ctx.fillRect(mid, y, len, rh - gap); else ctx.fillRect(mid - len, y, len, rh - gap); }
+    });
+    if (state.drift) { ctx.fillStyle = C.ink3; ctx.textAlign = 'center'; ctx.font = '10px ' + tok('--f-sans'); ctx.fillText('log₂ drift', labelW + k * cell + 40, 10); ctx.fillStyle = C.grid; ctx.fillRect(labelW + k * cell + 40, top, 1, n * rh); }
+  }
+
+  function table(){
+    var k = state.k, t = '<tr><th>r mod 2^' + k + '</th><th style="text-align:left">word (1 = odd step, 0 = halving)</th><th>heights</th><th>odd steps</th><th>log₂ drift</th><th>coef. stopping</th></tr>';
+    var lim = Math.min(rowsData.length, 512);
+    for (var i = 0; i < lim; i++) { var row = rowsData[i]; t += '<tr><td>' + row.r + '</td><td class="w">' + row.par.join('') + '</td><td>' + row.heights.map(function(h){ return h.complete ? h.h : '≥' + h.h; }).join(' ') + '</td><td>' + row.t + '</td><td>' + row.drift.toFixed(2) + '</td><td>' + (row.stop === null ? '> ' + k : row.stop) + '</td></tr>'; }
+    document.getElementById('tbl').innerHTML = t + (rowsData.length > lim ? '<tr><td colspan="6" style="text-align:left;color:var(--ink-3)">first 512 rows shown</td></tr>' : '');
+  }
+
+  cv.addEventListener('mousemove', function(e){
+    var r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+    var i = Math.floor((y - geo.top) / geo.rh), j = Math.floor((x - geo.labelW) / geo.cell);
+    if (i < 0 || i >= rowsData.length || j < 0 || j >= geo.k) { tip.hidden = true; return; }
+    var row = rowsData[i], p = row.par[j], k = geo.k, v = row.r, tt = 0;
+    for (var q = 0; q < j; q++) { if (row.par[q]) { v = (3 * v + 1) / 2; tt++; } else v = v / 2; }
+    var what = p ? ('odd step: ' + fmt(v) + ' → ' + fmt((3 * v + 1) / 2) + (j + 1 < k ? (row.par[j + 1] ? ' — a rise (height 1)' : ' — a fall (height ≥ 2)') : ' — direction beyond column ' + k)) : ('halving: ' + fmt(v) + ' → ' + fmt(v / 2));
+    tip.innerHTML = '<div class="v">n ≡ ' + row.r + ' (mod ' + fmt(1 << k) + ')</div><div class="word">' + row.par.map(function(b, q){ return q === j ? '[' + b + ']' : b; }).join('') + '</div><div>step ' + (j + 1) + ' for the representative ' + row.r + ': ' + what + '</div><div class="s">' + row.t + ' odd steps in ' + k + ': 3<sup>' + row.t + '</sup>/2<sup>' + k + '</sup>, log₂ drift ' + row.drift.toFixed(2) + (row.stop !== null ? ' · settled at step ' + row.stop : ' · not settled by step ' + k) + '</div>';
+    tip.hidden = false; tip.style.left = Math.min(x + 14, r.width - 330) + 'px'; tip.style.top = Math.max(0, y - 10) + 'px';
+  });
+  cv.addEventListener('mouseleave', function(){ tip.hidden = true; });
+
+  document.getElementById('kr').oninput = function(){ state.k = +this.value; build(); };
+  function order(id, val){ document.getElementById(id).onclick = function(){ state.order = val; ['o2', 'on', 'ow'].forEach(function(o){ document.getElementById(o).setAttribute('aria-pressed', o === id ? 'true' : 'false'); }); build(); }; }
+  order('o2', '2adic'); order('on', 'numeric'); order('ow', 'word');
+  document.getElementById('stops').onchange = function(){ state.stops = this.checked; draw(); };
+  document.getElementById('drift').onchange = function(){ state.drift = this.checked; draw(); };
+  window.addEventListener('resize', draw);
+  var mq = window.matchMedia('(prefers-color-scheme: dark)'); if (mq.addEventListener) mq.addEventListener('change', draw);
+  new MutationObserver(draw).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  build();
+})();
+</script>
