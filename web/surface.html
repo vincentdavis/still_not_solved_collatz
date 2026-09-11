@@ -86,7 +86,7 @@ input[type=checkbox]{accent-color:var(--ray);width:15px;height:15px}
     <button class="plain" id="reset">Reset view</button>
   </div>
   <div class="controls" role="group" aria-label="Trajectory">
-    <label class="ctl">trajectory from <input type="number" id="tn" min="1" max="100000000" step="1" value="27" aria-label="starting number"></label>
+    <label class="ctl">trajectory from <input type="number" id="tn" min="1" max="100000000" step="1" value="97" aria-label="starting number"></label>
     <button class="plain" id="tgo">Draw</button>
     <button class="plain" id="tclr">Clear</button>
     <span id="tstat" class="mono" style="font-size:.84rem"></span>
@@ -122,7 +122,7 @@ input[type=checkbox]{accent-color:var(--ray);width:15px;height:15px}
 (function(){
   var stage = document.getElementById('stage'), labelsEl = document.getElementById('labels'), tip = document.getElementById('tip');
   if (!window.THREE) { stage.innerHTML = '<div class="fallback">The 3D renderer (three.js from cdnjs) did not load, so there is nothing to draw here. Reload once online.</div>'; return; }
-  var state = { N: 10, X: 5, vlog: true, zlog: true, sheet: true, jumps: true, pads: true, traj: 27 };
+  var state = { N: 10, X: 5, vlog: true, zlog: true, sheet: true, jumps: true, pads: true, traj: 97 };
   var LX = 10, LZ = 8, LH = 5;
   function v2(n){ var c = 0; while (n % 2 === 0) { n /= 2; c++; } return c; }
   function isPad(y, x){ return x >= 1 && (y * Math.pow(2, x)) % 3 === 1; }
