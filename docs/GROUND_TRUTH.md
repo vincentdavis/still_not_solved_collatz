@@ -674,6 +674,33 @@ decay polynomially (exponent → ≈ 1.9) — so a certified truncated-cap
 invariant is the identified proof program.  Gap G, sharpest form: `μ_n ≤ 1.30`
 at every (2,2)-level.
 
+### The cycle ledger and the SAT box (`docs/LEDGER.md`)
+
+A visualization-led pass (2026-09-23, `web/ledger.html`) on four ideas: the
+ascent/descent balance of a cycle, the pairs `(n, D(n))`, the gates at both
+ends, and a SAT formulation. **Proved, one line each, nothing new:** around
+any `S_q`-cycle `Σ(2nᵢ+q) = Σ descents = E/2`, i.e. **`E = 4·O + 2Lq`** (the
+even members weigh four times the odd ones plus `2Lq`; 2 127 / 2 127 census);
+the pairs `(n, D(n))`, `D(n) = (3n+q)(1 − 2^{−v₂(3n+q)})`, lie on the fan of
+lines of slope `3(1 − 2^{−x})` under the ascent line `2n+q`, and a cycle is a
+set of points whose signed distances `n − S_q(n)` cancel; the gates are T1–T3
+and the STRUCTURE.md mirror, restated (the top is entered by a rise and left
+by a fall, the bottom the other way round). **Computed:** a CNF for "an
+`S_q`-cycle with `L` odd members, maximum `< 2^W`" (`satcycles.py`: `W`-bit
+members, ripple-carry `3n+q`, one-hot halving count, strict `nᵢ < n₀`), sound
+and complete for the box — 20 tests against `find_cycles` (CaDiCaL through
+python-sat; MiniSat in the page); `(q,L,W) = (1,8,20)` is 1 862 variables /
+14 568 clauses, `(1,12,24)` unsat in 8.8 s. Observation: every 2-adic gate
+(T1, T8) is a clause on the low bits of `n₀`, every 3-adic gate (T0, the
+mod-3 half of T2, T4, the sieve) needs a mod-3 circuit — a bit-level encoding
+sees the 2-adic half for free and the 3-adic half not at all. Verdict stated
+in the doc: bounded model checking cannot reach the box that matters
+(`L > 1.375×10¹¹`, `W > 71`), and the SAT direction with life in it is
+Yolcu–Aaronson–Heule's search for termination certificates (JAR 2023), not
+counterexample search. Status: **P (identities, cited gates) / C (encoding)**;
+`python/tests/test_ledger.py` (2), `test_satcycles.py` (20, skipped without
+python-sat).
+
 ### Verification status
 
 | result | Python | Lean |
@@ -692,6 +719,7 @@ at every (2,2)-level.
 | the death-depth counts `a_k` (`k ≤ 4`) | ✓ | ✓ `Census.lean` |
 | q-transfer: `S_k(q) = q·S_k(1)`, `a_k` q-blind (docs/FILTER.md) | ✓ (`k ≤ 10`, six `q`) | ✓ `QTransfer.lean` (`k ≤ 4`, four offsets incl. `q ≡ −1`) |
 | words: realization, bump law, sign law (docs/WORDS.md) | ✓ (`test_words.py`, 26 tests) | ✓ `Words.lean` (first collision, uniqueness at `k=4`, sign law `k ≤ 8`, deficit `n=5`) |
+| ledger identity `E = 4O + 2Lq`; SAT box = `find_cycles` on every tested box (docs/LEDGER.md) | ✓ (`test_ledger.py`, `test_satcycles.py`) | ✗ — not formalized (one-line identity; the CNF is computation) |
 | over-dispersion, tail rate, box dimension | ✓ | ✗ — infeasible in-kernel, open, unresolved limit |
 
 Lean total: **341 declarations**, all certifying `[propext, Quot.sound]` or
