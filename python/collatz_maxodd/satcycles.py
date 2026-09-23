@@ -42,15 +42,39 @@ Encoding (LSB-first bit vectors, Tseitin with constant folding)
 
 Enumeration blocks the value of ``n_0`` after each model: for fixed ``L`` the
 maximum determines the cycle, so this yields each cycle exactly once.
+
+3-adic gates as clauses (``gates3 = depth``)
+--------------------------------------------
+A residue ``n mod 3^k`` is not local in binary, so it is computed: a one-hot
+automaton reads the ``W`` bits from the top, state ``s -> (2s + bit) mod 3^k``
+(:func:`residue_automaton`; ``3^k`` state variables per bit position, two
+3-literal transition clauses per state and a sequential at-most-one).  With it:
+T0 on every member (final state ``!= 0`` mod 3, unconditional); on ``n_0`` the
+sieve of ``sieve.surviving_residues_mod3`` at depths ``1..gates3`` -- depth ``d``
+says ``n_0 mod 3^{d+1}`` lies in the survivor set (``{2, 8}`` mod 9 is T2+T4;
+``{2, 17, 20, 26}`` mod 27 is D2; ``{20, 26, 44, 71, 74, 80}`` mod 81 is D3) --
+each guarded by its magnitude threshold so the box stays sound: ``M > q`` at
+depth 1, ``M > 11q/7`` at depth 2, ``M > 49q/5`` at depth 3, and for ``q = 1``
+``M > floor_rule_safe_M(d)`` (``1, 1, 9, 9, 86, 86, 86, 86`` for ``d <= 8``)
+beyond.  Depths ``>= 4`` are offered for ``q = 1`` only, where those thresholds
+were computed.  The cost is the point: a 2-adic gate is one clause on the low
+bits; a 3-adic gate at depth ``d`` is a circuit over all ``W`` bits with
+``3^{d+1}`` states -- ``O(3^d W)`` clauses here (a binary remainder circuit
+would make it ``O(d W)``, still a circuit, never a clause).
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from .backtree import floor_rule_safe_M
+from .sieve import surviving_residues_mod3
 from .syracuse import check_q
 
-__all__ = ["Cnf", "Encoding", "encode", "decode", "enumerate_cycles", "cnf_stats"]
+__all__ = [
+    "Cnf", "Encoding", "encode", "decode", "enumerate_cycles", "cnf_stats",
+    "residue_automaton", "adic3_gates", "encode_max_only", "enumerate_max_only",
+]
 
 Lit = bool | int  # True/False are folded constants, nonzero ints are literals
 
@@ -186,16 +210,98 @@ class Encoding:
     L: int
     W: int
     gates: bool
+    gates3: int
     cnf: Cnf = field(repr=False)
     n: list[list[int]] = field(repr=False)  # n[i][j]: bit j of element i
     y: list[list[int]] = field(repr=False)  # y[i][k]: v2(3 n_i + q) == k, k >= 1 (index 0 unused)
 
 
-def encode(q: int, L: int, W: int, gates: bool = True) -> Encoding:
-    """CNF for "an ``S_q``-cycle with ``L`` odd elements, maximum ``< 2^W``"."""
+def amo_sequential(c: Cnf, xs: list[int]) -> None:
+    """At most one of ``xs`` (Sinz's sequential counter, ``3n`` clauses, ``n-1`` aux vars)."""
+    n = len(xs)
+    if n <= 1:
+        return
+    s = [c.var() for _ in range(n - 1)]
+    c.clause([-xs[0], s[0]])
+    for i in range(1, n - 1):
+        c.clause([-xs[i], s[i]])
+        c.clause([-s[i - 1], s[i]])
+        c.clause([-xs[i], -s[i - 1]])
+    c.clause([-xs[n - 1], -s[n - 2]])
+
+
+def residue_automaton(c: Cnf, bits: list[int], m: int) -> list[int]:
+    """One-hot state variables for ``value(bits) mod m`` (``bits`` LSB-first, all variables).
+
+    Reads the bits from the most significant down: ``s -> (2s + bit) mod m``.
+    Returns the final state list ``S`` with ``S[r]`` true iff the value is ``r (mod m)``.
+    """
+    W = len(bits)
+    cur = [c.var() for _ in range(m)]
+    c.require(cur[0])
+    for r in range(1, m):
+        c.require(-cur[r])
+    for p in range(W):
+        b = bits[W - 1 - p]
+        nxt = [c.var() for _ in range(m)]
+        for r in range(m):
+            c.clause([-cur[r], b, nxt[(2 * r) % m]])  # bit 0
+            c.clause([-cur[r], -b, nxt[(2 * r + 1) % m]])  # bit 1
+        amo_sequential(c, nxt)
+        cur = nxt
+    return cur
+
+
+def adic3_gates(q: int, depth: int) -> list[tuple[int, int, tuple[int, ...]]]:
+    """``[(threshold, modulus, survivors)]`` for depths ``1..depth``: valid when ``M > threshold``."""
+    check_q(q)
+    out: list[tuple[int, int, tuple[int, ...]]] = []
+    for d in range(1, depth + 1):
+        if q == 1:
+            if d > 8:
+                raise ValueError("floor-rule thresholds are tabulated to depth 8")
+            thr = floor_rule_safe_M(d)
+        elif d == 1:
+            thr = q
+        elif d == 2:
+            thr = (11 * q) // 7  # M > 11q/7  <=>  M > floor(11q/7) for integer M
+        elif d == 3:
+            thr = (49 * q) // 5
+        else:
+            raise ValueError("3-adic gates beyond depth 3 are available for q = 1 only")
+        modulus, surv = surviving_residues_mod3(d, q)
+        out.append((thr, modulus, surv))
+    return out
+
+
+def _add_adic3(c: Cnf, enc_n: list[list[int]], q: int, L: int, W: int, depth: int) -> None:
+    """T0 on every member; the sieve to ``depth`` on ``n_0``, threshold-guarded."""
+    gates = adic3_gates(q, depth)
+    for i in range(L):
+        m = gates[-1][1] if (i == 0 and gates) else 3
+        S = residue_automaton(c, enc_n[i], m)
+        c.clause([S[r] for r in range(m) if r % 3])  # T0: not divisible by 3
+        if i == 0:
+            for thr, modulus, surv in gates:
+                if thr + 1 >= 2**W:
+                    continue  # the guard n_0 > thr can never hold in this box
+                ok = set(surv)
+                ge = c.NOT(c.lt(enc_n[0], const_bits(thr + 1, W)))  # n_0 >= thr + 1, i.e. n_0 > thr
+                c.clause([c.NOT(ge)] + [S[r] for r in range(m) if r % modulus in ok])
+
+
+def encode(q: int, L: int, W: int, gates: bool = True, gates3: int = 0) -> Encoding:
+    """CNF for "an ``S_q``-cycle with ``L`` odd elements, maximum ``< 2^W``".
+
+    ``gates`` adds the 2-adic gates (T1, T2, T8, the minimum's mod 4); ``gates3 = d``
+    adds T0 on every member and the 3-adic sieve on the maximum to depth ``d``
+    (``d = 0``: none; see the module docstring).
+    """
     check_q(q)
     if L < 1 or W < 4 or q >= 2**W:
         raise ValueError("need L >= 1, W >= 4 and q < 2^W")
+    if gates3 < 0:
+        raise ValueError("gates3 must be >= 0")
     c = Cnf()
     n = [[c.var() for _ in range(W)] for _ in range(L)]
     K = W + 1
@@ -227,7 +333,59 @@ def encode(q: int, L: int, W: int, gates: bool = True) -> Encoding:
             c.clause([-n[0][3], n[0][2], n[0][1]])
         if q == 1 and L >= 2:  # the minimum's mirror: m = 3 (mod 4), so some member other than M has bit 1 set
             c.clause([n[i][1] for i in range(1, L)])
-    return Encoding(q, L, W, gates, c, n, y)
+    if gates3:
+        _add_adic3(c, n, q, L, W, gates3)
+    return Encoding(q, L, W, gates, gates3, c, n, y)
+
+
+def encode_max_only(q: int, W: int, gates: bool = True, gates3: int = 0) -> tuple[Cnf, list[int]]:
+    """Just the gates on one ``W``-bit odd number: which ``n < 2^W`` could be a cycle maximum?
+
+    Returns ``(cnf, bits)``.  No cycle structure at all -- the models are exactly the
+    odd numbers passing the encoded gates, which is what the tests compare against
+    arithmetic.
+    """
+    check_q(q)
+    c = Cnf()
+    n = [c.var() for _ in range(W)]
+    c.require(n[0])
+    if gates:
+        c.require(n[1] if (q >> 1) & 1 else -n[1])
+        if q == 1:
+            c.clause([-n[3], n[2], n[1]])
+    if gates3:
+        _add_adic3(c, [n], q, 1, W, gates3)
+    return c, n
+
+
+def passes_gates(n: int, q: int, gates: bool = True, gates3: int = 0) -> bool:
+    """Arithmetic twin of :func:`encode_max_only`."""
+    if n % 2 == 0:
+        return False
+    if gates and (n % 4 != q % 4 or (q == 1 and n % 16 == 9)):
+        return False
+    if gates3:
+        if n % 3 == 0:
+            return False
+        for thr, modulus, surv in adic3_gates(q, gates3):
+            if n > thr and n % modulus not in surv:
+                return False
+    return True
+
+
+def enumerate_max_only(q: int, W: int, gates: bool = True, gates3: int = 0, solver: str = "cd") -> list[int]:
+    """All ``n < 2^W`` accepted by :func:`encode_max_only`, via python-sat."""
+    from pysat.solvers import Solver  # optional dependency
+
+    c, n = encode_max_only(q, W, gates, gates3)
+    out: list[int] = []
+    with Solver(name=solver, bootstrap_with=c.clauses) as s:
+        while s.solve():
+            model = {lit for lit in s.get_model() if lit > 0}
+            v = sum(1 << j for j in range(W) if n[j] in model)
+            out.append(v)
+            s.add_clause([-n[j] if (v >> j) & 1 else n[j] for j in range(W)])
+    return sorted(out)
 
 
 def cnf_stats(enc: Encoding) -> tuple[int, int, int]:
@@ -253,7 +411,7 @@ def blocking_clause(enc: Encoding, elems: tuple[int, ...]) -> list[int]:
 
 
 def enumerate_cycles(
-    q: int, L: int, W: int, gates: bool = True, solver: str = "cd", limit: int = 10_000
+    q: int, L: int, W: int, gates: bool = True, solver: str = "cd", limit: int = 10_000, gates3: int = 0
 ) -> list[tuple[tuple[int, ...], tuple[int, ...]]]:
     """All ``S_q``-cycles with ``L`` odd elements and maximum ``< 2^W``, via python-sat.
 
@@ -262,7 +420,7 @@ def enumerate_cycles(
     """
     from pysat.solvers import Solver  # optional dependency
 
-    enc = encode(q, L, W, gates)
+    enc = encode(q, L, W, gates, gates3)
     out: list[tuple[tuple[int, ...], tuple[int, ...]]] = []
     with Solver(name=solver, bootstrap_with=enc.cnf.clauses) as s:
         while len(out) < limit and s.solve():

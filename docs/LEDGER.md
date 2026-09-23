@@ -11,7 +11,7 @@ SAT solver.  Labels follow the house scheme: **PROVED** (complete proof),
 claimed new; the gates are `docs/GROUND_TRUTH.md` T0–T3 and the
 `docs/STRUCTURE.md` mirror, restated in the ledger's vocabulary.  Witnesses:
 `python/tests/test_ledger.py` (2 tests), `python/tests/test_satcycles.py`
-(20 tests, need `python-sat`: `uv run --with python-sat pytest`).
+(25 tests, need `python-sat`: `uv run --with python-sat pytest`).
 
 Setting as everywhere in this repo: `S_q(n) = (3n+q)/2^{v₂(3n+q)}` on odd
 `n`, `q` odd with `3 ∤ q`; a cycle has odd members `n₁, …, n_L` (sum `O`),
@@ -125,10 +125,33 @@ reported.
 **Observation (2-adic vs 3-adic).** Every 2-adic gate is *local in binary* —
 a clause on the low bits of `n₀` — and the solver gets it by unit propagation.
 Every 3-adic gate (T0, the mod-3 half of T2, T4, D2/D3, the whole sieve)
-needs a mod-3 circuit per member.  A bit-level encoding therefore sees the
-2-adic half of the problem for free and the 3-adic half not at all; the
+needs a residue circuit per member.  A bit-level encoding therefore sees the
+2-adic half of the problem for free and pays for the 3-adic half; the
 project's actual content (the 3-adic sieve, `docs/DEATH_DEPTH.md`) is
-exactly what the encoding cannot express cheaply.
+exactly what the encoding cannot express as clauses.
+
+**3-adic gates as circuits (`gates3 = d`).** `residue_automaton` computes
+`n mod 3^k` with a one-hot automaton reading the `W` bits from the top
+(`s → (2s + bit) mod 3^k`; `3^k` states per bit position, two 3-literal
+transition clauses per state, a sequential at-most-one).  With it the encoder
+adds T0 on every member (final state `≠ 0 mod 3`, unconditional) and, on
+`n₀`, the survivor sets of `sieve.surviving_residues_mod3` at depths
+`1..d` — `{2, 8}` mod 9 (T2 + T4), `{2, 17, 20, 26}` mod 27 (D2), six classes
+mod 81 (D3), 13 mod 243, 22 mod 729 — each behind its magnitude threshold so
+the box stays exact: `M > q`, `M > 11q/7`, `M > 49q/5` at depths 1–3 for any
+`q`, and for `q = 1` `M > floor_rule_safe_M(d) = 1, 1, 9, 9, 86, …` beyond
+(deeper gates are offered for `q = 1` only, where those thresholds were
+computed).  Checks: the automaton is exact (every residue class mod 3, 9, 27
+of the 7-bit numbers enumerated and compared); on the census boxes the 3-adic
+gates change nothing, as theorems must (eight boxes with cycles, incl. the
+17-cycles of `3n+5` and the 18-cycle of `3n+17`); the gate-only instance
+`encode_max_only` enumerates exactly the odd numbers the arithmetic filter
+accepts.  Cost, `q = 1`, `W = 16`, `L = 6`: 7 739 clauses without, 15 290 at
+depth 3, 67 906 at depth 5 (`≈ 5·3^{d+1}·W` per depth); the ladder `L ≤ 6`
+stays unsat above `L = 1`.  What the gates alone leave: below `2^16`, 369 of
+the 32 768 odd numbers (1.1 %) pass as candidate maxima; below `2^12`, 22 —
+`1, 161, 449, 485, 593, 917, 1133, 1397, 1457, 1853, 1937, 2177, …`.  None
+of it changes a verdict; it shows the price of the 3-adic half.
 
 **Verdict.** Inside a box the encoding settles everything; outside it,
 nothing.  A nontrivial `3n+1` cycle has `> 1.375×10¹¹` odd members (Hercher
@@ -151,5 +174,5 @@ invariant, not for a cycle.
 |---|---|---|
 | ledger identity `E = 4O + 2Lq`, 2 127 cycles | ✓ `test_ledger.py` | ✗ (not formalized; one line) |
 | minimum entered by `≥ 2` halvings; `m ≥ q, L ≥ 2 ⇒` one halving out, `m ≡ q+2 (mod 4)` | ✓ `test_ledger.py` (434 / 1 681) | ✓ `Minimum.lean` (`min_bb_out`, `m_step_one`, hypothesis `q < m`) |
-| SAT box = `find_cycles` on every tested box | ✓ `test_satcycles.py` (20, needs python-sat) | ✗ (computation) |
+| SAT box = `find_cycles` on every tested box; residue automaton exact; 3-adic gates inert on cycle boxes; gate-only instance = arithmetic filter | ✓ `test_satcycles.py` (25, needs python-sat) | ✗ (computation) |
 | in-page: MiniSat models = exhaustive search of the same box, census gates for `q ≤ 199`, `M ≤ 4000` | ✓ `web/ledger.html` (live) | — |

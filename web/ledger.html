@@ -43,7 +43,8 @@ p code,li code,td code,.note code{color:var(--ink)}
 .seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
 button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 label.ctl{display:inline-flex;align-items:center;gap:8px}
-input[type=number]{font:inherit;font-family:var(--f-mono);width:7.5em;padding:4px 6px;border:1px solid var(--rule);border-radius:4px;background:var(--surface);color:var(--ink)}
+input[type=number],select{font:inherit;font-family:var(--f-mono);width:7.5em;padding:4px 6px;border:1px solid var(--rule);border-radius:4px;background:var(--surface);color:var(--ink)}
+select{width:auto}
 input[type=range]{width:150px;accent-color:var(--ray)}
 input[type=checkbox]{accent-color:var(--ray);width:15px;height:15px}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
@@ -201,7 +202,7 @@ li{margin:4px 0}
   <!-- ============ 4. SAT ============ -->
   <h2>4 · As a SAT problem <span class="tag">computed · MiniSat in this page</span></h2>
   <p class="note">"There is a <code>3n+1</code> cycle with <code>L</code> odd members, all below <code>2<sup>W</sup></code>" is a finite statement,
-  and finite statements can be written as clauses. The encoding below does exactly that; the solver is MiniSat, running in your browser.
+  and finite statements can be written as clauses. The encoding below does exactly that, with the 2-adic gates as clauses and the 3-adic gates as circuits; the solver is MiniSat, running in your browser.
   Every box it can afford comes back <em>unsat</em> above <code>L = 1</code> — as it must, since every member of a second cycle exceeds <code>2<sup>71</sup></code> and the page runs at <code>W ≤ 26</code>.
   At <code>L = 1</code> it finds the one fixed point, <code>1</code>. The point of running it is to see the formulation work, and to see its scale.</p>
   <ul>
@@ -209,24 +210,33 @@ li{margin:4px 0}
       one-hot <code>y<sub>i,k</sub></code> meaning "<code>tᵢ</code> has exactly <code>k</code> trailing zeros".</li>
     <li><b>Clauses.</b> <code>nᵢ</code> odd; <code>y<sub>i,k</sub> ⇒</code> the low <code>k</code> bits of <code>tᵢ</code> are 0, bit <code>k</code> is 1, and <code>n<sub>i+1</sub> = tᵢ ≫ k</code> (indices mod <code>L</code>);
       exactly one <code>k</code> per step; <code>nᵢ &lt; n₀</code> strictly for <code>i ≥ 1</code>, which fixes the rotation and forbids a shorter cycle run twice.</li>
-    <li><b>Gates as clauses.</b> T1 is one unit clause (bit 1 of <code>n₀</code> is 0); T8 is one 3-literal clause (not <code>…1001₂</code>); T2 is one clause behind "<code>n₀ &gt; 1</code>";
-      the minimum's <code>m ≡ 3 (mod 4)</code> is one clause saying some other member has bit 1 set. Every <em>2-adic</em> gate is local in binary. The <em>3-adic</em> gates — T0, the mod-3 half of T2, T4, the sieve —
-      are not: each needs a mod-3 circuit. A bit-level encoding sees the 2-adic half of the problem for free and the 3-adic half not at all.</li>
+    <li><b>2-adic gates as clauses.</b> T1 is one unit clause (bit 1 of <code>n₀</code> is 0); T8 is one 3-literal clause (not <code>…1001₂</code>); T2's "one halving into <code>M</code>" is one clause behind "<code>n₀ &gt; 1</code>";
+      the minimum's <code>m ≡ 3 (mod 4)</code> is one clause saying some other member has bit 1 set. A condition mod <code>2<sup>a</sup></code> is a clause on <code>a</code> bits: free.</li>
+    <li><b>3-adic gates as circuits.</b> A residue mod <code>3<sup>k</sup></code> is not local in binary, so it is computed: a one-hot automaton reads the <code>W</code> bits from the top, state <code>s → (2s + bit) mod 3<sup>k</sup></code>,
+      <code>3<sup>k</sup></code> states per bit position, two transition clauses per state and an at-most-one. With it: T0 on every member (final state not <code>0 mod 3</code>), and on <code>n₀</code> the sieve of the main page at depths <code>1 … d</code> —
+      <code>{2, 8} mod 9</code> is T2 + T4, <code>{2, 17, 20, 26} mod 27</code> is D2, six classes mod 81 is D3, then 13 classes mod 243 and 22 mod 729 — each behind its magnitude threshold (<code>M &gt; 1, 1, 9, 9, 86</code>) so the box stays exact.
+      Cost: a 2-adic gate is one clause; a 3-adic gate at depth <code>d</code> is about <code>5·3<sup>d+1</sup>·W</code> clauses. At <code>W = 16</code> the six-member box grows from 7 739 clauses to 15 290 at depth 3 and 67 906 at depth 5.
+      "Candidate maxima" lists every odd <code>n &lt; 2<sup>W</sup></code> the gate clauses alone accept, checked against arithmetic: below <code>2<sup>16</sup></code>, 369 of 32 768 odd numbers, 1.1 %.</li>
     <li><b>Enumeration.</b> After each model the value of <code>n₀</code> is blocked; for fixed <code>L</code> the maximum determines the cycle, so each cycle would appear once.</li>
   </ul>
   <div class="controls" style="margin-top:8px" role="group" aria-label="SAT controls">
     <label class="ctl">L odd members <input type="number" id="sl" min="1" max="20" value="6"></label>
     <label class="ctl">W bits <input type="number" id="sw" min="4" max="26" value="16"></label>
-    <label class="ctl"><input type="checkbox" id="sg" checked> gates as extra clauses</label>
+    <label class="ctl"><input type="checkbox" id="sg" checked> 2-adic gates</label>
+    <label class="ctl">3-adic gates <select id="s3" aria-label="3-adic gate depth">
+      <option value="0">none</option><option value="-1">T0 only (mod 3)</option><option value="1">depth 1 · mod 9</option><option value="2">depth 2 · mod 27</option><option value="3" selected>depth 3 · mod 81</option><option value="4">depth 4 · mod 243</option><option value="5">depth 5 · mod 729</option>
+    </select></label>
     <button class="btn" id="srun">Solve this box</button>
     <label class="ctl">ladder L = 1 … <input type="number" id="slmax" min="1" max="20" value="8" style="width:4.5em"></label>
     <button class="btn alt" id="sladder">Run the ladder</button>
     <button class="btn alt" id="sclear">Clear</button>
+    <button class="btn alt" id="smaxbtn">Candidate maxima below 2^W</button>
     <span class="status" id="sstat">loading MiniSat…</span>
   </div>
   <div class="card">
     <div class="out" id="sout">Press Solve, or run the ladder.</div>
     <div class="tbl"><table id="stbl"></table></div>
+    <div class="out" id="smax" hidden></div>
     <details style="border-top:1px solid var(--rule);margin-top:10px">
       <summary>The last CNF, DIMACS head</summary>
       <pre id="sdimacs" style="margin-top:8px"></pre>
@@ -235,7 +245,7 @@ li{margin:4px 0}
   <p class="note" style="margin-top:6px"><b>What this settles, and what it cannot.</b></p>
   <ul>
     <li><b>Inside a box, everything.</b> The encoding is sound and complete for <code>(L, W)</code>: its models are exactly the cycles with <code>L</code> odd members and maximum below <code>2<sup>W</sup></code>.
-      The Python twin (<code>collatz_maxodd/satcycles.py</code>, CaDiCaL through python-sat) is regression-tested against exhaustive search on 20 boxes; the ability to <em>find</em> a cycle can only be tested where cycles exist, so that harness runs the same encoder on the maps <code>3n+q</code> that have them. This page runs <code>3n+1</code> only.</li>
+      The Python twin (<code>collatz_maxodd/satcycles.py</code>, CaDiCaL through python-sat) is regression-tested against exhaustive search on 20 boxes, the residue automaton against arithmetic, and the 3-adic gates on boxes that contain cycles (they change nothing there, as theorems must); the ability to <em>find</em> a cycle can only be tested where cycles exist, so that harness runs the same encoder on the maps <code>3n+q</code> that have them. This page runs <code>3n+1</code> only.</li>
     <li><b>Outside a box, nothing.</b> The box that could matter has <code>L &gt; 1.375 × 10<sup>11</sup></code> and <code>W &gt; 71</code>: about <code>10<sup>14</sup></code> clauses. "Unsat" for every smaller box was already known from Barina's verification and the Diophantine bounds on <code>2<sup>B</sup>/3<sup>L</sup></code>.
       Bounded model checking never closes an unbounded question.</li>
     <li><b>Where SAT has actually helped.</b> Yolcu, Aaronson and Heule (CADE 2021; <em>J. Automated Reasoning</em> 2023) turned the conjecture into termination of a string-rewriting system and used SAT to search for
@@ -409,7 +419,26 @@ Cnf.prototype.add = function(A, B){ var n = Math.max(A.length, B.length); A = A.
 Cnf.prototype.lt = function(A, B){ var n = Math.max(A.length, B.length); A = A.concat(new Array(n - A.length).fill(false)); B = B.concat(new Array(n - B.length).fill(false)); var res = false, eq = true; for (var j = n - 1; j >= 0; j--){ res = this.OR(res, this.AND(eq, this.AND(NOT(A[j]), B[j]))); eq = this.AND(eq, NOT(this.XOR(A[j], B[j]))); } return res; };
 Cnf.prototype.impEq = function(y, a, b){ this.cl([-y, NOT(a), b]); this.cl([-y, a, NOT(b)]); };
 function constBits(v, n){ var out = []; for (var j = 0; j < n; j++) out.push(((v >> j) & 1) === 1); return out; }
-function encode(Lc, W, gates){
+var ADIC3 = [ /* q = 1: [threshold, modulus, survivors] for depths 1..5; sieve.surviving_residues_mod3, thresholds backtree.floor_rule_safe_M */
+  [1, 9, [2, 8]],
+  [1, 27, [2, 17, 20, 26]],
+  [9, 81, [20, 26, 44, 71, 74, 80]],
+  [9, 243, [20, 80, 107, 125, 152, 155, 161, 182, 188, 206, 233, 236, 242]],
+  [86, 729, [161, 182, 188, 206, 233, 242, 263, 350, 395, 404, 449, 479, 485, 506, 593, 638, 647, 668, 674, 719, 722, 728]]
+];
+function amoSeq(c, xs){ var n = xs.length, i; if (n <= 1) return; var s = []; for (i = 0; i < n - 1; i++) s.push(c.v()); c.cl([-xs[0], s[0]]); for (i = 1; i < n - 1; i++){ c.cl([-xs[i], s[i]]); c.cl([-s[i - 1], s[i]]); c.cl([-xs[i], -s[i - 1]]); } c.cl([-xs[n - 1], -s[n - 2]]); }
+function residueAutomaton(c, bits, m){ var W = bits.length, cur = [], r, p; for (r = 0; r < m; r++) cur.push(c.v()); c.cl([cur[0]]); for (r = 1; r < m; r++) c.cl([-cur[r]]); for (p = 0; p < W; p++){ var b = bits[W - 1 - p], nxt = []; for (r = 0; r < m; r++) nxt.push(c.v()); for (r = 0; r < m; r++){ c.cl([-cur[r], b, nxt[(2 * r) % m]]); c.cl([-cur[r], -b, nxt[(2 * r + 1) % m]]); } amoSeq(c, nxt); cur = nxt; } return cur; }
+function addAdic3(c, nArr, W, depth){ /* depth -1: T0 only; depth d >= 1: T0 everywhere + the sieve on n_0 to depth d */
+  var gates = depth > 0 ? ADIC3.slice(0, depth) : [];
+  for (var i = 0; i < nArr.length; i++){
+    var m = (i === 0 && gates.length) ? gates[gates.length - 1][1] : 3, S = residueAutomaton(c, nArr[i], m), t0 = [], r;
+    for (r = 0; r < m; r++) if (r % 3) t0.push(S[r]); c.cl(t0);
+    if (i === 0) gates.forEach(function(g){ if (g[0] + 1 >= Math.pow(2, W)) return; var ge = NOT(c.lt(nArr[0], constBits(g[0] + 1, W))), ok = {}, lits = [NOT(ge)]; g[2].forEach(function(v){ ok[v] = 1; }); for (var r2 = 0; r2 < m; r2++) if (ok[r2 % g[1]]) lits.push(S[r2]); c.cl(lits); });
+  }
+}
+function encodeMaxOnly(W, gates, depth3){ var c = new Cnf(), n = []; for (var j = 0; j < W; j++) n.push(c.v()); c.cl([n[0]]); if (gates){ c.cl([-n[1]]); c.cl([-n[3], n[2], n[1]]); } if (depth3) addAdic3(c, [n], W, depth3); return { cnf: c, n: n }; }
+function passesGates(n, gates, depth3){ if (n % 2 === 0) return false; if (gates && (n % 4 !== 1 || n % 16 === 9)) return false; if (depth3){ if (n % 3 === 0) return false; for (var d = 0; d < depth3; d++){ var g = ADIC3[d]; if (n > g[0] && g[2].indexOf(n % g[1]) < 0) return false; } } return true; }
+function encode(Lc, W, gates, depth3){
   var c = new Cnf(), n = [], y = [], K = W + 1, i, j, k;
   for (i = 0; i < Lc; i++){ n.push([]); for (j = 0; j < W; j++) n[i].push(c.v()); }
   for (i = 0; i < Lc; i++){ y.push([0]); for (k = 1; k <= K; k++) y[i].push(c.v()); }
@@ -428,19 +457,21 @@ function encode(Lc, W, gates){
     c.cl([-n[0][3], n[0][2], n[0][1]]);                      // T8: M ≢ 9 (mod 16)
     if (Lc >= 2){ var some = []; for (i = 1; i < Lc; i++) some.push(n[i][1]); c.cl(some); }  // min ≡ 3 (mod 4): some other member has bit 1 set
   }
+  if (depth3) addAdic3(c, n, W, depth3);
   return { cnf: c, n: n, y: y, L: Lc, W: W };
 }
 var Logic = null, running = false, rows = [];
 function setStat(s, cls){ var e = $('sstat'); e.textContent = s; e.className = 'status' + (cls ? ' ' + cls : ''); }
 import('https://cdn.jsdelivr.net/npm/logic-solver@2.0.1/+esm').then(function(mod){ Logic = mod.default || mod; if (!Logic._MiniSat) throw new Error('no MiniSat'); setStat('MiniSat ready'); runLadder(6); }).catch(function(e){ setStat('MiniSat could not be loaded here — the CNF is still built and the exhaustive search runs', 'warn'); });
 function yieldUI(){ return new Promise(function(r){ setTimeout(r, 0); }); }
-async function runBox(Lc, W, gates, out, prefix){
-  var t0 = performance.now(), enc = encode(Lc, W, gates), c = enc.cnf, tEnc = performance.now() - t0;
+function d3label(d){ return d === 0 ? 'none' : d === -1 ? 'T0' : 'depth ' + d; }
+async function runBox(Lc, W, gates, depth3, out, prefix){
+  var t0 = performance.now(), enc = encode(Lc, W, gates, depth3), c = enc.cnf, tEnc = performance.now() - t0;
   var lits = 0; c.clauses.forEach(function(x){ lits += x.length; });
-  var head = ['c 3n+1 cycle, L = ' + Lc + ' odd members, max < 2^' + W + (gates ? ', gates on' : ''), 'p cnf ' + c.nv + ' ' + c.clauses.length];
+  var head = ['c 3n+1 cycle, L = ' + Lc + ' odd members, max < 2^' + W + (gates ? ', 2-adic gates' : '') + ', 3-adic gates ' + d3label(depth3), 'p cnf ' + c.nv + ' ' + c.clauses.length];
   c.clauses.slice(0, 14).forEach(function(x){ head.push(x.join(' ') + ' 0'); }); if (c.clauses.length > 14) head.push('… ' + (c.clauses.length - 14) + ' more clauses');
   $('sdimacs').textContent = head.join('\n');
-  var lines = [prefix + 'box: L = ' + Lc + ', W = ' + W + ' (max < ' + fmt(Math.pow(2, W)) + ')' + (gates ? ', gates on' : ', gates off'), 'CNF: ' + fmt(c.nv) + ' variables, ' + fmt(c.clauses.length) + ' clauses, ' + fmt(lits) + ' literals — built in ' + tEnc.toFixed(0) + ' ms'];
+  var lines = [prefix + 'box: L = ' + Lc + ', W = ' + W + ' (max < ' + fmt(Math.pow(2, W)) + ')' + (gates ? ', 2-adic gates on' : ', 2-adic gates off') + ', 3-adic gates ' + d3label(depth3), 'CNF: ' + fmt(c.nv) + ' variables, ' + fmt(c.clauses.length) + ' clauses, ' + fmt(lits) + ' literals — built in ' + tEnc.toFixed(0) + ' ms'];
   out.textContent = lines.join('\n') + '\nsolving…'; await yieldUI();
   var found = [], tSolve = 0, unsat = c.clauses.some(function(x){ return x.length === 0; }), verdict = '';
   if (Logic && !unsat){
@@ -465,20 +496,39 @@ async function runBox(Lc, W, gates, out, prefix){
   if (W <= 20){ var ex = findCycles(Math.pow(2, W) - 1).filter(function(cc){ return cc.elements.length === Lc; }); var same = Logic && ex.length === found.length && ex.every(function(cc, i){ return cc.elements.join(',') === found[i].elements.join(','); }); exText = ex.length + (Logic ? (same ? ' ✓' : ' ✗') : ''); lines.push('exhaustive search of the same box: ' + ex.length + ' cycle' + (ex.length === 1 ? '' : 's') + (Logic ? (same ? ' — identical to the SAT models ✓' : ' — DIFFERENT from the SAT models ✗') : '')); }
   else { exText = 'skipped'; lines.push('exhaustive cross-check skipped above W = 20'); }
   out.textContent = lines.join('\n');
-  rows.push({ L: Lc, W: W, gates: gates, nv: c.nv, ncl: c.clauses.length, verdict: verdict, ms: tSolve, ex: exText });
+  rows.push({ L: Lc, W: W, gates: gates, d3: depth3, nv: c.nv, ncl: c.clauses.length, verdict: verdict, ms: tSolve, ex: exText });
   renderRows();
 }
 function renderRows(){
   var tb = $('stbl'); tb.innerHTML = ''; if (!rows.length) return;
-  var hr = document.createElement('tr'); ['L', 'W', 'gates', 'variables', 'clauses', 'MiniSat', 'ms', 'exhaustive'].forEach(function(h){ var th = document.createElement('th'); th.textContent = h; hr.appendChild(th); }); tb.appendChild(hr);
-  rows.forEach(function(r){ var tr = document.createElement('tr'); [r.L, r.W, r.gates ? 'on' : 'off', r.nv, r.ncl, r.verdict, r.ms.toFixed(0), r.ex].forEach(function(v){ var td = document.createElement('td'); td.textContent = typeof v === 'number' ? fmt(v) : v; tr.appendChild(td); }); tb.appendChild(tr); });
+  var hr = document.createElement('tr'); ['L', 'W', '2-adic', '3-adic', 'variables', 'clauses', 'MiniSat', 'ms', 'exhaustive'].forEach(function(h){ var th = document.createElement('th'); th.textContent = h; hr.appendChild(th); }); tb.appendChild(hr);
+  rows.forEach(function(r){ var tr = document.createElement('tr'); [r.L, r.W, r.gates ? 'on' : 'off', d3label(r.d3), r.nv, r.ncl, r.verdict, r.ms.toFixed(0), r.ex].forEach(function(v){ var td = document.createElement('td'); td.textContent = typeof v === 'number' ? fmt(v) : v; tr.appendChild(td); }); tb.appendChild(tr); });
 }
-function readBox(){ var Lc = parseInt($('sl').value, 10), W = parseInt($('sw').value, 10); if (!(Lc >= 1 && Lc <= 20 && W >= 4 && W <= 26)){ $('sout').textContent = 'need 1 ≤ L ≤ 20 and 4 ≤ W ≤ 26.'; return null; } return { L: Lc, W: W, gates: $('sg').checked }; }
-async function solveOne(){ if (running) return; var b = readBox(); if (!b) return; running = true; $('srun').disabled = true; $('sladder').disabled = true; await runBox(b.L, b.W, b.gates, $('sout'), ''); running = false; $('srun').disabled = false; $('sladder').disabled = false; }
-async function runLadder(maxL){ if (running) return; var b = readBox(); if (!b) return; var top = maxL || parseInt($('slmax').value, 10); if (!(top >= 1 && top <= 20)) top = 8; running = true; $('srun').disabled = true; $('sladder').disabled = true; for (var Lc = 1; Lc <= top; Lc++){ await runBox(Lc, b.W, b.gates, $('sout'), 'ladder ' + Lc + '/' + top + ' · '); } running = false; $('srun').disabled = false; $('sladder').disabled = false; }
+function readBox(){ var Lc = parseInt($('sl').value, 10), W = parseInt($('sw').value, 10), d3 = parseInt($('s3').value, 10); if (!(Lc >= 1 && Lc <= 20 && W >= 4 && W <= 26)){ $('sout').textContent = 'need 1 ≤ L ≤ 20 and 4 ≤ W ≤ 26.'; return null; } return { L: Lc, W: W, gates: $('sg').checked, d3: d3 }; }
+async function solveOne(){ if (running) return; var b = readBox(); if (!b) return; running = true; $('srun').disabled = true; $('sladder').disabled = true; await runBox(b.L, b.W, b.gates, b.d3, $('sout'), ''); running = false; $('srun').disabled = false; $('sladder').disabled = false; }
+async function runLadder(maxL){ if (running) return; var b = readBox(); if (!b) return; var top = maxL || parseInt($('slmax').value, 10); if (!(top >= 1 && top <= 20)) top = 8; running = true; $('srun').disabled = true; $('sladder').disabled = true; for (var Lc = 1; Lc <= top; Lc++){ await runBox(Lc, b.W, b.gates, b.d3, $('sout'), 'ladder ' + Lc + '/' + top + ' · '); } running = false; $('srun').disabled = false; $('sladder').disabled = false; }
 $('srun').addEventListener('click', solveOne);
 $('sladder').addEventListener('click', function(){ runLadder(); });
-$('sclear').addEventListener('click', function(){ rows = []; renderRows(); $('sout').textContent = 'Cleared.'; });
+$('sclear').addEventListener('click', function(){ rows = []; renderRows(); $('sout').textContent = 'Cleared.'; $('smax').hidden = true; });
+async function enumerateMaxOnly(){
+  if (running) return; var b = readBox(); if (!b) return; var out = $('smax'); out.hidden = false;
+  if (!Logic){ out.textContent = 'MiniSat unavailable in this viewer.'; return; }
+  var W = Math.min(b.W, 16); running = true; $('srun').disabled = true; $('sladder').disabled = true; $('smaxbtn').disabled = true;
+  var enc = encodeMaxOnly(W, b.gates, b.d3), c = enc.cnf, ms = new Logic._MiniSat(); ms.ensureVar(c.nv); c.clauses.forEach(function(x){ ms.addClause(x); });
+  var found = [], t1 = performance.now(), j;
+  out.textContent = 'candidate maxima below 2^' + W + ': enumerating…'; await yieldUI();
+  while (found.length < 3000 && ms.solve()){ var sol = ms.getSolution(), v = 0; for (j = 0; j < W; j++) if (sol[enc.n[j]]) v += Math.pow(2, j); found.push(v); var block = []; for (j = 0; j < W; j++) block.push(((v >> j) & 1) ? -enc.n[j] : enc.n[j]); ms.addClause(block); if (found.length % 40 === 0){ out.textContent = 'candidate maxima below 2^' + W + ': ' + found.length + ' so far…'; await yieldUI(); } }
+  var tSolve = performance.now() - t1; found.sort(function(a, b2){ return a - b2; });
+  var want = []; for (var n = 1; n < Math.pow(2, W); n += 2) if (passesGates(n, b.gates, b.d3)) want.push(n);
+  var same = found.length === want.length && found.every(function(v, i){ return v === want[i]; });
+  var odds = Math.pow(2, W - 1);
+  out.textContent = 'candidate maxima below 2^' + W + (b.W > 16 ? ' (capped at 16 bits for this listing)' : '') + ', 2-adic gates ' + (b.gates ? 'on' : 'off') + ', 3-adic gates ' + d3label(b.d3) + ':\n' +
+    'the gate clauses alone accept ' + fmt(found.length) + ' of the ' + fmt(odds) + ' odd numbers (' + (100 * found.length / odds).toFixed(2) + ' %)' + (found.length >= 3000 ? ' — stopped at 3000' : '') + ' · MiniSat ' + tSolve.toFixed(0) + ' ms · CNF ' + fmt(c.nv) + ' vars, ' + fmt(c.clauses.length) + ' clauses\n' +
+    'arithmetic check of the same gates: ' + fmt(want.length) + (same ? ' — identical ✓' : (found.length >= 3000 ? ' (listing truncated)' : ' — DIFFERENT ✗')) + '\n' +
+    'first: ' + found.slice(0, 16).map(fmt).join(', ') + (found.length > 16 ? ', …' : '');
+  running = false; $('srun').disabled = false; $('sladder').disabled = false; $('smaxbtn').disabled = false;
+}
+$('smaxbtn').addEventListener('click', enumerateMaxOnly);
 
 renderLedger(); renderGates();
 })();
