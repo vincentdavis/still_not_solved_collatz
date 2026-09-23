@@ -1,0 +1,235 @@
+<meta charset="utf-8">
+<title>Landing Form</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --paper:#E8EAE5; --surface:#F2F3EF; --ink:#171A1C; --ink-2:#4A5254; --ink-3:#79817F;
+  --rule:#C9CDC4; --grid:#DEE1DA; --axis:#B4B9AD;
+  --ray:#2a78d6; --rise:#eb6834; --fall:#1baf7a; --fix:#79817F; --band:rgba(23,26,28,.06);
+  --rise-soft:rgba(235,104,52,.18); --fall-soft:rgba(27,175,122,.18); --dead:rgba(23,26,28,.10);
+  --focus:#24478F; --ok:#1baf7a; --warn:#eb6834;
+  --f-sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#14171A; --surface:#1C2126; --ink:#E8EAE5; --ink-2:#A9B1AF; --ink-3:#6E7876;
+    --rule:#2B3138; --grid:#242A30; --axis:#3A424A;
+    --ray:#3987e5; --rise:#d95926; --fall:#199e70; --fix:#8B9492; --band:rgba(232,234,229,.08);
+    --rise-soft:rgba(217,89,38,.26); --fall-soft:rgba(25,158,112,.26); --dead:rgba(232,234,229,.10);
+    --focus:#7FA8EE; --ok:#199e70; --warn:#d95926;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#14171A; --surface:#1C2126; --ink:#E8EAE5; --ink-2:#A9B1AF; --ink-3:#6E7876;
+  --rule:#2B3138; --grid:#242A30; --axis:#3A424A;
+  --ray:#3987e5; --rise:#d95926; --fall:#199e70; --fix:#8B9492; --band:rgba(232,234,229,.08);
+  --rise-soft:rgba(217,89,38,.26); --fall-soft:rgba(25,158,112,.26); --dead:rgba(232,234,229,.10);
+  --focus:#7FA8EE; --ok:#199e70; --warn:#d95926;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-sans);font-size:15px;line-height:1.5}
+.wrap{max-width:1080px;margin:0 auto;padding:28px 20px 56px;display:flex;flex-direction:column;gap:18px}
+.eyebrow{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+h1{margin:2px 0 0;font-size:clamp(1.6rem,3.4vw,2.2rem);font-weight:600;letter-spacing:-.01em;text-wrap:balance;line-height:1.15}
+h2{margin:26px 0 0;font-size:1.25rem;font-weight:600;letter-spacing:-.005em;text-wrap:balance}
+h2 .tag{font-family:var(--f-mono);font-size:.7rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-left:10px;vertical-align:2px}
+.lede{max-width:66ch;color:var(--ink-2);margin:0}
+p{max-width:70ch}
+code,.mono{font-family:var(--f-mono);font-size:.92em}
+p code,li code,td code,.note code,.proof code{color:var(--ink)}
+.eq{font-family:var(--f-mono);font-size:1.02rem;padding:10px 14px;border:1px solid var(--rule);border-radius:6px;background:var(--surface);display:inline-block;margin:4px 0}
+.controls{display:flex;flex-wrap:wrap;align-items:center;gap:10px 20px;font-size:.88rem;color:var(--ink-2)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+label.ctl{display:inline-flex;align-items:center;gap:8px}
+input[type=number],input[type=text]{font:inherit;font-family:var(--f-mono);width:7.5em;padding:4px 6px;border:1px solid var(--rule);border-radius:4px;background:var(--surface);color:var(--ink)}
+input[type=text]{width:16em}
+input[type=range]{width:150px;accent-color:var(--ray)}
+input[type=checkbox]{accent-color:var(--ray);width:15px;height:15px}
+.btn{font:inherit;font-weight:500;font-size:.88rem;border:1px solid var(--ink);background:var(--ink);color:var(--paper);border-radius:5px;padding:6px 14px;cursor:pointer}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:inherit;font-size:.8rem;font-family:var(--f-mono);border:1px solid var(--rule);background:var(--surface);color:var(--ink-2);border-radius:999px;padding:3px 10px;cursor:pointer}
+.chip:hover{border-color:var(--ink-3);color:var(--ink)}
+.mono{font-variant-numeric:tabular-nums}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:12px 10px 8px;position:relative}
+.chart{position:relative;width:100%}
+svg{display:block;width:100%;height:auto}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--paper);padding:8px 10px;border-radius:5px;font-size:.8rem;line-height:1.35;max-width:320px;box-shadow:0 8px 24px -14px rgba(0,0,0,.6);z-index:2}
+.tip .v{font-family:var(--f-mono);font-size:.9rem;font-weight:500}
+.tip .s{color:var(--rule);opacity:.9}
+.legend{display:flex;flex-wrap:wrap;gap:8px 22px;font-size:.84rem;color:var(--ink-2);padding:2px 4px}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.legend i{display:inline-block;width:14px;height:14px;border-radius:3px}
+.note{max-width:70ch;color:var(--ink-2);font-size:.9rem;margin:0}
+.stat{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:.86rem;color:var(--ink);padding:6px 4px 2px;line-height:1.6}
+.stat b{font-weight:500;color:var(--ink-2)}
+.out{font-family:var(--f-mono);font-size:.84rem;line-height:1.55;white-space:pre-wrap;padding:8px 4px 2px;min-height:3em}
+.proof{border-left:3px solid var(--rule);padding:2px 0 2px 14px;margin:8px 0;color:var(--ink-2);font-size:.92rem;max-width:70ch}
+.proof b{color:var(--ink)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:760px){.two{grid-template-columns:1fr}}
+.wheel{display:grid;grid-template-columns:auto repeat(6,minmax(0,1fr));gap:4px;font-family:var(--f-mono);font-size:.8rem;max-width:520px}
+.wheel div{padding:6px 4px;text-align:center;border-radius:4px;border:1px solid var(--rule);background:var(--surface)}
+.wheel .h{border:0;background:transparent;color:var(--ink-3)}
+.wheel .na{border-style:dotted;color:var(--ink-3);background:transparent}
+.wheel .live{background:var(--fall-soft)}
+.wheel .dead{background:var(--dead);text-decoration:line-through;color:var(--ink-2)}
+ul{margin:6px 0 0;padding-left:20px;max-width:72ch}
+li{margin:4px 0}
+.status{font-size:.82rem;color:var(--ink-3);font-family:var(--f-mono)}
+.ok{color:var(--ok)} .warn{color:var(--warn)}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">3n+1 steps as landings</div>
+    <h1>Landing Form</h1>
+  </header>
+  <p class="lede">An odd step is a landing: it arrives at an odd target <code>s</code> from a height <code>x</code>, the number of halvings.
+  The pair <code>(s, x)</code> fixes everything — the source is <code>n = (2<sup>x</sup>s − 1)/3</code>, the ascent is <code>2n+1</code>, the descent is <code>s(2<sup>x</sup> − 1)</code> —
+  and every odd number is the source of exactly one landing. Targets divisible by 3 are never landed on, so they are excluded from every cycle at the outset.
+  This page lays the landings out as a table, follows chains of them backwards, and asks exactly how far exclusion reaches.</p>
+
+  <!-- ============ 1. the table ============ -->
+  <h2>1 · The landing table <span class="tag">bijection · proved</span></h2>
+  <p class="note">Rows are odd targets <code>s</code>, columns are heights <code>x</code>. A cell is filled when <code>2<sup>x</sup>s ≡ 1 (mod 3)</code>, i.e. <code>x</code> odd for <code>s ≡ 2 (mod 3)</code> and <code>x</code> even for <code>s ≡ 1 (mod 3)</code>;
+  it shows the source <code>n = (2<sup>x</sup>s − 1)/3</code>. Every positive odd number appears in exactly one cell (Lemma U on the main page). A source that is itself a multiple of 3 is a dead end going further back: nothing lands on it.
+  Rows <code>s ≡ 0 (mod 3)</code> are empty — no landing has that target.</p>
+  <div class="controls" role="group" aria-label="Table controls">
+    <label class="ctl">targets up to <input type="range" id="sr" min="11" max="119" step="2" value="47" aria-label="largest target"><span class="mono" id="srv">47</span></label>
+    <label class="ctl">heights up to <input type="range" id="xr" min="4" max="14" value="8" aria-label="largest height"><span class="mono" id="xrv">8</span></label>
+    <label class="ctl"><input type="checkbox" id="showex" checked> show excluded targets</label>
+  </div>
+  <div class="card">
+    <div class="chart">
+      <svg id="tsvg" viewBox="0 0 1000 600" role="img" aria-labelledby="tttl"><title id="tttl">Sources n = (2^x s − 1)/3 by target s and height x</title></svg>
+      <div class="tip" id="ttip" hidden></div>
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--rise-soft);border:1px solid var(--rise)"></i>height 1: the source is smaller than the target (a rise)</span>
+      <span><i style="background:var(--fall-soft);border:1px solid var(--fall)"></i>height ≥ 2: the source is larger (a fall)</span>
+      <span><i style="background:var(--dead);border:1px dashed var(--ink-3)"></i>dead source: a multiple of 3, nothing lands on it</span>
+      <span><i style="border:2px solid var(--ink);border-radius:50%;width:12px;height:12px"></i>the one cell whose source is its own target: <code>1 → 4 → 2 → 1</code></span>
+    </div>
+    <div class="stat" id="tstat"></div>
+  </div>
+
+  <!-- ============ 2. cycles ============ -->
+  <h2>2 · A cycle in landing coordinates <span class="tag">proved</span></h2>
+  <p class="note">Follow landings backwards from a target <code>s₀</code>: choose a height <code>x₁</code> (of the parity <code>s₀</code> allows), the source is <code>s₁ = (2<sup>x₁</sup>s₀ − 1)/3</code>; choose <code>x₂</code>, get <code>s₂</code>; and so on.
+  A cycle is a chain that returns: <code>s<sub>L</sub> = s₀</code>. Writing each <code>sᵢ = (2<sup>Bᵢ</sup>s₀ − cᵢ)/3<sup>i</sup></code> with <code>Bᵢ = x₁ + … + xᵢ</code> and <code>c<sub>i+1</sub> = 2<sup>x<sub>i+1</sub></sup>cᵢ + 3<sup>i</sup></code>, the return condition is</p>
+  <div class="eq">s₀·(2<sup>B</sup> − 3<sup>L</sup>) = c<sub>L</sub></div>
+  <p class="note">— the cycle equation of the main page (T7), read from the landings. So a height word <code>(x₁, …, x<sub>L</sub>)</code> has exactly one rational starting point that closes, <code>s₀ = c<sub>L</sub>/(2<sup>B</sup> − 3<sup>L</sup>)</code>, and it is a cycle only if that number is a positive odd integer and every intermediate source is an integer coprime to 3. For the word <code>(2)</code>: <code>s₀ = 1/(4 − 3) = 1</code>, the loop <code>1 → 4 → 2 → 1</code>. Type any height word and see where it would have to start.</p>
+  <div class="controls">
+    <label class="ctl">height word <input type="text" id="hw" value="2" aria-label="height word, comma separated"></label>
+    <button class="btn" id="hwgo">Close the chain</button>
+  </div>
+  <div class="chips" id="hwchips">
+    <button class="chip" data-w="2">(2) — the trivial loop</button>
+    <button class="chip" data-w="1,1">(1, 1)</button>
+    <button class="chip" data-w="1,2">(1, 2)</button>
+    <button class="chip" data-w="1,1,1,2">(1, 1, 1, 2)</button>
+    <button class="chip" data-w="3,1,1">(3, 1, 1)</button>
+    <button class="chip" data-w="1,1,2,2,2">(1, 1, 2, 2, 2) — 2^8 > 3^5</button>
+    <button class="chip" data-w="2,1,2,1,2">(2, 1, 2, 1, 2)</button>
+  </div>
+  <div class="card"><div class="out" id="hwout"></div></div>
+
+  <!-- ============ 3. exclusion ============ -->
+  <h2>3 · What exclusion reaches <span class="tag">proved · cited</span></h2>
+  <div class="two">
+    <div class="proof"><b>Targets.</b> A multiple of 3 is never landed on: <code>3n + 1 ≡ 1 (mod 3)</code> and halving does not change that. So no member of a cycle is divisible by 3 (T0), and the empty rows above are exactly the excluded targets.</div>
+    <div class="proof"><b>Sources.</b> The source at height <code>x</code> is a multiple of 3 exactly when <code>2<sup>x</sup>s ≡ 1 (mod 9)</code>. Since 2 has order 6 mod 9, among the admissible heights (one parity) every third one is dead: for <code>s = 5</code> the heights 1, 7, 13, … give dead sources 3, 213, …, and 3, 5, 9, 11, … give live ones. So every target coprime to 3 has infinitely many live sources, and backward chains of every length that avoid multiples of 3 — reachability alone excludes the multiples of 3 and nothing else. The residues a cycle's maximum can have are then only pinned mod 9 (<code>M ≡ 2, 8</code>, which is T4); the sieve on the main page saturates there without a size bound (<code>sieve.surviving_residues_mod3_no_size</code>).</div>
+  </div>
+  <div class="card">
+    <div class="eyebrow" style="letter-spacing:.1em">The leaf rule, mod 9 by mod 6</div>
+    <p class="note" style="margin:6px 0 10px">Rows: the target's residue mod 9. Columns: the height mod 6. A cell is admissible when the parity matches; it is dead when <code>2<sup>x</sup>s ≡ 1 (mod 9)</code>.</p>
+    <div class="wheel" id="wheel"></div>
+  </div>
+  <p class="note"><b>What a size bound adds.</b> Inside a cycle every member is at most the maximum <code>M</code>, so the backward chain from <code>M</code> must stay below <code>M</code> — and that is a real constraint: with it the survivor set shrinks at every depth (the death-depth sieve, survivor counts 1, 2, 3, 6, 10, 22, 50, … out of <code>3<sup>k</sup></code>; main page). An odd <code>M &gt; 1</code> with an infinite bounded backward chain is exactly a second cycle, so this is where the exclusion stops being a filter and becomes the problem itself.</p>
+
+  <!-- ============ 4. heights as the word ============ -->
+  <h2>4 · The heights are the word <span class="tag">cited</span></h2>
+  <p class="note">The height word of a cycle is its halving word, and the residue bookkeeping of section 2 is a finite automaton: the target's residue mod <code>3<sup>k</sup></code> and the height determine the source's residue mod <code>3<sup>k−1</sup></code> going back, while going forward <code>n mod 3<sup>k</sup></code> and <code>x</code> determine <code>s mod 3<sup>k</sup></code>.
+  A cycle's word is a closed walk of that automaton at every depth, which is the statement that the word is live at one residue mod <code>3<sup>k</sup></code> — the residue map of the words chapter on the main page, where the sign law lives. Nothing on this page is new; it is the coordinate system in which those results are easiest to see.</p>
+  <p class="note">Companion pages: <a href="https://claude.ai/artifact/SnaWUkMG6NSKjCD1HYmX8m">cycle ledger</a>, <a href="https://claude.ai/artifact/TUdU2rAtKnP9q2HsFcKPa5">multiplicative ledger</a>, <a href="https://claude.ai/code/artifact/6b158da1-5d06-4e60-8807-bb0044b4691d">halving rays</a>, <a href="https://claude.ai/code/artifact/5fd7a07b-0c94-49af-9f21-1055d13f6ede">parity atlas</a>.</p>
+</div>
+
+<script>
+(function(){
+'use strict';
+var $ = function(id){ return document.getElementById(id); };
+var SVGNS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs, text){ var e = document.createElementNS(SVGNS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); if (text != null) e.textContent = text; return e; }
+function fmt(v){ return Number(v).toLocaleString('en-US'); }
+function showTip(tip, host, evt, html){ tip.innerHTML = html; tip.hidden = false; var r = host.getBoundingClientRect(); var x = evt.clientX - r.left + 14, y = evt.clientY - r.top + 14; if (x + 330 > r.width) x = evt.clientX - r.left - 340; if (y + 90 > r.height) y = evt.clientY - r.top - 80; tip.style.left = x + 'px'; tip.style.top = y + 'px'; }
+function admissible(s, x){ return (Math.pow(2, x % 2 === 0 ? 2 : 1) * s) % 3 === 1; } // 2^x s ≡ 1 (mod 3) depends on x's parity only
+function source(s, x){ return (Math.pow(2, x) * s - 1) / 3; }
+function chainText(n, s){ var out = [fmt(n)], t = 3*n + 1; out.push(fmt(t)); while (t !== s){ t /= 2; out.push(fmt(t)); } return out.join(' → '); }
+
+/* ---------------- 1. table ---------------- */
+var T = { S: 47, X: 8, ex: true };
+function renderTable(){
+  var svg = $('tsvg'); while (svg.firstChild) svg.removeChild(svg.firstChild);
+  var rows = []; for (var s = 1; s <= T.S; s += 2) if (T.ex || s % 3 !== 0) rows.push(s);
+  var W = 1000, ML = 64, MR = 12, MT = 34, rh = Math.max(14, Math.min(26, Math.floor(560 / rows.length))), cw = (W - ML - MR) / T.X, H = MT + rh * rows.length + 14;
+  svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+  svg.appendChild(el('title', {}, 'Sources by target s up to ' + T.S + ' and height x up to ' + T.X));
+  svg.appendChild(el('text', { x: ML - 8, y: 14, 'text-anchor': 'end', 'font-size': 11, fill: 'var(--ink-3)', 'font-family': 'var(--f-mono)' }, 'target s'));
+  for (var x = 1; x <= T.X; x++) svg.appendChild(el('text', { x: ML + (x - 0.5) * cw, y: 14, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--ink-3)', 'font-family': 'var(--f-mono)' }, 'x = ' + x));
+  svg.appendChild(el('text', { x: ML + T.X * cw, y: 26, 'text-anchor': 'end', 'font-size': 10.5, fill: 'var(--ink-3)', 'font-family': 'var(--f-mono)' }, 'cell = source n = (2^x·s − 1)/3'));
+  var host = svg.parentNode, tip = $('ttip'), fs = Math.min(11.5, rh - 5), dead = 0, live = 0;
+  rows.forEach(function(s, i){
+    var y = MT + i * rh, excluded = s % 3 === 0;
+    svg.appendChild(el('text', { x: ML - 8, y: y + rh / 2 + 4, 'text-anchor': 'end', 'font-size': fs, fill: excluded ? 'var(--ink-3)' : 'var(--ink)', 'font-family': 'var(--f-mono)', 'font-weight': excluded ? 400 : 500 }, s));
+    if (excluded){ svg.appendChild(el('rect', { x: ML, y: y + 1, width: T.X * cw, height: rh - 2, fill: 'var(--band)' })); svg.appendChild(el('text', { x: ML + 8, y: y + rh / 2 + 4, 'font-size': fs - 1, fill: 'var(--ink-3)', 'font-family': 'var(--f-mono)' }, 'excluded: no odd number lands on a multiple of 3')); return; }
+    for (var x = 1; x <= T.X; x++){ (function(x){
+      if (!admissible(s, x)) return;
+      var n = source(s, x), isDead = n % 3 === 0, rise = x === 1, self = n === s; if (isDead) dead++; else live++;
+      var g = el('g', {});
+      g.appendChild(el('rect', { x: ML + (x - 1) * cw + 1.5, y: y + 1.5, width: cw - 3, height: rh - 3, rx: 3, fill: isDead ? 'var(--dead)' : rise ? 'var(--rise-soft)' : 'var(--fall-soft)', stroke: isDead ? 'var(--ink-3)' : rise ? 'var(--rise)' : 'var(--fall)', 'stroke-width': 1, 'stroke-dasharray': isDead ? '3 3' : 'none' }));
+      g.appendChild(el('text', { x: ML + (x - 0.5) * cw, y: y + rh / 2 + fs * 0.36, 'text-anchor': 'middle', 'font-size': n >= 1e6 ? fs - 2 : fs, fill: isDead ? 'var(--ink-2)' : 'var(--ink)', 'font-family': 'var(--f-mono)', 'text-decoration': isDead ? 'line-through' : 'none' }, fmt(n)));
+      if (self) g.appendChild(el('circle', { cx: ML + (x - 0.5) * cw, cy: y + rh / 2, r: Math.min(cw, rh) / 2 - 1, fill: 'none', stroke: 'var(--ink)', 'stroke-width': 2 }));
+      g.addEventListener('mousemove', function(evt){ showTip(tip, host, evt, '<div class="v">target ' + fmt(s) + ', height ' + x + ': source ' + fmt(n) + '</div><div class="s">' + chainText(n, s) + '</div><div class="s">' + (isDead ? fmt(n) + ' is a multiple of 3 — nothing lands on it: a dead end going further back' : (rise ? 'a rise: the source is smaller than the target' : 'a fall: the source is larger than the target') + (self ? ' · source = target: the trivial loop' : '')) + '</div>'); });
+      g.addEventListener('mouseleave', function(){ tip.hidden = true; });
+      svg.appendChild(g);
+    })(x); }
+  });
+  $('tstat').innerHTML = '<b>shown</b> ' + (live + dead) + ' landings on ' + rows.filter(function(s){ return s % 3; }).length + ' targets · ' + dead + ' dead sources (' + (100 * dead / (live + dead)).toFixed(1) + ' %, tends to one third) · smallest target whose lowest source is dead: s = 5 at height 1, source 3';
+}
+$('sr').addEventListener('input', function(){ T.S = parseInt(this.value, 10); $('srv').textContent = T.S; renderTable(); });
+$('xr').addEventListener('input', function(){ T.X = parseInt(this.value, 10); $('xrv').textContent = T.X; renderTable(); });
+$('showex').addEventListener('change', function(){ T.ex = this.checked; renderTable(); });
+
+/* ---------------- 2. closing a height word ---------------- */
+function closeWord(){
+  var raw = $('hw').value, xs = raw.split(/[,\s]+/).filter(Boolean).map(function(t){ return parseInt(t, 10); }), out = $('hwout');
+  if (!xs.length || xs.some(function(v){ return !(v >= 1 && v <= 60); }) || xs.length > 60){ out.textContent = 'give 1 to 60 heights, each between 1 and 60'; return; }
+  var L = xs.length, B = xs.reduce(function(a, b){ return a + b; }, 0), alpha = 1n, c = 0n, three = 1n;
+  xs.forEach(function(x){ var p = 1n << BigInt(x); alpha *= p; c = c * p + three; three *= 3n; });
+  var den = alpha - three; // 2^B − 3^L
+  var lines = ['word (' + xs.join(', ') + '): L = ' + L + ' odd steps, B = ' + B + ' halvings, 2^B − 3^L = ' + den.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ','), 'c_L = ' + c.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')];
+  if (den <= 0n){ lines.push('2^B ≤ 3^L: the chain never returns for a positive start (T7 needs 2^B > 3^L; the rational start is negative or undefined)'); out.textContent = lines.join('\n'); return; }
+  var g = (function gcd(a, b){ return b === 0n ? a : gcd(b, a % b); })(c, den), num = c / g, dd = den / g;
+  lines.push('the only start that closes: s₀ = c_L/(2^B − 3^L) = ' + num + '/' + dd + (dd === 1n ? ' — an integer' : ' — not an integer, so no cycle has this height word'));
+  if (dd === 1n){ var s0 = num, s = s0, ok = true, chain = [s0.toString()]; for (var i = 0; i < L; i++){ var t = (1n << BigInt(xs[i])) * s - 1n; if (t % 3n !== 0n || (t / 3n) % 2n !== 1n || (t / 3n) % 3n === 0n){ ok = false; chain.push('✗ source not an odd integer coprime to 3'); break; } s = t / 3n; chain.push(s.toString()); }
+    lines.push((s0 % 2n === 1n ? 'odd' : 'even') + ' start; backward chain: ' + chain.join(' ← ') + (ok && s === s0 ? '   ✓ closes: a cycle' : '   ✗ does not close as a cycle of odd numbers')); }
+  out.textContent = lines.join('\n');
+}
+$('hwgo').addEventListener('click', closeWord);
+$('hw').addEventListener('keydown', function(e){ if (e.key === 'Enter') closeWord(); });
+$('hwchips').addEventListener('click', function(e){ var b = e.target.closest('button'); if (!b) return; $('hw').value = b.dataset.w; closeWord(); });
+
+/* ---------------- 3. the leaf wheel ---------------- */
+function renderWheel(){
+  var w = $('wheel'); w.innerHTML = '';
+  var hd = document.createElement('div'); hd.className = 'h'; hd.textContent = 's mod 9 \\ x mod 6'; w.appendChild(hd);
+  for (var xm = 0; xm < 6; xm++){ var h = document.createElement('div'); h.className = 'h'; h.textContent = xm; w.appendChild(h); }
+  [1, 2, 4, 5, 7, 8].forEach(function(sm){ var lab = document.createElement('div'); lab.className = 'h'; lab.textContent = sm; w.appendChild(lab);
+    for (var xm = 0; xm < 6; xm++){ var d = document.createElement('div'); var adm = (Math.pow(2, xm) * sm) % 3 === 1; if (!adm){ d.className = 'na'; d.textContent = '·'; } else { var dead = (Math.pow(2, xm) * sm) % 9 === 1; d.className = dead ? 'dead' : 'live'; d.textContent = dead ? 'dead' : 'live'; } w.appendChild(d); } });
+}
+renderTable(); closeWord(); renderWheel();
+})();
+</script>
