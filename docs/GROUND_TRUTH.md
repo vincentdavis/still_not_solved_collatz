@@ -389,8 +389,10 @@ formalized.
 
 ## 7. Formalization status (`lean/`)
 
-Lean 4.33.1, **no Mathlib**, `"packages": []`. 302 declarations audited:
-238 depend on `[propext, Quot.sound]`, 30 on `[propext]`, 34 on nothing. Zero
+Lean 4.33.1, **no Mathlib**, `"packages": []`. 341 declarations audited
+(current count; an earlier revision of this section said 302 with 34 on
+nothing): 238 depend on `[propext, Quot.sound]`, 30 on `[propext]`, 73 on
+nothing. Zero
 `sorry`, zero `axiom`, zero `native_decide`, zero `set_option`.
 
 **Proved:** T0, T1, T1_mod4, T1_q1, T2, T2_mod3, T2_bb, T2_unique, T2_q1,

@@ -1,0 +1,216 @@
+<meta charset="utf-8">
+<title>Still Not Solved</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --paper:#E8EAE5; --surface:#F2F3EF; --ink:#171A1C; --ink-2:#4A5254; --ink-3:#79817F;
+  --rule:#C9CDC4; --grid:#DEE1DA; --axis:#B4B9AD;
+  --ray:#2a78d6; --rise:#eb6834; --fall:#1baf7a; --fix:#79817F; --band:rgba(23,26,28,.06);
+  --proved:#1baf7a; --computed:#2a78d6; --open:#eb6834; --cited:#79817F;
+  --focus:#24478F;
+  --f-sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#14171A; --surface:#1C2126; --ink:#E8EAE5; --ink-2:#A9B1AF; --ink-3:#6E7876;
+    --rule:#2B3138; --grid:#242A30; --axis:#3A424A;
+    --ray:#3987e5; --rise:#d95926; --fall:#199e70; --fix:#8B9492; --band:rgba(232,234,229,.08);
+    --proved:#199e70; --computed:#3987e5; --open:#d95926; --cited:#8B9492;
+    --focus:#7FA8EE;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#14171A; --surface:#1C2126; --ink:#E8EAE5; --ink-2:#A9B1AF; --ink-3:#6E7876;
+  --rule:#2B3138; --grid:#242A30; --axis:#3A424A;
+  --ray:#3987e5; --rise:#d95926; --fall:#199e70; --fix:#8B9492; --band:rgba(232,234,229,.08);
+  --proved:#199e70; --computed:#3987e5; --open:#d95926; --cited:#8B9492;
+  --focus:#7FA8EE;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-sans);font-size:15px;line-height:1.5}
+.wrap{max-width:1080px;margin:0 auto;padding:32px 20px 64px;display:flex;flex-direction:column;gap:22px}
+.eyebrow{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+h1{margin:2px 0 0;font-size:clamp(1.9rem,4vw,2.6rem);font-weight:600;letter-spacing:-.015em;text-wrap:balance;line-height:1.1}
+h2{margin:22px 0 0;font-size:1.25rem;font-weight:600;letter-spacing:-.005em;text-wrap:balance}
+.hero{display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:24px;align-items:start}
+@media (max-width:760px){.hero{grid-template-columns:1fr}}
+.lede{max-width:66ch;color:var(--ink-2);margin:0;font-size:1.02rem}
+p{max-width:70ch}
+code{font-family:var(--f-mono);font-size:.92em;color:var(--ink)}
+a{color:var(--ink);text-decoration-color:var(--rule);text-underline-offset:3px}
+a:hover{text-decoration-color:var(--ink)}
+a:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:2px}
+.glyph{width:100%;max-width:220px;justify-self:end}
+.glyph svg{display:block;width:100%;height:auto}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.tile{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:12px 14px 10px}
+.tile .n{font-family:var(--f-mono);font-size:1.35rem;font-weight:500;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.tile .l{font-size:.82rem;color:var(--ink-2);margin-top:2px;line-height:1.35}
+.tile .s{font-size:.72rem;color:var(--ink-3);margin-top:6px;font-family:var(--f-mono)}
+.cards{display:grid;grid-template-columns:1fr;gap:12px}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:14px 16px 12px;display:grid;grid-template-columns:minmax(0,1fr);gap:6px}
+.card h3{margin:0;font-size:1.05rem;font-weight:600;display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px}
+.card h3 a{text-decoration:none;border-bottom:1px solid var(--rule)}
+.card h3 a:hover{border-bottom-color:var(--ink)}
+.card .kind{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+.card p{margin:0;font-size:.92rem;color:var(--ink-2);max-width:none}
+.card p b{color:var(--ink);font-weight:500}
+.tag{display:inline-block;font-family:var(--f-mono);font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;border-radius:999px;padding:1px 8px;color:#fff;font-weight:600;vertical-align:1px;margin-right:4px}
+.tag.p{background:var(--proved)} .tag.c{background:var(--computed)} .tag.o{background:var(--open)} .tag.t{background:var(--cited)}
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:820px){.three{grid-template-columns:1fr}}
+.col{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:12px 14px}
+.col h3{margin:0 0 6px;font-size:.95rem;font-weight:600}
+.col ul{margin:0;padding-left:18px;font-size:.9rem;color:var(--ink-2)}
+.col li{margin:4px 0}
+.col li b{color:var(--ink);font-weight:500}
+.docs{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:1fr;gap:6px;font-size:.9rem;color:var(--ink-2)}
+.docs li{padding:8px 0;border-bottom:1px solid var(--grid)}
+.docs code{font-weight:500}
+.note{max-width:70ch;color:var(--ink-2);font-size:.9rem;margin:0}
+.repo{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+.repo div{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:10px 12px;font-size:.88rem;color:var(--ink-2)}
+.repo b{color:var(--ink);font-weight:500;display:block;margin-bottom:2px}
+.foot{font-size:.82rem;color:var(--ink-3);font-family:var(--f-mono);border-top:1px solid var(--rule);padding-top:12px}
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <div>
+      <div class="eyebrow">A Collatz cycle project · the front door</div>
+      <h1>Still Not Solved</h1>
+      <p class="lede" style="margin-top:12px">The Collatz rule sends an odd number <code>n</code> to <code>3n+1</code>, then halves until it is odd again. If the conjecture is false, some loop of numbers repeats forever, and a loop has a largest odd member, <code>M</code>. This project asks which odd numbers can be that <code>M</code>. Two one-line facts do most of the work: <code>M</code> must fall on its next step (a powers-of-two rule) and must be reached from something smaller in the loop (a powers-of-three rule). Everything below is what that question turned into: what is proved, what is computed, and where it stops.</p>
+    </div>
+    <div class="glyph" aria-hidden="true">
+      <svg viewBox="0 0 220 150">
+        <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="var(--ink-2)"/></marker></defs>
+        <path d="M60 40 Q110 5 160 40" fill="none" stroke="var(--rise)" stroke-width="2.2" marker-end="url(#ah)"/>
+        <path d="M172 62 Q190 100 150 122" fill="none" stroke="var(--fall)" stroke-width="2.2" marker-end="url(#ah)"/>
+        <path d="M118 128 Q70 130 50 62" fill="none" stroke="var(--fall)" stroke-width="2.2" marker-end="url(#ah)"/>
+        <circle cx="46" cy="48" r="18" fill="var(--surface)" stroke="var(--ink)" stroke-width="1.6"/>
+        <circle cx="174" cy="48" r="18" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.6"/>
+        <circle cx="134" cy="126" r="18" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.6"/>
+        <text x="46" y="53" text-anchor="middle" font-family="var(--f-mono)" font-size="15" font-weight="500" fill="var(--ink)">1</text>
+        <text x="174" y="53" text-anchor="middle" font-family="var(--f-mono)" font-size="15" fill="var(--ink)">4</text>
+        <text x="134" y="131" text-anchor="middle" font-family="var(--f-mono)" font-size="15" fill="var(--ink)">2</text>
+        <text x="110" y="24" text-anchor="middle" font-family="var(--f-mono)" font-size="10" fill="var(--ink-3)">3n+1</text>
+        <text x="110" y="92" text-anchor="middle" font-family="var(--f-mono)" font-size="10" fill="var(--ink-3)">the only loop anyone knows</text>
+      </svg>
+    </div>
+  </header>
+
+  <!-- ===== state of the problem ===== -->
+  <h2>Where the problem stands <span class="tag t">cited</span></h2>
+  <div class="tiles">
+    <div class="tile"><div class="n">2<sup>71</sup></div><div class="l">every number below it reaches 1</div><div class="s">Barina 2025, in print</div></div>
+    <div class="tile"><div class="n">&gt; 1.375 × 10<sup>11</sup></div><div class="l">odd members in any second cycle</div><div class="s">Hercher 2023, Cor. 29, via Barina</div></div>
+    <div class="tile"><div class="n">≥ 92</div><div class="l">circuits in any second cycle; m ≤ 91 is impossible</div><div class="s">Hercher 2023; m = 92 still stands</div></div>
+    <div class="tile"><div class="n">2 127</div><div class="l">real cycles of the 3n+q family used as the test bed</div><div class="s">every q ≤ 999, maxima ≤ 20 000</div></div>
+    <div class="tile"><div class="n">400 · 341</div><div class="l">Python tests · Lean declarations, no Mathlib, no sorry</div><div class="s">this repository</div></div>
+  </div>
+
+  <!-- ===== pages ===== -->
+  <h2>The pages</h2>
+  <p class="note">Seven interactive pages, each self-contained. The first is the study itself; the six after it are the tour that followed, in the order it was walked. Each card says what the page shows, what it establishes with the labels the page itself uses, and what it does not settle.</p>
+  <div class="cards">
+    <div class="card">
+      <h3><a href="https://claude.ai/artifact/LUiAkgnva2tjYNP1Bwwrgo">The Largest Odd Number</a><span class="kind">main page · web/index.html</span></h3>
+      <p><b>Shows.</b> The two rules printed as two inks over the odd numbers 1 to 3 999, then the whole study in order: the wheel mod 36, the predecessor network, the forced backward walk, the 3n+q test bed where real cycles exist, the ceiling where the sieve stops, the equivalence theorem, a cycle-length bound with its hard input quarantined, a re-run of Hercher's record ladder, the smallest element, the structure below the maximum, the −1 witness, the q-blindness theorem, the word classification, and a bookkeeping table of proved versus measured.</p>
+      <p><b>Establishes.</b> <span class="tag p">proved</span> T0–T8 and Lemma U (the maximum lies in 2, 8 mod 9, in 5q mod 12, in 5, 17, 29 mod 48 for q = 1; at most one predecessor below any target), Lean-checked with no Mathlib and no sorry; the equivalence theorem, that an infinite backward chain staying at or below <code>M</code> exists exactly when a nontrivial cycle does; the q-transfer theorem that the magnitude-free sieve is blind to q; Theorem A, half of the sign law for the word counts. <span class="tag c">computed</span> the forward sieve saturates at density 0.2863 of the odd numbers; the backward survivor counts <code>a_k</code> = 1, 2, 3, 6, 10, 22, 50, 104, … never reach zero; about one odd number in 3 300 survives both at modulus near 2<sup>63</sup>; the Crandall squeeze gives L ≥ 72 057 431 991 above Barina's bound; Hercher's ladder, re-run exactly, reproduces his rungs at his own bound and at 2<sup>71</sup> improves four rows of his table but leaves m = 92 standing.</p>
+      <p><b>Does not.</b> It does not resolve the conjecture and shows why a congruence sieve of this kind cannot: every theorem with an <code>M &gt; 1</code> hypothesis is vacuous if the conjecture is true, the number −1 survives the backward sieve at every depth, and the sieve cannot tell q = 1 from q = 5, which has the real cycle {19, 31, 49}. The Diophantine input, where Baker's theorem enters the literature, is taken as a hypothesis, not proved.</p>
+    </div>
+    <div class="card">
+      <h3><a href="https://claude.ai/artifact/EDwtTTYSLd9PNsDUP48R5E">Halving Rays</a><span class="kind">web/rays.html</span></h3>
+      <p><b>Shows.</b> Every odd <code>y</code> owns a ray through <code>y, 2y, 4y, …</code>; halving slides down a ray, and each 3n+1 step is an arrow onto some other ray, orange when the number it lands on is larger (a rise), green when smaller (a fall). Rings mark the landing pads; a panel lists the pads at any height with their formula.</p>
+      <p><b>Establishes.</b> <span class="tag p">proved</span> a point <code>y·2<sup>x</sup></code> is a landing pad exactly when <code>y·2<sup>x</sup> ≡ 1 (mod 3)</code>; rays rooted at multiples of 3 receive nothing (T0); a step rises if and only if it lands at height 1, so the sources of rises are exactly <code>n ≡ 3 (mod 4)</code>; the only equality is 1 → 4 → 1.</p>
+      <p><b>Does not.</b> One step per number and nothing about where a number goes afterwards; no claim about cycles beyond naming the fixed point.</p>
+    </div>
+    <div class="card">
+      <h3><a href="https://claude.ai/artifact/NspdyQPppeVkKowGHNiF3C">Halving Surface</a><span class="kind">web/surface.html</span></h3>
+      <p><b>Shows.</b> The rays lifted into three dimensions: halvings across, value up, and the odd root as depth, so every 3n+1 jump visibly moves toward a larger or smaller odd root. A full trajectory (97 by default, any start to 10<sup>8</sup>) is drawn as a path on the sheet.</p>
+      <p><b>Establishes.</b> <span class="tag p">proved</span> the same lattice facts as the rays page. <span class="tag c">computed</span> the drawn trajectory, e.g. 97 reaches 1 in 43 odd steps (24 rises, 19 falls) and 75 halvings, peaking at 9 232.</p>
+      <p><b>Does not.</b> A trajectory is one example; the page proves nothing about all numbers, stops after 4 000 odd steps, and hides jumps that land above the chosen height range.</p>
+    </div>
+    <div class="card">
+      <h3><a href="https://claude.ai/artifact/CqRzRVAdrRVZd5SspEBFKK">Parity Atlas</a><span class="kind">web/atlas.html</span></h3>
+      <p><b>Shows.</b> One row per odd residue class mod <code>2<sup>k</sup></code>, one column per step: Terras's theorem as a table, with the coefficient stopping time marked (the first step at which the parity word alone forces the value below its start) and each row's drift.</p>
+      <p><b>Establishes.</b> <span class="tag t">cited</span> Terras 1976: the first <code>k</code> steps depend only on <code>n mod 2<sup>k</sup></code>, and every length-<code>k</code> word starting with an odd step belongs to exactly one class. <span class="tag c">computed</span> 51 of 64 classes are settled by step 7, 448 of 512 by step 10.</p>
+      <p><b>Does not.</b> Whether the true stopping time always equals the coefficient stopping time is Terras's conjecture, open since 1976; the density-tends-to-1 theorem is cited, not checked here.</p>
+    </div>
+    <div class="card">
+      <h3><a href="https://claude.ai/artifact/SnaWUkMG6NSKjCD1HYmX8m">Cycle Ledger</a><span class="kind">web/ledger.html</span></h3>
+      <p><b>Shows.</b> A trajectory as a balance sheet: each odd step credits <code>2n+1</code>, each halving debits half the number, and a cycle is a trajectory whose books close. The pairs <code>(2n+1, D(n))</code> and a finder for balanced sets; what the largest and smallest members of a second cycle would look like mod 12; a SAT formulation of "a cycle with L odd members below <code>2<sup>W</sup></code>" solved by MiniSat inside the page.</p>
+      <p><b>Establishes.</b> <span class="tag p">proved</span> the identity <code>E = 4·O + 2L</code> between a cycle's even and odd members; the maximum of a second cycle is 5 mod 12 and the minimum 7 or 11 mod 12 (T0–T3 and the minimum mirror, Lean-checked). <span class="tag c">computed</span> 83 balanced pairs below 400 and no two-cycles, so balance is not closure; every affordable SAT box is unsat above L = 1; a 2-adic gate costs one clause, a 3-adic gate at depth <code>d</code> about <code>5·3<sup>d+1</sup>·W</code>.</p>
+      <p><b>Does not.</b> Nothing new: the balance is a consequence of closing, the gates are the repository's theorems restated, and the SAT box settles everything inside a box and nothing outside it, where the box that matters is about 10<sup>14</sup> clauses.</p>
+    </div>
+    <div class="card">
+      <h3><a href="https://claude.ai/artifact/TUdU2rAtKnP9q2HsFcKPa5">Multiplicative Ledger</a><span class="kind">web/multiplicative.html</span></h3>
+      <p><b>Shows.</b> The same cancellation as a product, <code>2<sup>B</sup> = ∏(3 + 1/nᵢ)</code>, so <code>B</code> must sit within a hair of <code>L·log₂3</code>. The best upper approximations of <code>log₂3</code> plotted against the allowed gap for members above <code>2<sup>k</sup></code>, with a slider for <code>k</code>; Hercher's floor on the same staircase; the circuit ladder with the Baker ceiling and the cleared zones m ≤ 68, 75, 91.</p>
+      <p><b>Establishes.</b> <span class="tag p">proved</span> the product identity, checked to 40 digits on the census. <span class="tag c">computed</span> in 320-digit arithmetic: members above <code>2<sup>40</sup></code> force B ≥ 17 087 915, Eliahou's 1993 number recovered; above <code>2<sup>71</sup></code>, L ≥ 72 057 431 991. <span class="tag t">cited</span> Hercher's floor 137 528 045 312 is the very next point on the staircase.</p>
+      <p><b>Does not.</b> The squeeze turns verified size into forbidden length and can never forbid all lengths, because <code>log₂3</code> is irrational; at m = 92 the ladder's floor stops a factor 1.7 short of the ceiling.</p>
+    </div>
+    <div class="card">
+      <h3><a href="https://claude.ai/artifact/3SGVtUyiuHJmw1Ms5HxrpP">Landing Form</a><span class="kind">web/landing.html</span></h3>
+      <p><b>Shows.</b> Every odd step as a landing on a target <code>s</code> from a height <code>x</code>: a table with targets as rows and heights as columns, sources in the cells, dead sources struck through and the rows of multiples of 3 empty; a chain closer that reads the cycle equation off any list of heights; the leaf rule mod 9.</p>
+      <p><b>Establishes.</b> <span class="tag p">proved</span> the landing map is a bijection (Lemma U as a table); reachability without a size bound excludes exactly the odd multiples of 3 and nothing else, because every target has infinitely many live sources; a source is dead iff <code>2<sup>x</sup>s ≡ 1 (mod 9)</code>, one in three admissible heights; after <code>k</code> landings the residue mod <code>3<sup>k</sup></code> depends only on the last <code>k</code> heights. <span class="tag t">cited</span> the table is Wirsching's back-tracing and the pruned tree of Applegate–Lagarias; the leaf rule's lowest cases are Monks et al. 2013.</p>
+      <p><b>Does not.</b> Nothing here is new, and every claim was refereed twice; the forward sieve excludes a further fixed share and stops, and once a size bound is imposed the exclusion becomes the cycle problem itself.</p>
+    </div>
+  </div>
+
+  <!-- ===== ledger of the project ===== -->
+  <h2>Proved, measured, open</h2>
+  <div class="three">
+    <div class="col"><h3><span class="tag p">proved</span> and Lean-checked unless noted</h3><ul>
+      <li><b>T0–T8, U, FP.</b> Where a cycle's maximum can sit mod 4, 3, 9, 12, 16, 36, 48; the unique smaller predecessor; fixed points are at most q (Lean for q = 1).</li>
+      <li><b>Equivalence theorem.</b> Infinite bounded backward chain ⟺ nontrivial cycle; the finite-to-infinite step (König) is on paper.</li>
+      <li><b>q-transfer.</b> The magnitude-free sieve is identical for every q (kernel-checked to depth 4).</li>
+      <li><b>Both ends.</b> The minimum mirrors the maximum; at least 41.5 % single halvings in a nontrivial 3n+1 cycle.</li>
+      <li><b>Theorem A.</b> The jump-1 half of the sign law for the word counts N<sub>k</sub> (new, refereed).</li>
+      <li><b>On paper.</b> D2, D3 (mod 108, 324); the tail-rate bracket [0.7364, 0.9465]; the ledger identities; the length bound with Baker's input as an explicit hypothesis.</li>
+    </ul></div>
+    <div class="col"><h3><span class="tag c">computed</span> exact, reproducible by pytest</h3><ul>
+      <li><b>The census.</b> 2 127 real 3n+q cycles; every theorem scores 100 % under its own hypothesis; two of the project's own earlier claims were caught by it.</li>
+      <li><b>The sieves.</b> Forward: density 0.2863153965, forever. Backward: a<sub>k</sub> to k = 14, exact tails a<sub>k</sub>/3<sup>k</sup>.</li>
+      <li><b>The ladders.</b> Crandall squeeze L ≥ 72 057 431 991; Hercher's ladder re-run in exact rationals.</li>
+      <li><b>The words.</b> Sign law verified to k = 2216; Conjecture B reduced to μ &lt; 1.30278 at the (2,2)-levels.</li>
+      <li><b>The boxes.</b> Every SAT box unsat above L = 1; balance without closure counted; the squeeze's rows at 2<sup>40</sup> … 2<sup>100</sup>.</li>
+    </ul></div>
+    <div class="col"><h3><span class="tag o">open</span> stated as such</h3><ul>
+      <li><b>The conjecture.</b> No second cycle is known; none can have a member below 2<sup>71</sup>.</li>
+      <li><b>Conjecture B.</b> The jump-2 half of the sign law, with a named proof program (a certified truncated cap-vector invariant).</li>
+      <li><b>The tail rate.</b> lim a<sub>k</sub><sup>1/k</sup> is bracketed, not known.</li>
+      <li><b>m = 92.</b> Not eliminated at the 2025 verification bound; would need about 2<sup>74</sup>.</li>
+      <li><b>Terras's conjecture.</b> Whether the true stopping time equals the coefficient stopping time.</li>
+    </ul></div>
+  </div>
+  <p class="note"><b>Why the sieve cannot finish, in one paragraph.</b> The equivalence theorem says that "the sieve kills every <code>M</code> at some finite depth" is the conjecture itself, restated. The number −1 sits in a residue class that survives the backward sieve at every depth, and the sieve's statistics are the same for q = 1 and q = 5, where a real cycle exists. So every reformulation walked through on these pages, balance, pairs, SAT, the multiplicative squeeze, circuits, landings, returned known results reorganized. That map is the honest product of the tour: the elementary structure is fully picked over, and any genuinely new statement has to come from the 3-adic counts under a size bound, which is where Conjecture B lives.</p>
+
+  <!-- ===== documents ===== -->
+  <h2>The documents</h2>
+  <ul class="docs">
+    <li><code>docs/GROUND_TRUTH.md</code> — the audited specification: notation, every claim with its exact hypotheses and proof, six refuted claims kept as warnings, the sieve tables, the Lean status, the prior-art table, and pointers to every later chapter.</li>
+    <li><code>docs/CENSUS.md</code> — whether "cycles should not exist" is calibrated: 1 080 primitive cycles across 333 systems 3n+q, over-dispersed (variance/mean 4.6 where Poisson gives 1); a primitive cycle forces q to divide <code>2<sup>B</sup> − 3<sup>L</sup></code>, and <code>2<sup>B</sup> − 3<sup>L</sup> = 1</code> has only the trivial solution, so the mechanism that manufactures cycles for other q is absent at q = 1.</li>
+    <li><code>docs/CERTIFY.md</code> — three complete tests that a number is not a cycle maximum, compared over 200 000 numbers; the backward tree is 27.6 times cheaper, and a dead residue class certifies infinitely many <code>M</code> at once.</li>
+    <li><code>docs/DEATH_DEPTH.md</code> — <code>d(M)</code>, the longest backward chain from <code>M</code> that stays at or below <code>M</code>; above a threshold it depends only on <code>M mod 3<sup>k</sup></code>, so <code>P(d ≥ k) = a<sub>k</sub>/3<sup>k</sup></code> exactly; it measures a distribution and proves nothing.</li>
+    <li><code>docs/EXPLORE.md</code> — three explorations, two of which refuted their own motivating guess; the rigorous tail-rate bracket [0.7364, 0.9465].</li>
+    <li><code>docs/FILTER.md</code> — the five-test gate a proposed proof strategy must pass before work starts, built on the q-transfer theorem: an argument whose hypotheses survive replacing q = 1 by q = 5 is dead.</li>
+    <li><code>docs/STRUCTURE.md</code> — with the largest element fixed: the length is at most the size of the backward-reachable set, the climb from the minimum takes at least 1.71·log₂(O/m) steps while the fall can take one, and at least 41.5 % of the steps of a nontrivial 3n+1 cycle are single halvings (the proof needs a minimum above 12 825, which the verified search supplies).</li>
+    <li><code>docs/WHY_NOT.md</code> — the explicit witness that a congruence sieve can never finish: the periodic point −1, whose base-3 digits are all 2s, survives at every depth.</li>
+    <li><code>docs/WORDS.md</code> — the halving words classified by their residue map mod <code>3<sup>k</sup></code>: realization, bump, saturation and forced-doubling lemmas, Theorem A (the jump-1 half of the sign law, a local log-concavity of the word counts), the no-rate-gain theorems, and Conjecture B with its exact dynamics and reduction.</li>
+    <li><code>docs/LEDGER.md</code> — the balance identity, the pairs, the gates, the SAT encoding with the 3-adic gates as circuits, the multiplicative squeeze and the circuit ladder, each with its verdict.</li>
+    <li><code>docs/LANDING.md</code> — the landing form, every claim refereed twice: the bijection, the chain, the exact exclusion result, the residue automaton, the literature identity.</li>
+  </ul>
+
+  <!-- ===== repository ===== -->
+  <h2>The repository</h2>
+  <div class="repo">
+    <div><b>Source</b><a href="https://github.com/vincentdavis/still_not_solved_collatz">github.com/vincentdavis/still_not_solved_collatz</a>, public. Three tracks share one specification, <code>docs/GROUND_TRUTH.md</code>.</div>
+    <div><b>Python</b>the package <code>collatz_maxodd</code>, standard library only, run with <code>uv</code>; 400 tests check every claim against the census, real integers, and exact big-integer brute force (25 of them need <code>python-sat</code>).</div>
+    <div><b>Lean 4</b>341 declarations, no Mathlib, audited by <code>#print axioms</code> at build time: each certifies <code>[propext, Quot.sound]</code>, <code>[propext]</code> or nothing; a five-step gate rejects <code>sorry</code>, <code>axiom</code>, <code>native_decide</code> and unsafe code, and was shown to fail on four injected defects.</div>
+    <div><b>Web</b>the main page is generated from a template and a 140 KB data file; the six standalone pages are single files with everything inline, published as private artifacts and linked above.</div>
+  </div>
+  <p class="foot">Labels throughout: proved (complete proof; Lean-checked where the card says so), computed (exact, this repository), cited (from the literature, with the source), open. Nothing is presented as new except Theorem A, which was refereed adversarially and searched for in the literature. Front door written 2026-09-23 from summaries of every page and document, each checked against its source by an independent referee.</p>
+</div>
