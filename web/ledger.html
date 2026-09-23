@@ -170,6 +170,24 @@ li{margin:4px 0}
     </div>
     <div class="stat" id="fstat"></div>
   </div>
+  <div class="proof"><b>As (ascent, descent) pairs.</b> Written as <code>(2n+1, D(n))</code> — <code>(11, 15)</code> for 5, <code>(19, 21)</code> for 9 — the pairs carry the same information as the points above, and they factor.
+  With <code>s = S(n)</code> the next odd and <code>x</code> the number of halvings, <b><code>D(n) = s·(2<sup>x</sup> − 1)</code></b>, <code>2n+1 = (2<sup>x+1</sup>s + 1)/3</code>, <code>n = (2<sup>x</sup>s − 1)/3</code>.
+  So a pair is a <em>landing</em>: choose the target odd <code>s</code> and the height <code>x</code>, with <code>s ≡ (−1)<sup>x</sup> (mod 3)</code> so that the source is an integer, and the pair is determined.
+  Every first coordinate <code>≡ 3 (mod 4)</code> occurs exactly once; every second coordinate is an odd number times a Mersenne number <code>2<sup>x</sup> − 1</code>; the net <code>(2n+1) − D(n) = s − n</code> is <code>+(s+1)/3</code> on the height-1 line and negative above it.
+  A cycle is a set of pairs whose nets sum to zero <em>and</em> whose targets are each other's sources. The first condition is cheap; the second is the whole problem. The finder counts how many sets pass the first without the second.</div>
+  <div class="card">
+    <div class="controls" style="margin-bottom:6px">
+      <span class="eyebrow" style="letter-spacing:.1em">Balance finder</span>
+      <label class="ctl">odd n below <input type="number" id="bfn" min="10" max="400" value="120" style="width:5.5em" aria-label="bound"></label>
+      <label class="ctl">set size <select id="bfk" aria-label="set size"><option value="2">2</option><option value="3" selected>3</option></select></label>
+      <button class="btn" id="bfrun">Find balanced sets</button>
+    </div>
+    <div class="out" id="bfout"></div>
+  </div>
+  <details>
+    <summary>The pairs, one per odd n</summary>
+    <div class="tbl"><table id="pairtbl"></table></div>
+  </details>
 
   <!-- ============ 3. gates ============ -->
   <h2>3 · What another cycle would have to look like <span class="tag">proved · lean-checked at both ends</span></h2>
@@ -378,6 +396,30 @@ function renderFan(){
   $('fstat').innerHTML = '<b>odd n ≤ ' + N + '</b> ' + rises + ' rises (height 1) · ' + falls + ' falls (height ≥ 2) · the fixed point 1 · a cycle would be a set of these points whose offsets n − S(n) sum to 0; only {1} does, with offset 0';
 }
 $('fn').addEventListener('input', function(){ F.N = parseInt(this.value, 10); $('fnv').textContent = F.N; renderFan(); });
+function pairOf(n){ var s = step(n); return { n: n, A: 2*n + 1, x: s.x, s: s.next, D: 3*n + 1 - s.next, net: s.next - n }; }
+function renderPairTable(){
+  var tb = $('pairtbl'); tb.innerHTML = '';
+  var hr = document.createElement('tr'); ['n', '2n+1', 'halvings x', 'S(n) = s', 'D(n) = s(2^x − 1)', 'net s − n', 'source (2^x s − 1)/3'].forEach(function(h){ var th = document.createElement('th'); th.textContent = h; hr.appendChild(th); }); tb.appendChild(hr);
+  for (var n = 1; n < 200; n += 2){ var p = pairOf(n), tr = document.createElement('tr'); [p.n, p.A, p.x, p.s, p.s + '·' + (Math.pow(2, p.x) - 1) + ' = ' + p.D, (p.net > 0 ? '+' : '') + p.net, (Math.pow(2, p.x) * p.s - 1) / 3].forEach(function(v){ var td = document.createElement('td'); td.textContent = v; tr.appendChild(td); }); tb.appendChild(tr); }
+}
+function findBalanced(){
+  var N = parseInt($('bfn').value, 10), k = parseInt($('bfk').value, 10), out = $('bfout');
+  if (!(N >= 10 && N <= 400)){ out.textContent = 'bound must be between 10 and 400'; return; }
+  var odds = [], net = {}, i, j, m; for (var n = 1; n < N; n += 2){ odds.push(n); net[n] = step(n).next - n; }
+  var byNet = {}; odds.forEach(function(n){ (byNet[net[n]] = byNet[net[n]] || []).push(n); });
+  var sets = [], chained = 0;
+  function isChain(set){ // does S permute the set cyclically (a single cycle through all of them)?
+    var cur = set[0], seen = 0; for (var t = 0; t < set.length; t++){ if (set.indexOf(cur) < 0) return false; cur = step(cur).next; seen++; } if (cur !== set[0]) return false; var visited = {}; cur = set[0]; for (t = 0; t < set.length; t++){ if (visited[cur]) return false; visited[cur] = 1; cur = step(cur).next; } return true; }
+  if (k === 2){ for (i = 0; i < odds.length; i++) for (j = i + 1; j < odds.length; j++) if (net[odds[i]] + net[odds[j]] === 0) sets.push([odds[i], odds[j]]); }
+  else { for (i = 0; i < odds.length; i++) for (j = i + 1; j < odds.length; j++){ var need = -(net[odds[i]] + net[odds[j]]), cands = byNet[need] || []; for (m = 0; m < cands.length; m++) if (cands[m] > odds[j]) sets.push([odds[i], odds[j], cands[m]]); } }
+  sets.forEach(function(st){ if (isChain(st)) chained++; });
+  var lines = ['odd n < ' + N + ', sets of ' + k + ' pairs with Σ(2n+1) = Σ D(n), i.e. nets summing to zero: ' + fmt(sets.length), 'of these, sets whose targets are each other\'s sources (actual ' + k + '-cycles): ' + chained + (chained === 0 ? ' — balance closes the ledger without closing the loop' : '')];
+  sets.slice(0, 6).forEach(function(st){ lines.push('  {' + st.join(', ') + '}: ' + st.map(function(n){ return n + ' → ' + step(n).next + ' (' + (net[n] > 0 ? '+' : '') + net[n] + ')'; }).join(', ')); });
+  if (sets.length > 6) lines.push('  … ' + (sets.length - 6) + ' more');
+  out.textContent = lines.join('\n');
+}
+$('bfrun').addEventListener('click', findBalanced);
+renderPairTable(); findBalanced();
 
 /* ---------------- 3. gates ---------------- */
 function renderGates(){

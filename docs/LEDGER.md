@@ -59,6 +59,19 @@ The signed vertical distance to it is `D(n) − (2n+q) = n − S_q(n)`, so:
 * a cycle is a multiset of points whose signed distances sum to zero — the
   ledger identity again, drawn.
 
+**The pairs factor (PROVED, one line).**  Written as `(2n+1, D(n))` — the
+user's `(11, 15)` for 5, `(19, 21)` for 9 — with `s = S_q(n)` and `x = v₂(3n+q)`:
+`3n + q = 2^x s`, so **`D(n) = s·(2^x − 1)`**, `n = (2^x s − q)/3`,
+`2n + q = (2^{x+1} s + q)/3`, and the net `(2n+q) − D(n) = s − n`.  A pair is
+a *landing*: the target odd `s` and the height `x` (with `2^x s ≡ q (mod 3)`,
+Lemma U) determine it.  Every first coordinate `≡ q + 2 (mod 4)` occurs once;
+every second coordinate is odd × Mersenne.  **Balance is not closure
+(COMPUTED):** among odd `n < 400` there are 83 two-element sets with nets
+summing to zero and 0 two-cycles; among odd `n < 120`, 408 three-element
+zero-sum sets and 0 three-cycles (`test_ledger.py`; the page's balance
+finder).  Zero net sum is the ledger identity; the loop needs the targets to
+be each other's sources, which the sum forgets.
+
 ## 3. The gates at both ends (PROVED · CITED from this repo)
 
 *Maximum* — `docs/GROUND_TRUTH.md` T1, T2, T3 (Lean `Cycle.T1`–`T3`):
