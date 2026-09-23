@@ -1,0 +1,300 @@
+<meta charset="utf-8">
+<title>Multiplicative Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --paper:#E8EAE5; --surface:#F2F3EF; --ink:#171A1C; --ink-2:#4A5254; --ink-3:#79817F;
+  --rule:#C9CDC4; --grid:#DEE1DA; --axis:#B4B9AD;
+  --ray:#2a78d6; --rise:#eb6834; --fall:#1baf7a; --fix:#79817F; --band:rgba(23,26,28,.06); --allow:rgba(27,175,122,.12);
+  --focus:#24478F; --ok:#1baf7a; --warn:#eb6834;
+  --f-sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#14171A; --surface:#1C2126; --ink:#E8EAE5; --ink-2:#A9B1AF; --ink-3:#6E7876;
+    --rule:#2B3138; --grid:#242A30; --axis:#3A424A;
+    --ray:#3987e5; --rise:#d95926; --fall:#199e70; --fix:#8B9492; --band:rgba(232,234,229,.08); --allow:rgba(25,158,112,.16);
+    --focus:#7FA8EE; --ok:#199e70; --warn:#d95926;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#14171A; --surface:#1C2126; --ink:#E8EAE5; --ink-2:#A9B1AF; --ink-3:#6E7876;
+  --rule:#2B3138; --grid:#242A30; --axis:#3A424A;
+  --ray:#3987e5; --rise:#d95926; --fall:#199e70; --fix:#8B9492; --band:rgba(232,234,229,.08); --allow:rgba(25,158,112,.16);
+  --focus:#7FA8EE; --ok:#199e70; --warn:#d95926;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-sans);font-size:15px;line-height:1.5}
+.wrap{max-width:1080px;margin:0 auto;padding:28px 20px 56px;display:flex;flex-direction:column;gap:18px}
+.eyebrow{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+h1{margin:2px 0 0;font-size:clamp(1.6rem,3.4vw,2.2rem);font-weight:600;letter-spacing:-.01em;text-wrap:balance;line-height:1.15}
+h2{margin:26px 0 0;font-size:1.25rem;font-weight:600;letter-spacing:-.005em;text-wrap:balance}
+h2 .tag{font-family:var(--f-mono);font-size:.7rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-left:10px;vertical-align:2px}
+.lede{max-width:66ch;color:var(--ink-2);margin:0}
+p{max-width:70ch}
+code,.mono{font-family:var(--f-mono);font-size:.92em}
+p code,li code,td code,.note code,.proof code{color:var(--ink)}
+.eq{font-family:var(--f-mono);font-size:1.02rem;padding:10px 14px;border:1px solid var(--rule);border-radius:6px;background:var(--surface);display:inline-block;margin:4px 0}
+.controls{display:flex;flex-wrap:wrap;align-items:center;gap:10px 20px;font-size:.88rem;color:var(--ink-2)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+label.ctl{display:inline-flex;align-items:center;gap:8px}
+input[type=number]{font:inherit;font-family:var(--f-mono);width:7.5em;padding:4px 6px;border:1px solid var(--rule);border-radius:4px;background:var(--surface);color:var(--ink)}
+input[type=range]{width:220px;accent-color:var(--ray)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:inherit;font-size:.8rem;font-family:var(--f-mono);border:1px solid var(--rule);background:var(--surface);color:var(--ink-2);border-radius:999px;padding:3px 10px;cursor:pointer}
+.chip:hover{border-color:var(--ink-3);color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.mono{font-variant-numeric:tabular-nums}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:12px 10px 8px;position:relative}
+.chart{position:relative;width:100%}
+svg{display:block;width:100%;height:auto}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--paper);padding:8px 10px;border-radius:5px;font-size:.8rem;line-height:1.35;max-width:300px;box-shadow:0 8px 24px -14px rgba(0,0,0,.6);z-index:2}
+.tip .v{font-family:var(--f-mono);font-size:.9rem;font-weight:500}
+.tip .s{color:var(--rule);opacity:.9}
+.legend{display:flex;flex-wrap:wrap;gap:8px 22px;font-size:.84rem;color:var(--ink-2);padding:2px 4px}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.legend i{display:inline-block;width:14px;height:14px;border-radius:3px}
+.note{max-width:70ch;color:var(--ink-2);font-size:.9rem;margin:0}
+.stat{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:.86rem;color:var(--ink);padding:6px 4px 2px;line-height:1.6}
+.stat b{font-weight:500;color:var(--ink-2)}
+.big{font-size:1.15rem;font-weight:500}
+details{border-top:1px solid var(--rule);padding-top:10px}
+summary{cursor:pointer;color:var(--ink-2);font-weight:500;font-size:.9rem}
+.tbl{overflow-x:auto;margin-top:10px}
+table{border-collapse:collapse;font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:.82rem;white-space:nowrap}
+th,td{padding:4px 10px;text-align:right;border-bottom:1px solid var(--grid);color:var(--ink)}
+th{color:var(--ink-3);font-weight:500}
+td.l,th.l{text-align:left}
+tr.hit td{background:var(--band)}
+.proof{border-left:3px solid var(--rule);padding:2px 0 2px 14px;margin:8px 0;color:var(--ink-2);font-size:.92rem;max-width:70ch}
+.proof b{color:var(--ink)}
+ul{margin:6px 0 0;padding-left:20px;max-width:72ch}
+li{margin:4px 0}
+.status{font-size:.82rem;color:var(--ink-3);font-family:var(--f-mono)}
+.hyp{color:var(--warn);font-weight:500}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">3n+1 cycles in logarithms</div>
+    <h1>Multiplicative Ledger</h1>
+  </header>
+  <p class="lede">The additive ledger says a cycle's ascents and descents cancel. Written multiplicatively the same cancellation becomes an exact equation,
+  <code>2<sup>B</sup> = ∏(3 + 1/nᵢ)</code>, and in logarithms it says the halving count <code>B</code> must be an integer within a hair of <code>L·log₂3</code>.
+  How thin the hair is depends on how large the members are; how far the integers can be from <code>L·log₂3</code> is decided by the continued fraction of <code>log₂3</code>.
+  Putting the two together is the classical lower bound on the length of a second cycle. This page draws it.</p>
+
+  <!-- ============ 1. identity ============ -->
+  <h2>1 · The product around a loop <span class="tag">identity · proved</span></h2>
+  <p class="note">One odd step with <code>x</code> halvings is <code>2<sup>x</sup>·n′ = 3n + 1 = n·(3 + 1/n)</code>. Multiply these around a cycle and every member appears once on each side, so they cancel:</p>
+  <div class="eq">2<sup>B</sup> = ∏ᵢ (3 + 1/nᵢ) &nbsp;&nbsp;⟺&nbsp;&nbsp; B = L·log₂3 + Σᵢ log₂(1 + 1/(3nᵢ))</div>
+  <p class="note">For <code>1 → 4 → 2 → 1</code>: <code>2² = 3 + 1/1</code>. Along an open trajectory the same product runs as <code>2<sup>B<sub>k</sub></sup>·n<sub>k</sub>/n₀ = ∏<sub>i&lt;k</sub>(3 + 1/nᵢ)</code>, and in logarithms
+  <code>B<sub>k</sub> − k·log₂3 = log₂(n₀/n<sub>k</sub>) + c<sub>k</sub></code> with <code>c<sub>k</sub> = Σ log₂(1 + 1/(3nᵢ)) ≥ 0</code>: the halvings so far, minus the budget <code>log₂3</code> per odd step,
+  equal the doublings lost since the start plus a small positive correction. A cycle returns to <code>n₀</code>, so it ends exactly at <code>B − L·log₂3 = c<sub>L</sub></code>.</p>
+  <div class="controls">
+    <label class="ctl">start n <input type="number" id="tn" min="1" step="2" value="13" aria-label="odd start"></label>
+    <span class="status" id="terr"></span>
+  </div>
+  <div class="card">
+    <div class="chart">
+      <svg id="tsvg" viewBox="0 0 1000 340" role="img" aria-labelledby="tttl"><title id="tttl">Halvings minus the log2 3 budget along the trajectory</title></svg>
+      <div class="tip" id="ttip" hidden></div>
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--rise)"></i><code>B<sub>k</sub> − k·log₂3</code>, halvings above budget</span>
+      <span><i style="background:var(--ray)"></i><code>log₂(n₀/n<sub>k</sub>)</code>, doublings lost</span>
+      <span><i style="background:var(--fall)"></i>the gap between them is <code>c<sub>k</sub></code>, always positive</span>
+    </div>
+    <div class="stat" id="tstat"></div>
+  </div>
+  <details>
+    <summary>The factors, step by step</summary>
+    <div class="tbl"><table id="ttbl"></table></div>
+  </details>
+
+  <!-- ============ 2. the squeeze ============ -->
+  <h2>2 · How thin the hair is <span class="tag">proved · cited</span></h2>
+  <div class="proof"><b>Squeeze.</b> Every correction term is positive, so <code>B &gt; L·log₂3</code> — that is <code>2<sup>B</sup> &gt; 3<sup>L</sup></code>, T7 on the main page.
+  And each term is at most the one for the smallest member <code>m</code>: <code>0 &lt; B − L·log₂3 ≤ L·log₂(1 + 1/(3m))</code>. Dividing by <code>L</code>:
+  <div class="eq" style="margin:8px 0 4px">0 &lt; B/L − log₂3 ≤ δ(m) = log₂(1 + 1/(3m)) &lt; 1/(3m·ln 2)</div>
+  Barina's verification (<em>J. Supercomputing</em> 81, 2025) puts every member of a second cycle above <code>2<sup>71</sup></code>, so <code>δ &lt; 2.04 × 10<sup>−22</sup></code>:
+  the ratio <code>B/L</code> would have to sit above <code>log₂3</code> by less than two parts in <code>10<sup>22</sup></code>.</div>
+  <div class="proof"><b>Where such ratios live.</b> If some length <code>L</code> admits a <code>B</code> with <code>B/L</code> that close, then the fraction above <code>log₂3</code> with denominator <code>≤ L</code> that is <em>closest</em> to it is at least as close,
+  and that fraction is by definition a best upper approximation of <code>log₂3</code>. These are the convergents and intermediate fractions of its continued fraction
+  <code>[1; 1, 1, 2, 2, 3, 1, 5, 2, 23, 2, 2, 1, 1, 55, …]</code>: <code>2/1, 5/3, 8/5, 27/17, 46/29, 65/41, 149/94, …</code>. So the smallest possible <code>L</code> is the first denominator in that list whose fraction is within <code>δ</code> of <code>log₂3</code>.
+  Nothing else can be a cycle length below it.</div>
+
+  <!-- ============ 3. the chart ============ -->
+  <h2>3 · Best upper approximations of log₂3 against the allowed gap <span class="tag">computed · exact</span></h2>
+  <p class="note">Each point is a best upper approximation <code>B/L</code>: its denominator is a candidate cycle length, its height is how far it sits above <code>log₂3</code>.
+  The horizontal line is the allowed gap <code>δ(m)</code> for members above <code>m = 2<sup>k</sup></code>. Points above the line are lengths a cycle cannot have; the first point under it is the smallest length left.</p>
+  <div class="controls" role="group" aria-label="Bound controls">
+    <label class="ctl">members above 2^k, k = <input type="range" id="kr" min="4" max="120" value="71" aria-label="k"><span class="mono" id="kv">71</span></label>
+    <span class="status" id="kstat"></span>
+  </div>
+  <div class="chips" id="kchips" aria-label="Verified bounds">
+    <button class="chip" data-k="40">2^40 — Eliahou 1993</button>
+    <button class="chip" data-k="60">2^60</button>
+    <button class="chip" data-k="68">2^68 — Barina 2020</button>
+    <button class="chip" data-k="71" aria-pressed="true">2^71 — Barina 2025, in print</button>
+    <button class="chip" data-k="100">2^100 — hypothetical</button>
+  </div>
+  <div class="card">
+    <div class="chart">
+      <svg id="bsvg" viewBox="0 0 1000 520" role="img" aria-labelledby="bttl"><title id="bttl">Gap of each best upper approximation of log2 3 against its denominator, with the allowed gap</title></svg>
+      <div class="tip" id="btip" hidden></div>
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--ink);border-radius:50%"></i>best upper approximation <code>B/L</code> of <code>log₂3</code></span>
+      <span><i style="background:var(--fall);width:24px;height:3px"></i>allowed gap <code>δ(m)</code> — the region below it is where a cycle's <code>B/L</code> must lie</span>
+      <span><i style="border:2px solid var(--rise);border-radius:50%;width:12px;height:12px"></i>the first admissible length</span>
+    </div>
+    <div class="stat" id="bstat"></div>
+  </div>
+  <div class="tbl"><table id="ptbl"></table></div>
+  <p class="note">The five marked rows are verified exactly, in 320-digit arithmetic, by <code>cycleeq.smallest_admissible_length</code> in this repository; the chart computes the same thing in the page with exact integer arithmetic for the gaps.
+  With members above <code>2<sup>40</sup></code> the halving count comes out as <code>B ≥ 17 087 915</code> — the number Eliahou published in 1993 from exactly that verification bound, here recovered from your balance idea.</p>
+
+  <!-- ============ 4. meaning ============ -->
+  <h2>4 · What the number says, and what it does not <span class="tag">cited</span></h2>
+  <ul>
+    <li><b>A second cycle has at least 72 057 431 991 odd steps and 114 208 327 604 halvings</b> — 186 billion steps of <code>T</code> in all — with every member above <code>2<sup>71</sup></code>.
+      Its ratio <code>B/L</code> is one specific fraction, <code>114 208 327 604 / 72 057 431 991</code>, or a later best upper approximation.</li>
+    <li><b>This is the Crandall–Eliahou squeeze</b> (Crandall 1978; Eliahou, <em>Discrete Math.</em> 118, 1993), the elementary half of the cycle-length story. Hercher (<em>J. Integer Sequences</em> 26, 2023) gets further,
+      <code>L &gt; 1.375 × 10<sup>11</sup></code>, with the local-maximum structure and Baker's theorem on linear forms in logarithms. Nothing here is new; the page draws the classical argument from the ledger.</li>
+    <li><b>Why the argument stops.</b> Move the slider past 71 and the bound keeps climbing, but only because the verification bound is assumed to. The squeeze converts verified <em>size</em> into forbidden <em>length</em>; it cannot forbid all lengths, because <code>log₂3</code> is irrational and best approximations exist at every scale.
+      A proof would need <code>B − L·log₂3</code> to be bounded below by something larger than <code>L/(3m)</code> for all large <code>L</code> — which is Baker-type territory, and even there the known bounds fall short.</li>
+    <li><b>The ledger, closed.</b> Section 1 of the additive page said ascents equal descents; this page says the same thing as <code>2<sup>B</sup> = ∏(3 + 1/nᵢ)</code>. The additive form gives the residue gates at the ends; the multiplicative form gives the length bound. Neither closes the loop, and both are exact.</li>
+  </ul>
+  <p class="note">Companion pages: <a href="https://claude.ai/artifact/SnaWUkMG6NSKjCD1HYmX8m">cycle ledger</a>, <a href="https://claude.ai/code/artifact/6b158da1-5d06-4e60-8807-bb0044b4691d">halving rays</a>, <a href="https://claude.ai/code/artifact/b128753e-8771-43da-9ff7-d6d0e29867ef">halving surface</a>, <a href="https://claude.ai/code/artifact/5fd7a07b-0c94-49af-9f21-1055d13f6ede">parity atlas</a>.</p>
+</div>
+
+<script>
+(function(){
+'use strict';
+var $ = function(id){ return document.getElementById(id); };
+var SVGNS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs, text){ var e = document.createElementNS(SVGNS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); if (text != null) e.textContent = text; return e; }
+function fmt(v){ return Number(v).toLocaleString('en-US'); }
+function fmtBig(b){ return b.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+function sci(x, d){ if (x === 0) return '0'; var e = Math.floor(Math.log10(x)), m = x / Math.pow(10, e); return m.toFixed(d === undefined ? 2 : d) + ' × 10^' + e; }
+function showTip(tip, host, evt, html){ tip.innerHTML = html; tip.hidden = false; var r = host.getBoundingClientRect(); var x = evt.clientX - r.left + 14, y = evt.clientY - r.top + 14; if (x + 310 > r.width) x = evt.clientX - r.left - 320; if (y + 90 > r.height) y = evt.clientY - r.top - 80; tip.style.left = x + 'px'; tip.style.top = y + 'px'; }
+var LOG2_3 = Math.log2(3);
+
+/* ---------------- 1. the product along a trajectory ---------------- */
+function step(n){ var t = 3*n + 1, x = 0; while (t % 2 === 0){ t /= 2; x++; } return { next: t, x: x }; }
+function renderTraj(){
+  var n0 = parseInt($('tn').value, 10);
+  if (!(Number.isInteger(n0) && n0 > 0 && n0 % 2 === 1 && n0 <= 1e9)){ $('terr').textContent = 'start must be a positive odd number ≤ 10⁹'; return; }
+  $('terr').textContent = '';
+  var rows = [], n = n0, B = 0, c = 0, seen = new Set(), k = 0;
+  while (k < 400 && !seen.has(n)){ seen.add(n); var s = step(n); var corr = Math.log2(1 + 1/(3*n)); B += s.x; c += corr; k++; rows.push({ k: k, n: n, x: s.x, next: s.next, B: B, c: c, lhs: B - k * LOG2_3, lost: Math.log2(n0 / s.next) }); n = s.next; }
+  var closed = seen.has(n);
+  // chart
+  var svg = $('tsvg'); while (svg.firstChild) svg.removeChild(svg.firstChild);
+  svg.appendChild(el('title', {}, 'Halvings minus the log2 3 budget along the trajectory of ' + n0));
+  var W = 1000, H = 340, ML = 64, MR = 20, MT = 22, MB = 44, pw = W - ML - MR, ph = H - MT - MB;
+  var ymax = 0, ymin = 0; rows.forEach(function(r){ ymax = Math.max(ymax, r.lhs, r.lost); ymin = Math.min(ymin, r.lhs, r.lost); }); ymax = Math.ceil(ymax + 0.5); ymin = Math.floor(ymin - 0.5);
+  var X = function(kk){ return ML + pw * kk / Math.max(1, rows.length); }, Y = function(v){ return MT + ph - ph * (v - ymin) / (ymax - ymin); };
+  var yt = []; var stepY = Math.max(1, Math.ceil((ymax - ymin) / 6)); for (var v = ymin; v <= ymax; v += stepY) yt.push(v);
+  yt.forEach(function(v){ svg.appendChild(el('line', { x1: ML, x2: W - MR, y1: Y(v), y2: Y(v), stroke: v === 0 ? 'var(--axis)' : 'var(--grid)' })); svg.appendChild(el('text', { x: ML - 8, y: Y(v) + 4, 'text-anchor': 'end', 'font-size': 11, fill: 'var(--ink-3)', 'font-family': 'var(--f-mono)' }, v)); });
+  svg.appendChild(el('line', { x1: ML, x2: ML, y1: MT, y2: MT + ph, stroke: 'var(--axis)' }));
+  svg.appendChild(el('text', { x: ML, y: 12, 'font-size': 11, fill: 'var(--ink-3)', 'font-family': 'var(--f-mono)' }, 'bits'));
+  svg.appendChild(el('text', { x: W - MR, y: MT + ph + 32, 'text-anchor': 'end', 'font-size': 11, fill: 'var(--ink-3)', 'font-family': 'var(--f-mono)' }, 'odd steps k'));
+  var kt = Math.max(1, Math.ceil(rows.length / 10)); for (var kk = 0; kk <= rows.length; kk += kt) svg.appendChild(el('text', { x: X(kk), y: MT + ph + 16, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--ink-3)', 'font-family': 'var(--f-mono)' }, kk));
+  // gap fill between the two series
+  var dTop = 'M' + X(0) + ' ' + Y(0), dBot = '';
+  rows.forEach(function(r){ dTop += ' L' + X(r.k) + ' ' + Y(r.lhs); });
+  for (var i = rows.length - 1; i >= 0; i--) dBot += ' L' + X(rows[i].k) + ' ' + Y(rows[i].lost);
+  svg.appendChild(el('path', { d: dTop + dBot + ' L' + X(0) + ' ' + Y(0) + ' Z', fill: 'var(--fall)', opacity: .25 }));
+  var pl = 'M' + X(0) + ' ' + Y(0), pm = 'M' + X(0) + ' ' + Y(0);
+  rows.forEach(function(r){ pl += ' L' + X(r.k) + ' ' + Y(r.lhs); pm += ' L' + X(r.k) + ' ' + Y(r.lost); });
+  svg.appendChild(el('path', { d: pm, fill: 'none', stroke: 'var(--ray)', 'stroke-width': 1.6 }));
+  svg.appendChild(el('path', { d: pl, fill: 'none', stroke: 'var(--rise)', 'stroke-width': 2 }));
+  var host = svg.parentNode, tip = $('ttip');
+  rows.forEach(function(r){ var cpt = el('circle', { cx: X(r.k), cy: Y(r.lhs), r: rows.length > 60 ? 2 : 3.5, fill: 'var(--rise)', stroke: 'var(--surface)', 'stroke-width': 1 });
+    cpt.addEventListener('mousemove', function(evt){ showTip(tip, host, evt, '<div class="v">after ' + r.k + ' odd step' + (r.k > 1 ? 's' : '') + ': ' + fmt(r.n) + ' → ' + fmt(r.next) + '</div><div class="s">halvings so far B = ' + r.B + ', budget ' + (r.k * LOG2_3).toFixed(3) + '</div><div class="s">B − k·log₂3 = ' + r.lhs.toFixed(4) + ' = log₂(n₀/n) ' + r.lost.toFixed(4) + ' + c ' + r.c.toFixed(4) + '</div>'); });
+    cpt.addEventListener('mouseleave', function(){ tip.hidden = true; }); svg.appendChild(cpt); });
+  var last = rows[rows.length - 1];
+  $('tstat').innerHTML = '<b>from ' + fmt(n0) + '</b> ' + rows.length + ' odd steps, B = ' + last.B + ' halvings · B − L·log₂3 = ' + last.lhs.toFixed(6) + ' = log₂(' + fmt(n0) + '/' + fmt(last.next) + ') + c = ' + last.lost.toFixed(6) + ' + ' + last.c.toFixed(6) +
+    (closed ? ' · closed at ' + fmt(n) + ': the loop 1 → 4 → 2 → 1 alone has B − L·log₂3 = 2 − log₂3 = ' + (2 - LOG2_3).toFixed(6) + ' = log₂(4/3) = c' : ' · not closed within 400 odd steps');
+  var tb = $('ttbl'); tb.innerHTML = '';
+  var hr = document.createElement('tr'); ['k', 'nᵢ', '3 + 1/nᵢ', 'halvings', 'next', '2^B·n/n₀ so far', 'log₂(1 + 1/(3nᵢ))', 'c so far'].forEach(function(h){ var th = document.createElement('th'); th.textContent = h; hr.appendChild(th); }); tb.appendChild(hr);
+  rows.slice(0, 60).forEach(function(r){ var tr = document.createElement('tr'); var prod = Math.pow(2, r.B) * r.next / n0; [r.k, fmt(r.n), '(' + fmt(3*r.n + 1) + ')/' + fmt(r.n), r.x, fmt(r.next), prod >= 1e6 ? sci(prod, 4) : prod.toFixed(6), Math.log2(1 + 1/(3*r.n)).toExponential(3), r.c.toFixed(6)].forEach(function(v){ var td = document.createElement('td'); td.textContent = v; tr.appendChild(td); }); tb.appendChild(tr); });
+  if (rows.length > 60){ var tr2 = document.createElement('tr'), td2 = document.createElement('td'); td2.colSpan = 8; td2.className = 'l'; td2.textContent = '… ' + (rows.length - 60) + ' more'; tr2.appendChild(td2); tb.appendChild(tr2); }
+}
+$('tn').addEventListener('change', renderTraj);
+
+/* ---------------- 2/3. best upper approximations of log2 3, exactly ---------------- */
+var ALPHA = '1.584962500721156181453738943947816508759814407692481060455752654541098227794358562522280474'; // 90 decimals; cycleeq.log2_3
+var A = BigInt(ALPHA.replace('.', '')), TEN90 = 10n ** 90n;
+var CF = [1, 1, 1, 2, 2, 3, 1, 5, 2, 23, 2, 2, 1, 1, 55, 1, 4, 3, 1, 1, 15, 1, 9, 2, 5, 7, 1, 1, 4, 8, 1, 11, 1, 20, 2, 1, 10, 1, 4, 1, 1, 1, 1, 1, 37, 4, 55, 1, 1, 49, 1, 1, 1, 4, 1, 3, 2, 3, 3, 1, 5, 16, 2, 3, 1, 1, 1, 1, 1, 5]; // cycleeq.log2_3_cf(70, 300)
+var conv = []; (function(){ var pm1 = 1n, pm2 = 0n, qm1 = 0n, qm2 = 1n; CF.forEach(function(a){ var p = BigInt(a) * pm1 + pm2, q = BigInt(a) * qm1 + qm2; conv.push([p, q]); pm2 = pm1; pm1 = p; qm2 = qm1; qm1 = q; }); })();
+function gapScaled(p, q){ return p * TEN90 - q * A; }  // (p − q·log2 3)·10^90, exact to within q
+var BUA = []; (function(){ // intermediate fractions of the upper convergents (odd index), record-filtered
+  var best = null;
+  for (var k = 1; k < conv.length; k += 2){
+    var pA = k >= 2 ? conv[k - 2][0] : 1n, qA = k >= 2 ? conv[k - 2][1] : 0n, pB = conv[k - 1][0], qB = conv[k - 1][1];
+    for (var j = 1; j <= CF[k]; j++){
+      var p = pA + BigInt(j) * pB, q = qA + BigInt(j) * qB, g = gapScaled(p, q);
+      if (g <= 0n) continue;
+      if (best === null || g * best[1] < best[0] * q){ best = [g, q]; BUA.push({ p: p, q: q, g: g, err: Number(g) / 1e90 / Number(q) }); }
+    }
+  }
+})();
+var PRESETS = { 40: { name: 'Eliahou 1993' }, 60: { name: '' }, 68: { name: 'Barina 2020' }, 71: { name: 'Barina 2025, in print' }, 100: { name: 'hypothetical' } };
+var EXACT = { 40: [10781274, 17087915], 60: [397573379, 630138897], 68: [72057431991, 114208327604], 71: [72057431991, 114208327604], 100: [3332857981044265, 5282454920184382] }; // cycleeq.smallest_admissible_length
+function delta(k){ return Math.log1p(1 / (3 * Math.pow(2, k))) / Math.LN2; }
+function firstAdmissible(d){ for (var i = 0; i < BUA.length; i++) if (BUA[i].err <= d) return i; return -1; }
+var K = 71;
+function renderBound(){
+  var d = delta(K), hit = firstAdmissible(d);
+  var svg = $('bsvg'); while (svg.firstChild) svg.removeChild(svg.firstChild);
+  svg.appendChild(el('title', {}, 'Best upper approximations of log2 3 against the allowed gap for members above 2^' + K));
+  var W = 1000, H = 520, ML = 70, MR = 24, MT = 22, MB = 48, pw = W - ML - MR, ph = H - MT - MB;
+  var XMAX = 17, YMIN = -36; // log10 axes: L up to 1e17, gap down to 1e-36
+  var X = function(q){ return ML + pw * Math.log10(q) / XMAX; }, Y = function(g){ return MT + ph * (Math.log10(g) / YMIN); };
+  for (var e = 0; e <= XMAX; e += 2){ var x = X(Math.pow(10, e)); svg.appendChild(el('line', { x1: x, x2: x, y1: MT, y2: MT + ph, stroke: 'var(--grid)' })); svg.appendChild(el('text', { x: x, y: MT + ph + 16, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--ink-3)', 'font-family': 'var(--f-mono)' }, e === 0 ? '1' : '10^' + e)); }
+  for (var f = 0; f >= YMIN; f -= 4){ var y = Y(Math.pow(10, f)); svg.appendChild(el('line', { x1: ML, x2: W - MR, y1: y, y2: y, stroke: 'var(--grid)' })); svg.appendChild(el('text', { x: ML - 8, y: y + 4, 'text-anchor': 'end', 'font-size': 11, fill: 'var(--ink-3)', 'font-family': 'var(--f-mono)' }, f === 0 ? '1' : '10^' + f)); }
+  svg.appendChild(el('line', { x1: ML, x2: ML, y1: MT, y2: MT + ph, stroke: 'var(--axis)' })); svg.appendChild(el('line', { x1: ML, x2: W - MR, y1: MT + ph, y2: MT + ph, stroke: 'var(--axis)' }));
+  svg.appendChild(el('text', { x: ML, y: 12, 'font-size': 11, fill: 'var(--ink-3)', 'font-family': 'var(--f-mono)' }, 'B/L − log₂3'));
+  svg.appendChild(el('text', { x: W - MR, y: MT + ph + 34, 'text-anchor': 'end', 'font-size': 11, fill: 'var(--ink-3)', 'font-family': 'var(--f-mono)' }, 'L, the denominator = candidate number of odd steps'));
+  // allowed region and line
+  var yd = Y(d);
+  svg.appendChild(el('rect', { x: ML, y: yd, width: pw, height: MT + ph - yd, fill: 'var(--allow)' }));
+  svg.appendChild(el('line', { x1: ML, x2: W - MR, y1: yd, y2: yd, stroke: 'var(--fall)', 'stroke-width': 2.2 }));
+  svg.appendChild(el('text', { x: ML + 8, y: yd - 6, 'font-size': 11.5, fill: 'var(--fall)', 'font-family': 'var(--f-mono)', 'font-weight': 500 }, 'allowed gap δ = log₂(1 + 1/(3·2^' + K + ')) = ' + sci(d)));
+  var host = svg.parentNode, tip = $('btip');
+  BUA.forEach(function(b, i){
+    if (Number(b.q) > Math.pow(10, XMAX) || b.err < Math.pow(10, YMIN)) return;
+    var cx = X(Number(b.q)), cy = Y(b.err);
+    if (i === hit){ svg.appendChild(el('line', { x1: cx, x2: cx, y1: cy, y2: MT + ph, stroke: 'var(--rise)', 'stroke-width': 1.2, 'stroke-dasharray': '4 4' })); svg.appendChild(el('circle', { cx: cx, cy: cy, r: 9, fill: 'none', stroke: 'var(--rise)', 'stroke-width': 2 })); svg.appendChild(el('text', { x: Math.min(cx + 12, W - MR - 220), y: cy + 4, 'font-size': 11.5, fill: 'var(--rise)', 'font-family': 'var(--f-mono)', 'font-weight': 500 }, 'L ≥ ' + fmtBig(b.q))); }
+    var pt = el('circle', { cx: cx, cy: cy, r: 3.6, fill: 'var(--ink)', stroke: 'var(--surface)', 'stroke-width': 1 });
+    pt.addEventListener('mousemove', function(evt){ showTip(tip, host, evt, '<div class="v">' + fmtBig(b.p) + ' / ' + fmtBig(b.q) + '</div><div class="s">B/L − log₂3 = ' + sci(b.err, 3) + (b.err <= d ? ' — under the allowed gap: an admissible length' : ' — above the allowed gap: no cycle with this many odd steps') + '</div>'); });
+    pt.addEventListener('mouseleave', function(){ tip.hidden = true; });
+    svg.appendChild(pt);
+    if (i < 8) svg.appendChild(el('text', { x: cx + 7, y: cy - 6, 'font-size': 10.5, fill: 'var(--ink-2)', 'font-family': 'var(--f-mono)' }, b.p + '/' + b.q));
+  });
+  var hyp = K > 71;
+  var lines = ['<b>members above 2^' + K + '</b> ' + (hyp ? '<span class="hyp">hypothetical — verification stands at 2^71</span>' : K === 71 ? 'the current verified bound (Barina 2025)' : 'verified') + ' · allowed gap δ = ' + sci(d, 3)];
+  if (hit >= 0){ var b = BUA[hit]; var tot = b.p + b.q; lines.push('<span class="big">L ≥ ' + fmtBig(b.q) + ' odd steps · B ≥ ' + fmtBig(b.p) + ' halvings · ' + fmtBig(tot) + ' T-steps</span>'); lines.push('B/L = ' + fmtBig(b.p) + '/' + fmtBig(b.q) + ' sits ' + sci(b.err, 3) + ' above log₂3; the previous best, ' + (hit > 0 ? fmtBig(BUA[hit - 1].p) + '/' + fmtBig(BUA[hit - 1].q) + ', sits ' + sci(BUA[hit - 1].err, 3) + ' above — too far' : '—')); if (EXACT[K]) lines.push('exact check (cycleeq, 320 digits): L = ' + fmt(EXACT[K][0]) + ', B = ' + fmt(EXACT[K][1]) + (Number(b.q) === EXACT[K][0] && Number(b.p) === EXACT[K][1] ? ' ✓' : ' ✗')); }
+  else lines.push('no admissible length within the tabulated continued fraction (denominators to 10^34)');
+  $('bstat').innerHTML = lines.join('<br>');
+  $('kv').textContent = K; $('kstat').textContent = 'm = 2^' + K + ' ≈ ' + sci(Math.pow(2, K), 2);
+  document.querySelectorAll('#kchips .chip').forEach(function(c){ c.setAttribute('aria-pressed', parseInt(c.dataset.k, 10) === K ? 'true' : 'false'); });
+}
+function renderPresets(){
+  var tb = $('ptbl'); tb.innerHTML = '';
+  var hr = document.createElement('tr'); ['members above', 'allowed gap δ', 'smallest L (odd steps)', 'B (halvings)', 'T-steps L + B', 'B/L − log₂3', 'note'].forEach(function(h, i){ var th = document.createElement('th'); th.textContent = h; if (i === 0 || i === 6) th.className = 'l'; hr.appendChild(th); }); tb.appendChild(hr);
+  [40, 60, 68, 71, 100].forEach(function(k){ var d = delta(k), i = firstAdmissible(d), b = BUA[i], tr = document.createElement('tr'); if (k === K) tr.className = 'hit';
+    ['2^' + k + ' ≈ ' + sci(Math.pow(2, k), 2), sci(d, 3), fmtBig(b.q), fmtBig(b.p), fmtBig(b.p + b.q), sci(b.err, 3), (PRESETS[k].name || '') + (k === 40 ? ' — B is his 17 087 915' : k === 100 ? ' — if verification reached 2^100' : '')].forEach(function(v, j){ var td = document.createElement('td'); td.textContent = v; if (j === 0 || j === 6) td.className = 'l'; tr.appendChild(td); }); tb.appendChild(tr); });
+}
+$('kr').addEventListener('input', function(){ K = parseInt(this.value, 10); renderBound(); renderPresets(); });
+$('kchips').addEventListener('click', function(e){ var b = e.target.closest('button'); if (!b) return; K = parseInt(b.dataset.k, 10); $('kr').value = K; renderBound(); renderPresets(); });
+
+renderTraj(); renderBound(); renderPresets();
+})();
+</script>

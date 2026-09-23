@@ -176,3 +176,47 @@ invariant, not for a cycle.
 | minimum entered by `≥ 2` halvings; `m ≥ q, L ≥ 2 ⇒` one halving out, `m ≡ q+2 (mod 4)` | ✓ `test_ledger.py` (434 / 1 681) | ✓ `Minimum.lean` (`min_bb_out`, `m_step_one`, hypothesis `q < m`) |
 | SAT box = `find_cycles` on every tested box; residue automaton exact; 3-adic gates inert on cycle boxes; gate-only instance = arithmetic filter | ✓ `test_satcycles.py` (25, needs python-sat) | ✗ (computation) |
 | in-page: MiniSat models = exhaustive search of the same box, census gates for `q ≤ 199`, `M ≤ 4000` | ✓ `web/ledger.html` (live) | — |
+
+## 6. The multiplicative ledger (`web/multiplicative.html`; PROVED · CITED · COMPUTED)
+
+The additive balance, written multiplicatively.  One odd step with `x`
+halvings is `2^x·n′ = 3n + 1 = n·(3 + 1/n)`; multiplied around a cycle the
+members cancel:
+
+> **`2^B = ∏ᵢ (3 + 1/nᵢ)`**, i.e. **`B = L·log₂3 + Σᵢ log₂(1 + 1/(3nᵢ))`**
+> (`cycleeq.product_identity`; the log form is checked to 40 digits on the
+> census, `test_multiplicative.py`).
+
+Along an open trajectory the same product runs as
+`2^{B_k}·n_k/n₀ = ∏_{i<k}(3 + 1/nᵢ)`, so `B_k − k·log₂3 = log₂(n₀/n_k) + c_k`
+with `c_k ≥ 0` — the page's first chart.
+
+**Squeeze (Crandall 1978, Eliahou 1993).** Every correction term is positive
+(`2^B > 3^L`, T7) and at most the one for the smallest member `m`:
+`0 < B/L − log₂3 ≤ δ(m) = log₂(1 + 1/(3m)) < 1/(3m·ln 2)`.  With Barina's
+`m > 2^71`, `δ < 2.04×10⁻²²`.  If a length `L` admits such a `B`, the fraction
+above `log₂3` with denominator `≤ L` closest to it is at least as close and is
+a best upper approximation of `log₂3` — an intermediate fraction of an upper
+convergent of `[1; 1, 1, 2, 2, 3, 1, 5, 2, 23, …]`
+(`cycleeq.best_upper_approximations`; brute-force checked to denominator
+3000).  So the smallest possible `L` is the first denominator in that list
+whose fraction is within `δ` of `log₂3` (`cycleeq.smallest_admissible_length`,
+320-digit arithmetic):
+
+| members above | `δ` | smallest `L` | `B` | `L + B` |
+|---|---|---|---|---|
+| `2^40` | `4.37×10⁻¹³` | 10 781 274 | **17 087 915** — Eliahou's 1993 number | 27 869 189 |
+| `2^60` | `4.17×10⁻¹⁹` | 397 573 379 | 630 138 897 | 1 027 712 276 |
+| `2^68` (Barina 2020) | `1.63×10⁻²¹` | 72 057 431 991 | 114 208 327 604 | 186 265 759 595 |
+| `2^71` (Barina 2025, in print; `2075·2^60` gives the same) | `2.04×10⁻²²` | 72 057 431 991 | 114 208 327 604 | 186 265 759 595 |
+| `2^100` (hypothetical) | `3.79×10⁻³¹` | 3 332 857 981 044 265 | 5 282 454 920 184 382 | 8 615 312 901 228 647 |
+
+The page recomputes the list and the crossing in exact integer arithmetic
+(`log₂3` to 90 decimals, 70 continued-fraction terms, denominators to
+`10^34`) with a slider for `k`; the five rows above are pinned by
+`test_multiplicative.py`.  Eliahou's published `17 087 915` is the `B` of the
+`2^40` row, which is the check that the page is drawing the classical
+argument and not a variant.  Hercher 2023 goes further
+(`L > 1.375×10¹¹`) with the local-maximum structure and Baker's theorem;
+nothing here is new, and the squeeze cannot forbid all lengths because best
+approximations of the irrational `log₂3` exist at every scale.

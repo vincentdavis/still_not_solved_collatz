@@ -702,9 +702,16 @@ census boxes as theorems must be; below `2^16` the gate clauses alone leave
 in the doc: bounded model checking cannot reach the box that matters
 (`L > 1.375×10¹¹`, `W > 71`), and the SAT direction with life in it is
 Yolcu–Aaronson–Heule's search for termination certificates (JAR 2023), not
-counterexample search. Status: **P (identities, cited gates) / C (encoding)**;
-`python/tests/test_ledger.py` (2), `test_satcycles.py` (25, skipped without
-python-sat).
+counterexample search. **Multiplicative ledger** (`web/multiplicative.html`, LEDGER.md §6): the
+same balance as `2^B = ∏(3 + 1/nᵢ)`, `B = L·log₂3 + Σ log₂(1 + 1/(3nᵢ))`,
+squeezed against the best upper approximations of `log₂3` — the
+Crandall–Eliahou bound drawn from the ledger, in the page's own exact
+arithmetic: members above `2^40` force `B ≥ 17 087 915` (Eliahou's 1993
+number reproduced), above `2^71` force `L ≥ 72 057 431 991`,
+`B ≥ 114 208 327 604` (this doc's T7 figure), with a slider for the
+verification bound. Status: **P (identities, cited gates) / C (encoding,
+bounds)**; `python/tests/test_ledger.py` (2), `test_satcycles.py` (25,
+skipped without python-sat), `test_multiplicative.py` (3).
 
 ### Verification status
 
@@ -724,7 +731,7 @@ python-sat).
 | the death-depth counts `a_k` (`k ≤ 4`) | ✓ | ✓ `Census.lean` |
 | q-transfer: `S_k(q) = q·S_k(1)`, `a_k` q-blind (docs/FILTER.md) | ✓ (`k ≤ 10`, six `q`) | ✓ `QTransfer.lean` (`k ≤ 4`, four offsets incl. `q ≡ −1`) |
 | words: realization, bump law, sign law (docs/WORDS.md) | ✓ (`test_words.py`, 26 tests) | ✓ `Words.lean` (first collision, uniqueness at `k=4`, sign law `k ≤ 8`, deficit `n=5`) |
-| ledger identity `E = 4O + 2Lq`; SAT box = `find_cycles` on every tested box, 3-adic gates as circuits (docs/LEDGER.md) | ✓ (`test_ledger.py`, `test_satcycles.py`) | ✗ — not formalized (one-line identity; the CNF is computation) |
+| ledger identity `E = 4O + 2Lq`; SAT box = `find_cycles` on every tested box, 3-adic gates as circuits; multiplicative ledger and the squeeze's `(L, B)` at `2^40 … 2^100` (docs/LEDGER.md) | ✓ (`test_ledger.py`, `test_satcycles.py`, `test_multiplicative.py`) | ✗ — not formalized (one-line identity; the CNF is computation) |
 | over-dispersion, tail rate, box dimension | ✓ | ✗ — infeasible in-kernel, open, unresolved limit |
 
 Lean total: **341 declarations**, all certifying `[propext, Quot.sound]` or
