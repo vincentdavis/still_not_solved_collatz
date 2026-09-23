@@ -51,3 +51,15 @@ def test_hercher_floor_is_the_next_rung_of_the_staircase():
     i = [q for _, q in b].index(72057431991)
     assert b[i] == (114208327604, 72057431991)
     assert b[i + 1] == (217976794617, 137528045312)
+
+
+def test_circuit_chart_constants_match_hercher_module():
+    """The (m, K) chart's inputs are hercher.py's imported Simons-de Weger and Hercher constants."""
+    from collatz_maxodd import hercher as h
+
+    assert h.SDW_LOWER_K_91_PLUS == 753_110_000_000 and h.SDW_CEILING_RANGE == (91, 515619)
+    assert float(h.SDW_CEILING_COEFF) == 1.4784
+    assert dict(h.COR24_STARTS)[98] == 7.76e19 and dict(h.COR24_STARTS)[117] == 2.74e19
+    assert dict(h.COR24_STARTS)[276] == 4.68e18 and dict(h.COR24_STARTS)[3079] == 3.97e17
+    assert 3.43e20 < float(h.sdw_ceiling(92)) < 3.44e20 and 2.14e20 < float(h.sdw_ceiling(91)) < 2.15e20
+    assert h.allm_bound(2**71)[0] == 72057431991

@@ -223,6 +223,26 @@ is exactly the **next best upper approximation** after the squeeze's
 `72 057 431 991`: `217 976 794 617 / 137 528 045 312`, `9.43×10⁻²⁴` above
 `log₂3` (`test_multiplicative.py`; `hercher.py` reproduces both rungs, see
 GROUND_TRUTH §7).  The page draws it as a vertical line, labelled
-conditional when the slider sits below `3·2^69`.  Nothing here is new, and
-the squeeze cannot forbid all lengths because best approximations of the
-irrational `log₂3` exist at every scale.
+conditional when the slider sits below `3·2^69`.
+
+**Circuits (Simons–de Weger 2005/2010, Hercher 2023).**  "No m-cycles with
+`m ≤ 68`" is a statement about the number of circuits (local maxima), not the
+length.  The page draws it in the `(m, K)` plane, all inputs imported from
+`hercher.py`: the Baker ceiling `K < 1.4784·m·(log₂3)^m` (S&dW 2010 Thm 3,
+`91 ≤ m ≤ 515 619`; dashed and labelled "orientation only" below 91), the
+floors as published — S&dW `K > 1.1173×10¹⁷` for `78 ≤ m ≤ 90`,
+`K > 7.5311×10¹¹` for `91 ≤ m ≤ 515 619`; Hercher Table 1 `m ≤ 98: 7.76×10¹⁹`,
+`≤ 117: 2.74×10¹⁹`, `≤ 276: 4.68×10¹⁸`, `≤ 3079: 3.97×10¹⁷` — the repository's
+re-run at `2^71` (`m ≤ 100: 2.0563×10²⁰`, `≤ 124: 7.7692×10¹⁹`,
+`≤ 187: 2.7444×10¹⁹`, `277–400: 4.6403×10¹⁸`, GROUND_TRUTH §7) dashed, the
+all-`m` floor `137 528 045 312` across, the dead zones `m ≤ 68` (2005),
+`≤ 75` (2010), `≤ 91` (2023) shaded, and the `m = 92` deadlock marked (floor
+`2.0563×10²⁰` under ceiling `3.43×10²⁰`).  On the length chart the same
+results appear as conditional floors on `L` (`m ≤ 515 619: L > 7.53×10¹¹`,
+`m ≤ 3079: 3.97×10¹⁷`, `m ≤ 276: 4.68×10¹⁸`, `m ≤ 117: 2.74×10¹⁹`,
+`m ≤ 98: 7.76×10¹⁹`): the fewer the circuits, the longer the cycle, until
+below `m = 92` no length is left.  The floors climb the same staircase of
+best upper approximations; the ceiling is the one place Baker's theorem
+enters.  Constants pinned against `hercher.py` in `test_multiplicative.py`.
+Nothing here is new, and the squeeze cannot forbid all lengths because best
+approximations of the irrational `log₂3` exist at every scale.
