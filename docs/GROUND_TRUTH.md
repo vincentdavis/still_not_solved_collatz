@@ -744,6 +744,23 @@ superadditivity upgrade of W2, `S_k` as the shadow of the negative rational
 cycles, the general-`q` first-source rule). Status: **P (restatements, cited)
 / C (counts)**; `python/tests/test_landing.py` (24).
 
+### The drop function `f(n) = n − S(n)` (`docs/DROP.md`)
+
+A user-led pass (2026-09-23, `web/drop.html`, `collatz_maxodd/drop.py`): the
+signed distance from an odd `n` to the next odd number,
+`f(n) = n − S(n) = ((2^x − 3)n − 1)/2^x`.  PROVED: `f` is even, negative
+exactly on `n ≡ 3 (mod 4)`, zero only at 1; on each class mod `2^{x+1}` it is
+affine with slope `1 − 3/2^x`; every even integer is a drop, a negative one
+from exactly one source `2|d| − 1`, a positive `d` from one source per divisor
+of `3d+1` of the form `2^x − 3` (`x ≥ 2`), so the fiber size is unbounded
+(`d = 958 208` has six sources); along a trajectory the drops telescope to
+`n − 1`; zero-sum sets of drops exist for every size
+(`{3, 7, …, 4k−5, (2k−1)²}`), a zero-sum *chain* is exactly a cycle, and
+there is no 2-chain (the smallest case of Steiner 1977).  COMPUTED: 83
+zero-sum pairs below 400, 383 triples below 120, 511 quadruples below 60,
+none a chain.  Literature: the drop sequence is not in the OEIS, `2^x − 3` is
+A036563; nothing is claimed new.  Witnesses: `test_drop.py` (21).
+
 ### Verification status
 
 | result | Python | Lean |
@@ -764,6 +781,7 @@ cycles, the general-`q` first-source rule). Status: **P (restatements, cited)
 | words: realization, bump law, sign law (docs/WORDS.md) | ✓ (`test_words.py`, 26 tests) | ✓ `Words.lean` (first collision, uniqueness at `k=4`, sign law `k ≤ 8`, deficit `n=5`) |
 | ledger identity `E = 4O + 2Lq`; SAT box = `find_cycles` on every tested box, 3-adic gates as circuits; multiplicative ledger and the squeeze's `(L, B)` at `2^40 … 2^100` (docs/LEDGER.md) | ✓ (`test_ledger.py`, `test_satcycles.py`, `test_multiplicative.py`) | ✗ — not formalized (one-line identity; the CNF is computation) |
 | landing form: bijection, leaf rule mod 9, saturation, automaton = `Φ_k`, `S_k(q) = q·S_k(1)` (docs/LANDING.md) | ✓ (`test_landing.py`, 24) | ✗ — not formalized (Lemma U and T0 are; the rest is bookkeeping) |
+| drop function: parity/sign, height classes, fibers = divisors of `3d+1` of the form `2^x − 3`, unbounded multiplicity, telescoping, zero-sum sets vs chains (docs/DROP.md) | ✓ (`test_drop.py`, 21) | ✗ — not formalized (two-line identities and computation) |
 | over-dispersion, tail rate, box dimension | ✓ | ✗ — infeasible in-kernel, open, unresolved limit |
 
 Lean total: **341 declarations**, all certifying `[propext, Quot.sound]` or

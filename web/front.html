@@ -109,7 +109,7 @@ a:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:
     <div class="tile"><div class="n">&gt; 1.375 × 10<sup>11</sup></div><div class="l">odd members in any second cycle</div><div class="s">Hercher 2023, Cor. 29, via Barina</div></div>
     <div class="tile"><div class="n">≥ 92</div><div class="l">circuits in any second cycle; m ≤ 91 is impossible</div><div class="s">Hercher 2023; m = 92 still stands</div></div>
     <div class="tile"><div class="n">2 127</div><div class="l">real cycles of the 3n+q family used as the test bed</div><div class="s">every q ≤ 999, maxima ≤ 20 000</div></div>
-    <div class="tile"><div class="n">400 · 341</div><div class="l">Python tests · Lean declarations, no Mathlib, no sorry</div><div class="s">this repository</div></div>
+    <div class="tile"><div class="n">421 · 341</div><div class="l">Python tests · Lean declarations, no Mathlib, no sorry</div><div class="s">this repository</div></div>
   </div>
 
   <!-- ===== pages ===== -->
@@ -158,6 +158,12 @@ a:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:
       <p><b>Establishes.</b> <span class="tag p">proved</span> the landing map is a bijection (Lemma U as a table); reachability without a size bound excludes exactly the odd multiples of 3 and nothing else, because every target has infinitely many live sources; a source is dead iff <code>2<sup>x</sup>s ≡ 1 (mod 9)</code>, one in three admissible heights; after <code>k</code> landings the residue mod <code>3<sup>k</sup></code> depends only on the last <code>k</code> heights. <span class="tag t">cited</span> the table is Wirsching's back-tracing and the pruned tree of Applegate–Lagarias; the leaf rule's lowest cases are Monks et al. 2013.</p>
       <p><b>Does not.</b> Nothing here is new, and every claim was refereed twice; the forward sieve excludes a further fixed share and stops, and once a size bound is imposed the exclusion becomes the cycle problem itself.</p>
     </div>
+    <div class="card">
+      <h3><a href="https://claude.ai/artifact/4ZAdqTQfk4D9br1KtGKcRk">Drop Function</a><span class="kind">web/drop.html</span></h3>
+      <p><b>Shows.</b> The drop <code>f(n) = n − S(n)</code> of every odd <code>n</code>: a table and the rays of slope <code>1 − 3/2<sup>x</sup></code>; which even numbers are drops and every odd number that produces each one; the drop ledger along a trajectory, where the falls exceed the rises by exactly <code>n − 1</code>; a finder for sets of drops that sum to zero, with a chain test.</p>
+      <p><b>Establishes.</b> <span class="tag p">proved</span> every even integer is a drop and no odd one; a negative drop has exactly one source, <code>2|d| − 1</code>, zero has only 1, and a positive <code>d</code> has one source per divisor of <code>3d+1</code> of the form <code>2<sup>x</sup> − 3</code>, so the number of sources is unbounded; zero-sum sets exist for every size (<code>{3, 7, …, 4k−5, (2k−1)²}</code>), a zero-sum chain is exactly a cycle, and there is no 2-chain. <span class="tag c">computed</span> 83 zero-sum pairs below 400, 383 triples below 120, 511 quadruples below 60, none a chain; the drop 628 has four sources and 958 208 six.</p>
+      <p><b>Does not.</b> The sum constrains only the multiset of drops; the chain condition is the cycle equation again, and the page adds no bound. Nothing here is new: the statements reorganise the inverse map <code>(2<sup>x</sup>s − 1)/3</code> by the drop instead of by the target.</p>
+    </div>
   </div>
 
   <!-- ===== ledger of the project ===== -->
@@ -186,7 +192,7 @@ a:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:
       <li><b>Terras's conjecture.</b> Whether the true stopping time equals the coefficient stopping time.</li>
     </ul></div>
   </div>
-  <p class="note"><b>Why the sieve cannot finish, in one paragraph.</b> The equivalence theorem says that "the sieve kills every <code>M</code> at some finite depth" is the conjecture itself, restated. The number −1 sits in a residue class that survives the backward sieve at every depth, and the sieve's statistics are the same for q = 1 and q = 5, where a real cycle exists. So every reformulation walked through on these pages, balance, pairs, SAT, the multiplicative squeeze, circuits, landings, returned known results reorganized. That map is the honest product of the tour: the elementary structure is fully picked over, and any genuinely new statement has to come from the 3-adic counts under a size bound, which is where Conjecture B lives.</p>
+  <p class="note"><b>Why the sieve cannot finish, in one paragraph.</b> The equivalence theorem says that "the sieve kills every <code>M</code> at some finite depth" is the conjecture itself, restated. The number −1 sits in a residue class that survives the backward sieve at every depth, and the sieve's statistics are the same for q = 1 and q = 5, where a real cycle exists. So every reformulation walked through on these pages, balance, pairs, SAT, the multiplicative squeeze, circuits, landings, drops, returned known results reorganized. That map is the honest product of the tour: the elementary structure is fully picked over, and any genuinely new statement has to come from the 3-adic counts under a size bound, which is where Conjecture B lives.</p>
 
   <!-- ===== documents ===== -->
   <h2>The documents</h2>
@@ -202,13 +208,14 @@ a:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:
     <li><code>docs/WORDS.md</code> — the halving words classified by their residue map mod <code>3<sup>k</sup></code>: realization, bump, saturation and forced-doubling lemmas, Theorem A (the jump-1 half of the sign law, a local log-concavity of the word counts), the no-rate-gain theorems, and Conjecture B with its exact dynamics and reduction.</li>
     <li><code>docs/LEDGER.md</code> — the balance identity, the pairs, the gates, the SAT encoding with the 3-adic gates as circuits, the multiplicative squeeze and the circuit ladder, each with its verdict.</li>
     <li><code>docs/LANDING.md</code> — the landing form, every claim refereed twice: the bijection, the chain, the exact exclusion result, the residue automaton, the literature identity.</li>
+    <li><code>docs/DROP.md</code> — the drop function <code>f(n) = n − S(n)</code>: its fibers through the divisors of <code>3d+1</code> of the form <code>2<sup>x</sup> − 3</code>, the telescoping ledger, zero-sum sets against chains.</li>
   </ul>
 
   <!-- ===== repository ===== -->
   <h2>The repository</h2>
   <div class="repo">
     <div><b>Source</b><a href="https://github.com/vincentdavis/still_not_solved_collatz">github.com/vincentdavis/still_not_solved_collatz</a>, public. Three tracks share one specification, <code>docs/GROUND_TRUTH.md</code>.</div>
-    <div><b>Python</b>the package <code>collatz_maxodd</code>, standard library only, run with <code>uv</code>; 400 tests check every claim against the census, real integers, and exact big-integer brute force (25 of them need <code>python-sat</code>).</div>
+    <div><b>Python</b>the package <code>collatz_maxodd</code>, standard library only, run with <code>uv</code>; 421 tests check every claim against the census, real integers, and exact big-integer brute force (25 of them need <code>python-sat</code>).</div>
     <div><b>Lean 4</b>341 declarations, no Mathlib, audited by <code>#print axioms</code> at build time: each certifies <code>[propext, Quot.sound]</code>, <code>[propext]</code> or nothing; a five-step gate rejects <code>sorry</code>, <code>axiom</code>, <code>native_decide</code> and unsafe code, and was shown to fail on four injected defects.</div>
     <div><b>Web</b>the main page is generated from a template and a 140 KB data file; the six standalone pages are single files with everything inline, published as private artifacts and linked above.</div>
   </div>
