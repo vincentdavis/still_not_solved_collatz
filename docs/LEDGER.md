@@ -216,7 +216,13 @@ The page recomputes the list and the crossing in exact integer arithmetic
 `10^34`) with a slider for `k`; the five rows above are pinned by
 `test_multiplicative.py`.  Eliahou's published `17 087 915` is the `B` of the
 `2^40` row, which is the check that the page is drawing the classical
-argument and not a variant.  Hercher 2023 goes further
-(`L > 1.375×10¹¹`) with the local-maximum structure and Baker's theorem;
-nothing here is new, and the squeeze cannot forbid all lengths because best
-approximations of the irrational `log₂3` exist at every scale.
+argument and not a variant.  Hercher 2023 goes one rung further:
+Cor. 29 gives `L ≥ 137 528 045 312` (his `1.375×10¹¹`; the certificate's
+condition, verification to `3·2^69`, is met by Barina 2025), and that floor
+is exactly the **next best upper approximation** after the squeeze's
+`72 057 431 991`: `217 976 794 617 / 137 528 045 312`, `9.43×10⁻²⁴` above
+`log₂3` (`test_multiplicative.py`; `hercher.py` reproduces both rungs, see
+GROUND_TRUTH §7).  The page draws it as a vertical line, labelled
+conditional when the slider sits below `3·2^69`.  Nothing here is new, and
+the squeeze cannot forbid all lengths because best approximations of the
+irrational `log₂3` exist at every scale.

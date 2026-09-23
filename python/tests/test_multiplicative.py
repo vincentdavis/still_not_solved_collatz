@@ -43,3 +43,11 @@ def test_length_bounds_quoted_on_the_page():
         assert (got_L, got_B) == (L, B) and margin > 0, k
     # Barina's project-page figure gives the same convergent as the printed 2^71
     assert smallest_admissible_length(2075 * 2**60, 1, terms=70, prec=320)[:2] == (72057431991, 114208327604)
+
+
+def test_hercher_floor_is_the_next_rung_of_the_staircase():
+    """Cor. 29's L >= 137 528 045 312 is the best upper approximation right after the squeeze's 72 057 431 991."""
+    b = best_upper_approximations(70, 300)
+    i = [q for _, q in b].index(72057431991)
+    assert b[i] == (114208327604, 72057431991)
+    assert b[i + 1] == (217976794617, 137528045312)

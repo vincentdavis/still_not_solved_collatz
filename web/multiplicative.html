@@ -134,6 +134,7 @@ li{margin:4px 0}
   <div class="controls" role="group" aria-label="Bound controls">
     <label class="ctl">members above 2^k, k = <input type="range" id="kr" min="4" max="120" value="71" aria-label="k"><span class="mono" id="kv">71</span></label>
     <span class="status" id="kstat"></span>
+    <label class="ctl"><input type="checkbox" id="hl" checked> Hercher 2023 line</label>
   </div>
   <div class="chips" id="kchips" aria-label="Verified bounds">
     <button class="chip" data-k="40">2^40 — Eliahou 1993</button>
@@ -150,7 +151,9 @@ li{margin:4px 0}
     <div class="legend">
       <span><i style="background:var(--ink);border-radius:50%"></i>best upper approximation <code>B/L</code> of <code>log₂3</code></span>
       <span><i style="background:var(--fall);width:24px;height:3px"></i>allowed gap <code>δ(m)</code> — the region below it is where a cycle's <code>B/L</code> must lie</span>
-      <span><i style="border:2px solid var(--rise);border-radius:50%;width:12px;height:12px"></i>the first admissible length</span>
+      <span><i style="border:2px solid var(--rise);border-radius:50%;width:12px;height:12px"></i>the first admissible length under the squeeze</span>
+      <span><i style="background:var(--ray);width:3px;height:16px;border-radius:1px"></i>Hercher 2023, Cor. 29: <code>L ≥ 137 528 045 312</code> — every length to its left is excluded</span>
+      <span><i style="border:2px solid var(--ray);border-radius:50%;width:12px;height:12px"></i>the first length left under both</span>
     </div>
     <div class="stat" id="bstat"></div>
   </div>
@@ -163,8 +166,10 @@ li{margin:4px 0}
   <ul>
     <li><b>A second cycle has at least 72 057 431 991 odd steps and 114 208 327 604 halvings</b> — 186 billion steps of <code>T</code> in all — with every member above <code>2<sup>71</sup></code>.
       Its ratio <code>B/L</code> is one specific fraction, <code>114 208 327 604 / 72 057 431 991</code>, or a later best upper approximation.</li>
-    <li><b>This is the Crandall–Eliahou squeeze</b> (Crandall 1978; Eliahou, <em>Discrete Math.</em> 118, 1993), the elementary half of the cycle-length story. Hercher (<em>J. Integer Sequences</em> 26, 2023) gets further,
-      <code>L &gt; 1.375 × 10<sup>11</sup></code>, with the local-maximum structure and Baker's theorem on linear forms in logarithms. Nothing here is new; the page draws the classical argument from the ledger.</li>
+    <li><b>This is the Crandall–Eliahou squeeze</b> (Crandall 1978; Eliahou, <em>Discrete Math.</em> 118, 1993), the elementary half of the cycle-length story. Hercher (<em>J. Integer Sequences</em> 26, 2023, Cor. 29) gets one rung further,
+      <code>L ≥ 137 528 045 312</code> — his <code>1.375 × 10<sup>11</sup></code> — with the local-maximum structure of Simons and de Weger, Baker-type bounds and a certificate computation whose condition, verification to <code>3·2<sup>69</sup></code>, Barina's 2025 bound meets.
+      His floor is the <em>next point on this very staircase</em>: <code>217 976 794 617 / 137 528 045 312</code>. The squeeze allows the rung <code>72 057 431 991</code> (his own "for all m" row, <code>7.20 × 10<sup>10</sup></code>), the machinery removes it, and the next best upper approximation becomes the floor.
+      The repository's exact re-run of his ladder (<code>hercher.py</code>) reproduces both rungs. Nothing here is new; the page draws the classical argument from the ledger.</li>
     <li><b>Why the argument stops.</b> Move the slider past 71 and the bound keeps climbing, but only because the verification bound is assumed to. The squeeze converts verified <em>size</em> into forbidden <em>length</em>; it cannot forbid all lengths, because <code>log₂3</code> is irrational and best approximations exist at every scale.
       A proof would need <code>B − L·log₂3</code> to be bounded below by something larger than <code>L/(3m)</code> for all large <code>L</code> — which is Baker-type territory, and even there the known bounds fall short.</li>
     <li><b>The ledger, closed.</b> Section 1 of the additive page said ascents equal descents; this page says the same thing as <code>2<sup>B</sup> = ∏(3 + 1/nᵢ)</code>. The additive form gives the residue gates at the ends; the multiplicative form gives the length bound. Neither closes the loop, and both are exact.</li>
@@ -267,13 +272,23 @@ function renderBound(){
   svg.appendChild(el('rect', { x: ML, y: yd, width: pw, height: MT + ph - yd, fill: 'var(--allow)' }));
   svg.appendChild(el('line', { x1: ML, x2: W - MR, y1: yd, y2: yd, stroke: 'var(--fall)', 'stroke-width': 2.2 }));
   svg.appendChild(el('text', { x: ML + 8, y: yd - 6, 'font-size': 11.5, fill: 'var(--fall)', 'font-family': 'var(--f-mono)', 'font-weight': 500 }, 'allowed gap δ = log₂(1 + 1/(3·2^' + K + ')) = ' + sci(d)));
+  // Hercher 2023, Cor. 29: L >= 137 528 045 312 (unconditional once verification reaches 3*2^69, which Barina 2025 does)
+  var LH = 137528045312, showH = $('hl').checked, condH = Math.pow(2, K) < 3 * Math.pow(2, 69), hitBoth = -1;
+  if (showH){
+    var xh = X(LH);
+    svg.appendChild(el('rect', { x: ML, y: MT, width: xh - ML, height: ph, fill: 'var(--band)' }));
+    svg.appendChild(el('line', { x1: xh, x2: xh, y1: MT, y2: MT + ph, stroke: 'var(--ray)', 'stroke-width': 2, 'stroke-dasharray': '6 4' }));
+    svg.appendChild(el('text', { x: xh + 8, y: MT + 14, 'font-size': 11.5, fill: 'var(--ray)', 'font-family': 'var(--f-mono)', 'font-weight': 500 }, 'Hercher 2023: L ≥ 137 528 045 312' + (condH ? ' (conditional here)' : '')));
+    for (var hi = 0; hi < BUA.length; hi++) if (Number(BUA[hi].q) >= LH && BUA[hi].err <= d){ hitBoth = hi; break; }
+  }
   var host = svg.parentNode, tip = $('btip');
   BUA.forEach(function(b, i){
     if (Number(b.q) > Math.pow(10, XMAX) || b.err < Math.pow(10, YMIN)) return;
     var cx = X(Number(b.q)), cy = Y(b.err);
-    if (i === hit){ svg.appendChild(el('line', { x1: cx, x2: cx, y1: cy, y2: MT + ph, stroke: 'var(--rise)', 'stroke-width': 1.2, 'stroke-dasharray': '4 4' })); svg.appendChild(el('circle', { cx: cx, cy: cy, r: 9, fill: 'none', stroke: 'var(--rise)', 'stroke-width': 2 })); svg.appendChild(el('text', { x: Math.min(cx + 12, W - MR - 220), y: cy + 4, 'font-size': 11.5, fill: 'var(--rise)', 'font-family': 'var(--f-mono)', 'font-weight': 500 }, 'L ≥ ' + fmtBig(b.q))); }
+    if (i === hitBoth) svg.appendChild(el('circle', { cx: cx, cy: cy, r: 14, fill: 'none', stroke: 'var(--ray)', 'stroke-width': 2 }));
+    if (i === hit){ svg.appendChild(el('line', { x1: cx, x2: cx, y1: cy, y2: MT + ph, stroke: 'var(--rise)', 'stroke-width': 1.2, 'stroke-dasharray': '4 4' })); svg.appendChild(el('circle', { cx: cx, cy: cy, r: 9, fill: 'none', stroke: 'var(--rise)', 'stroke-width': 2 })); var nearH = showH && cx < X(LH) && cx > X(LH) - 230; svg.appendChild(el('text', { x: nearH ? cx - 16 : Math.min(cx + 12, W - MR - 220), y: cy + 4, 'text-anchor': nearH ? 'end' : 'start', 'font-size': 11.5, fill: 'var(--rise)', 'font-family': 'var(--f-mono)', 'font-weight': 500 }, 'L ≥ ' + fmtBig(b.q))); }
     var pt = el('circle', { cx: cx, cy: cy, r: 3.6, fill: 'var(--ink)', stroke: 'var(--surface)', 'stroke-width': 1 });
-    pt.addEventListener('mousemove', function(evt){ showTip(tip, host, evt, '<div class="v">' + fmtBig(b.p) + ' / ' + fmtBig(b.q) + '</div><div class="s">B/L − log₂3 = ' + sci(b.err, 3) + (b.err <= d ? ' — under the allowed gap: an admissible length' : ' — above the allowed gap: no cycle with this many odd steps') + '</div>'); });
+    pt.addEventListener('mousemove', function(evt){ showTip(tip, host, evt, '<div class="v">' + fmtBig(b.p) + ' / ' + fmtBig(b.q) + '</div><div class="s">B/L − log₂3 = ' + sci(b.err, 3) + (b.err <= d ? ' — under the allowed gap: admissible for the squeeze' : ' — above the allowed gap: no cycle with this many odd steps') + (showH ? (Number(b.q) < LH ? '; left of Hercher\'s line: excluded' : '; right of Hercher\'s line') : '') + '</div>'); });
     pt.addEventListener('mouseleave', function(){ tip.hidden = true; });
     svg.appendChild(pt);
     if (i < 8) svg.appendChild(el('text', { x: cx + 7, y: cy - 6, 'font-size': 10.5, fill: 'var(--ink-2)', 'font-family': 'var(--f-mono)' }, b.p + '/' + b.q));
@@ -282,6 +297,12 @@ function renderBound(){
   var lines = ['<b>members above 2^' + K + '</b> ' + (hyp ? '<span class="hyp">hypothetical — verification stands at 2^71</span>' : K === 71 ? 'the current verified bound (Barina 2025)' : 'verified') + ' · allowed gap δ = ' + sci(d, 3)];
   if (hit >= 0){ var b = BUA[hit]; var tot = b.p + b.q; lines.push('<span class="big">L ≥ ' + fmtBig(b.q) + ' odd steps · B ≥ ' + fmtBig(b.p) + ' halvings · ' + fmtBig(tot) + ' T-steps</span>'); lines.push('B/L = ' + fmtBig(b.p) + '/' + fmtBig(b.q) + ' sits ' + sci(b.err, 3) + ' above log₂3; the previous best, ' + (hit > 0 ? fmtBig(BUA[hit - 1].p) + '/' + fmtBig(BUA[hit - 1].q) + ', sits ' + sci(BUA[hit - 1].err, 3) + ' above — too far' : '—')); if (EXACT[K]) lines.push('exact check (cycleeq, 320 digits): L = ' + fmt(EXACT[K][0]) + ', B = ' + fmt(EXACT[K][1]) + (Number(b.q) === EXACT[K][0] && Number(b.p) === EXACT[K][1] ? ' ✓' : ' ✗')); }
   else lines.push('no admissible length within the tabulated continued fraction (denominators to 10^34)');
+  if (showH){
+    var hb = hitBoth >= 0 ? BUA[hitBoth] : null;
+    lines.push('<b>Hercher 2023, Cor. 29</b> ' + (condH ? '<span class="hyp">conditional at this k — its certificate assumes verification to 3·2^69 ≈ 2^70.6</span>' : 'unconditional: its condition, verification to 3·2^69, is met by Barina 2025') + ' · L ≥ 137,528,045,312' +
+      (hit >= 0 && Number(BUA[hit].q) >= LH ? ' · the squeeze alone already exceeds it here' : ' · removes the squeeze\'s rung 72,057,431,991; the next point of the same staircase, 217,976,794,617/137,528,045,312 (' + sci(BUA[44].err, 3) + ' above log₂3), becomes the floor') +
+      (hb ? ' · <span class="big">under both: L ≥ ' + fmtBig(hb.q) + ' odd steps, B ≥ ' + fmtBig(hb.p) + ', ' + fmtBig(hb.p + hb.q) + ' T-steps</span>' : ''));
+  }
   $('bstat').innerHTML = lines.join('<br>');
   $('kv').textContent = K; $('kstat').textContent = 'm = 2^' + K + ' ≈ ' + sci(Math.pow(2, K), 2);
   document.querySelectorAll('#kchips .chip').forEach(function(c){ c.setAttribute('aria-pressed', parseInt(c.dataset.k, 10) === K ? 'true' : 'false'); });
@@ -293,6 +314,7 @@ function renderPresets(){
     ['2^' + k + ' ≈ ' + sci(Math.pow(2, k), 2), sci(d, 3), fmtBig(b.q), fmtBig(b.p), fmtBig(b.p + b.q), sci(b.err, 3), (PRESETS[k].name || '') + (k === 40 ? ' — B is his 17 087 915' : k === 100 ? ' — if verification reached 2^100' : '')].forEach(function(v, j){ var td = document.createElement('td'); td.textContent = v; if (j === 0 || j === 6) td.className = 'l'; tr.appendChild(td); }); tb.appendChild(tr); });
 }
 $('kr').addEventListener('input', function(){ K = parseInt(this.value, 10); renderBound(); renderPresets(); });
+$('hl').addEventListener('change', renderBound);
 $('kchips').addEventListener('click', function(e){ var b = e.target.closest('button'); if (!b) return; K = parseInt(b.dataset.k, 10); $('kr').value = K; renderBound(); renderPresets(); });
 
 renderTraj(); renderBound(); renderPresets();

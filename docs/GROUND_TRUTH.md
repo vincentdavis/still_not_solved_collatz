@@ -709,7 +709,8 @@ Crandall–Eliahou bound drawn from the ledger, in the page's own exact
 arithmetic: members above `2^40` force `B ≥ 17 087 915` (Eliahou's 1993
 number reproduced), above `2^71` force `L ≥ 72 057 431 991`,
 `B ≥ 114 208 327 604` (this doc's T7 figure), with a slider for the
-verification bound. Status: **P (identities, cited gates) / C (encoding,
+verification bound; Hercher's Cor. 29 floor `137 528 045 312` is drawn as a
+line and is the next best upper approximation on the same staircase. Status: **P (identities, cited gates) / C (encoding,
 bounds)**; `python/tests/test_ledger.py` (2), `test_satcycles.py` (25,
 skipped without python-sat), `test_multiplicative.py` (3).
 
