@@ -1,0 +1,420 @@
+<meta charset="utf-8">
+<title>Drop Function</title>
+<meta name="description" content="f(n) = n − S(n): how far an odd number falls to the next odd number on its 3n+1 trajectory — which numbers are drops, how many odd numbers share each drop, the drop ledger of a trajectory, and zero-sum combinations against chains.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --paper:#E8EAE5; --surface:#F2F3EF; --ink:#171A1C; --ink-2:#4A5254; --ink-3:#79817F;
+  --rule:#C9CDC4; --grid:#DEE1DA; --axis:#B4B9AD;
+  --ray:#2a78d6; --rise:#eb6834; --fall:#1baf7a; --fix:#79817F; --band:rgba(23,26,28,.06);
+  --focus:#24478F; --ok:#1baf7a; --warn:#eb6834;
+  --f-sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#14171A; --surface:#1C2126; --ink:#E8EAE5; --ink-2:#A9B1AF; --ink-3:#6E7876;
+    --rule:#2B3138; --grid:#242A30; --axis:#3A424A;
+    --ray:#3987e5; --rise:#d95926; --fall:#199e70; --fix:#8B9492; --band:rgba(232,234,229,.08);
+    --focus:#7FA8EE; --ok:#199e70; --warn:#d95926;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#14171A; --surface:#1C2126; --ink:#E8EAE5; --ink-2:#A9B1AF; --ink-3:#6E7876;
+  --rule:#2B3138; --grid:#242A30; --axis:#3A424A;
+  --ray:#3987e5; --rise:#d95926; --fall:#199e70; --fix:#8B9492; --band:rgba(232,234,229,.08);
+  --focus:#7FA8EE; --ok:#199e70; --warn:#d95926;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-sans);font-size:15px;line-height:1.5}
+.wrap{max-width:1080px;margin:0 auto;padding:28px 16px 56px;display:flex;flex-direction:column;gap:18px}
+.eyebrow{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+h1{margin:2px 0 0;font-size:clamp(1.6rem,3.4vw,2.2rem);font-weight:600;letter-spacing:-.01em;text-wrap:balance;line-height:1.15}
+h2{margin:26px 0 0;font-size:1.25rem;font-weight:600;letter-spacing:-.005em;text-wrap:balance}
+h2 .tag{font-family:var(--f-mono);font-size:.7rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-left:10px;vertical-align:2px}
+h3{margin:14px 0 0;font-size:1rem;font-weight:600}
+.lede{max-width:66ch;color:var(--ink-2);margin:0}
+p{max-width:70ch}
+a{color:var(--ink);text-decoration-color:var(--ink-3);text-underline-offset:2px}
+code,.mono{font-family:var(--f-mono);font-size:.92em}
+p code,li code,td code,.note code{color:var(--ink)}
+.controls{display:flex;flex-wrap:wrap;align-items:center;gap:10px 20px;font-size:.88rem;color:var(--ink-2)}
+button:focus-visible,input:focus-visible,summary:focus-visible,select:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+label.ctl{display:inline-flex;align-items:center;gap:8px}
+input[type=number],select{font:inherit;font-family:var(--f-mono);width:8.5em;padding:4px 6px;border:1px solid var(--rule);border-radius:4px;background:var(--surface);color:var(--ink)}
+select{width:auto}
+input[type=range]{width:150px;accent-color:var(--ray)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:inherit;font-size:.8rem;font-family:var(--f-mono);border:1px solid var(--rule);background:var(--surface);color:var(--ink-2);border-radius:999px;padding:3px 10px;cursor:pointer}
+.chip:hover{border-color:var(--ink-3);color:var(--ink)}
+.btn{font:inherit;font-weight:500;font-size:.88rem;border:1px solid var(--ink);background:var(--ink);color:var(--paper);border-radius:5px;padding:6px 14px;cursor:pointer}
+.btn.alt{background:transparent;color:var(--ink)}
+.btn[disabled]{opacity:.5;cursor:default}
+.mono{font-variant-numeric:tabular-nums}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:12px 10px 8px;position:relative}
+.chart{position:relative;width:100%}
+svg{display:block;width:100%;height:auto}
+svg text{font-family:var(--f-mono);font-size:11px;fill:var(--ink-3)}
+svg .axis{stroke:var(--axis);stroke-width:1}
+svg .grid{stroke:var(--grid);stroke-width:1}
+svg .zero{stroke:var(--ink-3);stroke-width:1;stroke-dasharray:3 3}
+svg .ray{stroke:var(--ray);stroke-width:1;opacity:.45}
+svg .ray.far{opacity:.22}
+svg .pt.rise{fill:var(--rise)} svg .pt.fall{fill:var(--fall)} svg .pt.fix{fill:var(--fix)}
+svg .bar.rise{fill:var(--rise)} svg .bar.fall{fill:var(--fall)} svg .bar.fix{fill:var(--fix)}
+svg .run{fill:none;stroke:var(--ink);stroke-width:1.4;opacity:.75}
+svg .hl{fill:none;stroke:var(--ink);stroke-width:1.5}
+svg .lab{fill:var(--ray);font-size:10.5px}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--paper);padding:8px 10px;border-radius:5px;font-size:.8rem;line-height:1.35;max-width:300px;box-shadow:0 8px 24px -14px rgba(0,0,0,.6);z-index:2}
+.tip .v{font-family:var(--f-mono);font-size:.9rem;font-weight:500}
+.tip .s{color:var(--rule);opacity:.9}
+.legend{display:flex;flex-wrap:wrap;gap:8px 22px;font-size:.84rem;color:var(--ink-2);padding:2px 4px}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.legend i{display:inline-block;width:14px;height:14px;border-radius:3px}
+.note{max-width:70ch;color:var(--ink-2);font-size:.9rem;margin:0}
+.stat{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:.86rem;color:var(--ink);padding:6px 4px 2px;line-height:1.5}
+.stat b{font-weight:500;color:var(--ink-2)}
+details{border-top:1px solid var(--rule);padding-top:10px}
+summary{cursor:pointer;color:var(--ink-2);font-weight:500;font-size:.9rem}
+.tbl{overflow-x:auto;margin-top:10px}
+table{border-collapse:collapse;font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:.82rem;white-space:nowrap}
+th,td{padding:4px 10px;text-align:right;border-bottom:1px solid var(--grid);color:var(--ink)}
+th{color:var(--ink-3);font-weight:500}
+td.l,th.l{text-align:left}
+tr.rise td:last-child,td.rise{color:var(--rise)} tr.fall td:last-child,td.fall{color:var(--fall)}
+.strip{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:6px;margin:8px 0 4px}
+.cell{border:1px solid var(--rule);border-radius:5px;padding:7px 5px 6px;text-align:center;font-family:var(--f-mono);font-size:.74rem;background:var(--surface);min-height:70px;display:flex;flex-direction:column;gap:3px;align-items:center;justify-content:flex-start;color:var(--ink-2)}
+.cell .r{font-size:.98rem;font-weight:500;color:var(--ink)}
+.cell.rise .r{color:var(--rise)} .cell.fall .r{color:var(--fall)}
+.cell .src{line-height:1.3}
+.cell.m2{background:color-mix(in srgb,var(--fall) 10%,var(--surface))} .cell.m3{background:color-mix(in srgb,var(--fall) 22%,var(--surface))} .cell.m4{background:color-mix(in srgb,var(--fall) 36%,var(--surface))}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:760px){.two{grid-template-columns:1fr}.strip{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.proof{border-left:3px solid var(--rule);padding:2px 0 2px 14px;margin:8px 0;color:var(--ink-2);font-size:.92rem;max-width:70ch}
+.proof b{color:var(--ink)}
+.out{font-family:var(--f-mono);font-size:.84rem;line-height:1.55;white-space:pre-wrap;padding:8px 4px 2px;min-height:3em}
+.ok{color:var(--ok)} .warn{color:var(--warn)}
+ul{margin:6px 0 0;padding-left:20px;max-width:72ch}
+li{margin:4px 0}
+.status{font-size:.82rem;color:var(--ink-3);font-family:var(--f-mono)}
+.bars{display:grid;grid-template-columns:auto 1fr auto;gap:4px 12px;align-items:center;font-family:var(--f-mono);font-size:.82rem;max-width:520px;margin-top:8px}
+.bars .b{height:12px;background:var(--fall);border-radius:2px;min-width:2px}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">the 3n+1 odd step as a signed distance</div>
+    <h1>Drop Function</h1>
+  </header>
+  <p class="lede">For an odd <code>n</code> the next odd number on its trajectory is <code>S(n) = (3n+1)/2<sup>x</sup></code>, with
+  <code>x</code> the number of halvings. The <b>drop</b> <code>f(n) = n − S(n)</code> is how far the trajectory has come down by the time it
+  is odd again — negative when it went up. It is the net of the <a href="https://claude.ai/artifact/SnaWUkMG6NSKjCD1HYmX8m">cycle ledger</a>'s
+  pairs with the sign flipped, and <code>n − s</code> in the <a href="https://claude.ai/artifact/3SGVtUyiuHJmw1Ms5HxrpP">landing form</a>.
+  This page builds the function, says exactly which numbers are drops and how many odd numbers share each one, keeps the drop ledger along a
+  trajectory, and answers the question a cycle raises: combinations of drops that sum to zero exist in abundance — and none of them is a chain.</p>
+
+  <!-- ============ 1. the function ============ -->
+  <h2>1 · The function <span class="tag">definition · proved</span></h2>
+  <p class="note">With <code>x = v₂(3n+1)</code> and <code>s = S(n)</code>, the drop is <code>f(n) = n − s = ((2<sup>x</sup> − 3)·n − 1)/2<sup>x</sup></code>.
+  It is always even (two odd numbers). It is <b>negative exactly when <code>x = 1</code></b>, i.e. <code>n ≡ 3 (mod 4)</code>: the step is a rise
+  by <code>(n+1)/2</code>. It is zero only at <code>n = 1</code>. Otherwise <code>x ≥ 2</code> and the fall is at least <code>(n−1)/4</code>.
+  On each class <code>n ≡ n₀ (mod 2<sup>x+1</sup>)</code> the function is a straight line of slope <code>1 − 3/2<sup>x</sup></code>:
+  <code>−½, ¼, ⅝, 13⁄16, 29⁄32, …</code> — the <a href="https://claude.ai/code/artifact/6b158da1-5d06-4e60-8807-bb0044b4691d">halving rays</a> seen from <code>n</code> instead of from <code>s</code>.</p>
+  <div class="two">
+    <div>
+      <div class="controls" role="group" aria-label="Table controls">
+        <label class="ctl">rows <select id="trows" aria-label="rows"><option>24</option><option selected>48</option><option>100</option><option>250</option></select></label>
+        <span class="status">odd n from 1 upward</span>
+      </div>
+      <div class="tbl" style="max-height:520px;overflow-y:auto"><table id="ttab" aria-label="drop table"></table></div>
+    </div>
+    <div>
+      <div class="controls" role="group" aria-label="Chart controls">
+        <label class="ctl">odd n below <input type="range" id="rn" min="64" max="2048" step="64" value="512" aria-label="range"> <span class="mono" id="rnv">512</span></label>
+      </div>
+      <div class="card chart" id="rcard">
+        <svg id="rsvg" viewBox="0 0 1000 620" role="img" aria-label="drop f(n) against n, rays by height x"></svg>
+        <div class="tip" id="rtip" hidden></div>
+      </div>
+      <div class="legend"><span><i style="background:var(--rise)"></i>rise · x = 1 · f(n) = −(n+1)/2</span><span><i style="background:var(--fall)"></i>fall · x ≥ 2</span><span><i style="background:var(--ray);opacity:.5"></i>ray of height x, slope 1 − 3/2<sup>x</sup></span></div>
+      <p class="note">Hover for a point. The rays for <code>x ≥ 6</code> are almost the diagonal <code>f = n</code>: a deep landing keeps nearly all of <code>n</code>.</p>
+    </div>
+  </div>
+
+  <!-- ============ 2. the value set ============ -->
+  <h2>2 · Which numbers are drops <span class="tag">theorem · proved</span></h2>
+  <p class="note"><b>Every even integer is a drop, and the sources of a drop are read off the divisors of <code>3d+1</code>.</b>
+  Write <code>d = f(n)</code>, <code>s = S(n)</code>, <code>x</code> the height. Then <code>n = s + d</code> and <code>3n + 1 = 2<sup>x</sup>s</code> give
+  <code>(2<sup>x</sup> − 3)·s = 3d + 1</code>. So:</p>
+  <ul>
+    <li><b><code>d &lt; 0</code>:</b> only <code>x = 1</code> fits (<code>2 − 3 = −1</code>), <code>s = −3d − 1</code>, one source <code>n = −2d − 1 = 2|d| − 1</code>. Every negative even number is the drop of exactly one odd number, and it is <code>≡ 3 (mod 4)</code>.</li>
+    <li><b><code>d = 0</code>:</b> <code>(2<sup>x</sup> − 3)·s = 1</code> forces <code>x = 2, s = 1</code>: only <code>n = 1</code>, the fixed point.</li>
+    <li><b><code>d &gt; 0</code>:</b> one source for each divisor of <code>3d + 1</code> of the form <code>2<sup>x</sup> − 3</code> with <code>x ≥ 2</code>, namely
+    <code>n = d + (3d+1)/(2<sup>x</sup> − 3)</code> at height <code>x</code>. The divisor 1 (<code>x = 2</code>) always works, so every positive even <code>d</code> has the source <code>4d + 1</code>; the others come from
+    <code>5, 13, 29, 61, 125, 253, 509, 1021, …</code> (<code>2<sup>x</sup> − 3</code>, OEIS A036563; prime for <code>x = 3, 4, 5, 6, 9, 10, 12, 14, 20, 22, 24, 29, …</code>, A050414).</li>
+    <li><b>odd <code>d</code>:</b> never.</li>
+  </ul>
+  <div class="proof"><b>Proof.</b> Both directions are the identity <code>(2<sup>x</sup> − 3)s = 3d + 1</code>. Given <code>n</code>, put <code>s = S(n)</code>, <code>d = n − s</code>. Given a divisor
+  <code>2<sup>x</sup> − 3</code> of <code>3d+1</code> with quotient <code>s</code>, the number <code>n = s + d</code> is odd (odd plus even), <code>3n+1 = 3s + 3d + 1 = 2<sup>x</sup>s</code>, and <code>s</code> is odd, so
+  <code>v₂(3n+1) = x</code> exactly and <code>S(n) = s</code>. The map <code>x ↦ n</code> is injective because <code>n = d + (3d+1)/(2<sup>x</sup> − 3)</code> is strictly decreasing in <code>x</code>. ∎</div>
+  <div class="controls" role="group" aria-label="Fiber lookup">
+    <label class="ctl">drop d <input type="number" id="fd" step="2" value="628" aria-label="drop"></label>
+    <button class="btn" id="fgo">sources of d</button>
+    <span class="status">up to 10<sup>12</sup></span>
+  </div>
+  <div class="out" id="fout" aria-live="polite"></div>
+  <div class="strip" id="dstrip" aria-label="drops −10 … 96 with their sources"></div>
+  <p class="note">Each cell: the drop, its sources below it, shaded by how many there are. Negative drops have one source each; <code>0</code> has only <code>1</code>; positive drops have at least the source <code>4d+1</code> and gain another for each <code>2<sup>x</sup> − 3</code> dividing <code>3d+1</code>.</p>
+  <div class="two">
+    <div>
+      <h3>How many odd numbers share a drop</h3>
+      <div class="bars" id="dist" aria-label="distribution of source counts"></div>
+      <p class="note" id="distnote"></p>
+      <div class="proof"><b>The count is unbounded (proved).</b> The numbers <code>2<sup>x</sup> − 3</code> are odd and prime to 3, so their least common multiple over <code>2 ≤ x ≤ X</code> has a multiple <code>M ≡ 1 (mod 6)</code>, and <code>d = (M − 1)/3</code> is an even drop with at least <code>X − 1</code> sources.
+      For <code>X = 7</code>: <code>lcm(1, 5, 13, 29, 61, 125) = 2 874 625 ≡ 1 (mod 6)</code>, <code>d = 958 208</code>, six sources — and by the divisor count no smaller drop has six.</div>
+    </div>
+    <div>
+      <h3>The sources at each height</h3>
+      <div class="tbl"><table id="htab" aria-label="height classes"></table></div>
+      <p class="note">At height <code>x</code> the sources are one class mod <code>2<sup>x+1</sup></code>, the targets one odd class mod 6 (<code>s ≡ 1</code> for even <code>x</code>, <code>s ≡ 5</code> for odd <code>x</code>, so <code>2<sup>x</sup>s ≡ 1 (mod 3)</code>), and the drops the arithmetic progression <code>d₀ + 2(2<sup>x</sup> − 3)·k</code>. The first source at an even height is <code>(2<sup>x</sup> − 1)/3</code>, which lands on 1.</p>
+    </div>
+  </div>
+
+  <!-- ============ 3. the trajectory ledger ============ -->
+  <h2>3 · The drop ledger of a trajectory <span class="tag">telescoping · proved</span></h2>
+  <p class="note">Along the odd steps <code>n = n₀ → n₁ → … → 1</code> the drops telescope: <b><code>Σ f(nᵢ) = n − 1</code></b>. So the falls' total exceeds the rises' total by exactly <code>n − 1</code>, whatever the trajectory does in between. The running sum after step <code>i</code> is <code>n − nᵢ₊₁</code>, the height of the start above the current odd number.</p>
+  <div class="controls" role="group" aria-label="Trajectory controls">
+    <label class="ctl">start n <input type="number" id="tn" min="1" step="2" value="27" aria-label="odd start"></label>
+    <div class="chips" id="tchips"></div>
+    <span class="status" id="terr"></span>
+  </div>
+  <div class="card chart" id="tcard">
+    <svg id="tsvg" viewBox="0 0 1000 420" role="img" aria-label="drops along the trajectory"></svg>
+    <div class="tip" id="ttip" hidden></div>
+  </div>
+  <div class="legend"><span><i style="background:var(--rise)"></i>rise (drop &lt; 0)</span><span><i style="background:var(--fall)"></i>fall (drop &gt; 0)</span><span><i style="background:var(--ink);height:2px;border-radius:0"></i>running sum = n − current odd</span></div>
+  <div class="stat" id="tstat"></div>
+  <details><summary>every odd step</summary><div class="tbl"><table id="ttbl" aria-label="trajectory steps"></table></div></details>
+
+  <!-- ============ 4. zero-sum combinations ============ -->
+  <h2>4 · Combinations that sum to zero <span class="tag">computed · proved</span></h2>
+  <p class="note"><b>Do combinations of drops that sum to zero exist?</b> Yes, for every size, and it is easy to say why. What does not exist below every bound ever searched is a zero-sum combination that is also a <em>chain</em> — and a zero-sum chain is exactly a cycle.</p>
+  <ul>
+    <li><b>Pairs.</b> For every even <code>d ≥ 2</code> the rise source <code>2d − 1</code> has drop <code>−d</code> and the fall source <code>4d + 1</code> has drop <code>+d</code>: <code>{3, 9}, {7, 17}, {11, 25}, …</code> Every zero-sum pair is <code>{2d − 1, one source of d}</code>, so below <code>N</code> there are as many as there are fall sources below <code>N</code> whose drop is at most <code>(N−1)/2</code>: 83 below 400, 2 109 below 10 000.</li>
+    <li><b>Every size.</b> <code>{3, 7, 11, …, 4k − 5, (2k−1)²}</code>: the first <code>k − 1</code> rise sources drop by <code>−2, −4, …, −2(k−1)</code>, total <code>−k(k−1)</code>, and the odd square <code>(2k−1)² ≡ 1 (mod 8)</code> lands at height 2 with drop <code>((2k−1)² − 1)/4 = k(k−1)</code>. Sizes 2, 3, 4: <code>{3, 9}, {3, 7, 25}, {3, 7, 11, 49}</code>.</li>
+    <li><b>Chains.</b> A set is a chain when its members can be ordered so that each one's target is the next: <code>n₁ → n₂ → … → n_L → n₁</code>. Its drops sum to zero automatically (telescoping), and it is a cycle. The converse fails badly: the sum only constrains the multiset of drops, while a chain fixes every member from the previous one and leaves a single number free, whose closure is the cycle equation. Below <code>2<sup>71</sup></code> the only chain is <code>{1}</code> (Barina 2025), and no cycle with fewer than 92 rise-runs exists at any size (Hercher 2023).</li>
+    <li><b>No 2-chain (proved).</b> A rise <code>a → b = a + (a+1)/2</code> followed by a fall back to <code>a</code> means the fall's drop is <code>d = (a+1)/2</code>, so <code>a = 2d − 1</code>, <code>b = 3d − 1</code>, and <code>S(3d − 1) = 2d − 1</code> requires <code>9d − 2 = 2<sup>x</sup>(2d − 1)</code>, i.e. <code>d·(2<sup>x+1</sup> − 9) = 2<sup>x</sup> − 2</code>. At <code>x = 2</code> that is <code>d = −2</code>; for <code>x ≥ 3</code> it puts <code>d</code> strictly between 0 and 1. No solution — the smallest case of Steiner's 1977 theorem on one-circuit cycles.</li>
+  </ul>
+  <div class="controls" role="group" aria-label="Finder controls">
+    <label class="ctl">odd numbers below <input type="number" id="zn" min="10" step="2" value="400" aria-label="bound"></label>
+    <label class="ctl">size <select id="zk" aria-label="size"><option>2</option><option>3</option><option>4</option></select></label>
+    <button class="btn" id="zgo">find zero-sum sets</button>
+    <span class="status" id="zstatus">1 is left out: its drop is 0, so it would pad every set</span>
+  </div>
+  <div class="out" id="zout" aria-live="polite"></div>
+  <div class="tbl"><table id="ztbl" aria-label="zero-sum sets"></table></div>
+
+  <!-- ============ 5. cycles ============ -->
+  <h2>5 · What a cycle would have to balance <span class="tag">identity · proved</span></h2>
+  <p class="note">Around a cycle with members <code>n₁, …, n_L</code> the drops sum to zero, so the rises' ledger equals the falls' ledger:
+  <b><code>Σ<sub>rises</sub> (n+1)/2 = Σ<sub>falls</sub> ((2<sup>x</sup> − 3)·n − 1)/2<sup>x</sup></code></b>.
+  This is one identity in three vocabularies: the ledger page's <code>E = 4·O + 2L</code>, the landing form's <code>Σ sᵢ(2<sup>xᵢ</sup> − 3) = L</code>, and this one. Each says what the members must add up to, none says which members. The finite version of "which" is what the
+  <a href="https://claude.ai/artifact/SnaWUkMG6NSKjCD1HYmX8m">SAT box</a> decides for one box at a time, the <a href="https://claude.ai/artifact/3SGVtUyiuHJmw1Ms5HxrpP">chain closer</a> reads off any list of heights, and the
+  <a href="https://claude.ai/artifact/TUdU2rAtKnP9q2HsFcKPa5">multiplicative ledger</a> turns into the continued fraction of <code>log₂3</code>.</p>
+  <p class="note">The only odd number with drop 0 is 1, so a cycle other than <code>{1}</code> has no member that lands on itself; its rises and falls must cancel across members. Every odd number outside <code>{1}</code> is either a rise source (<code>≡ 3 mod 4</code>) or falls by at least a quarter of itself.</p>
+
+  <p class="note" style="margin-top:22px"><b>Provenance.</b> Every statement marked proved has a proof in <code>docs/DROP.md</code>; every number on this page is pinned by <code>python/tests/test_drop.py</code>. The drop sequence
+  <code>−2, 4, −4, 2, −6, 8, −8, 4, −10, 20, …</code> (odd <code>n = 3, 5, 7, …</code>) is not in the OEIS (checked 2026-09-23), and we found no source that slices the inverse map by the drop; the statements are elementary reorganisations of the inverse map <code>(2<sup>x</sup>s − 1)/3</code> and nothing here is claimed as new.
+  Companion pages: <a href="https://claude.ai/artifact/Ka93oeMYfWhb5aLUX2Kooi">front door</a>, <a href="https://claude.ai/artifact/SnaWUkMG6NSKjCD1HYmX8m">cycle ledger</a>, <a href="https://claude.ai/artifact/3SGVtUyiuHJmw1Ms5HxrpP">landing form</a>, <a href="https://claude.ai/artifact/TUdU2rAtKnP9q2HsFcKPa5">multiplicative ledger</a>, <a href="https://claude.ai/code/artifact/6b158da1-5d06-4e60-8807-bb0044b4691d">halving rays</a>, <a href="https://claude.ai/code/artifact/b128753e-8771-43da-9ff7-d6d0e29867ef">halving surface</a>, <a href="https://claude.ai/code/artifact/5fd7a07b-0c94-49af-9f21-1055d13f6ede">parity atlas</a>.
+  Source: <a href="https://github.com/vincentdavis/still_not_solved_collatz">github.com/vincentdavis/still_not_solved_collatz</a>.</p>
+</div>
+
+<script>
+(function(){
+'use strict';
+var $ = function(id){ return document.getElementById(id); };
+var SEP = ' ', MINUS = '−';
+function fmt(v){ if (typeof v !== 'number' || !isFinite(v)) return String(v); var neg = v < 0, s = String(Math.abs(v)), out = ''; while (s.length > 3){ out = SEP + s.slice(-3) + out; s = s.slice(0, -3); } return (neg ? MINUS : '') + s + out; }
+function v2(t){ var x = 0; while (t % 2 === 0){ t /= 2; x++; } return x; }
+function dropOf(n){ var t = 3 * n + 1, x = v2(t), s = t / Math.pow(2, x); return { n: n, x: x, s: s, d: n - s }; }
+function m3(x){ return Math.pow(2, x) - 3; }
+function fiber(d){
+  if (d % 2 !== 0) return [];
+  var out = [];
+  if (d < 0) out.push({ x: 1, s: -3 * d - 1, n: -2 * d - 1 });
+  var rhs = 3 * d + 1;
+  for (var x = 2; m3(x) <= rhs; x++){ if (rhs % m3(x) === 0){ var s = rhs / m3(x); out.push({ x: x, s: s, n: s + d }); } }
+  out.sort(function(a, b){ return a.n - b.n; });
+  return out;
+}
+function heightClass(x){ var r = (x % 2 === 0) ? 1 : 5, n0 = (Math.pow(2, x) * r - 1) / 3; return { x: x, n0: n0, s0: r, d0: n0 - r, nStep: Math.pow(2, x + 1), dStep: 2 * m3(x) }; }
+function isPrime(m){ if (m < 2) return false; for (var i = 2; i * i <= m; i++) if (m % i === 0) return false; return true; }
+function factor(m){ var f = [], p = 2; while (p * p <= m){ while (m % p === 0){ f.push(p); m /= p; } p += (p === 2 ? 1 : 2); } if (m > 1) f.push(m); return f; }
+function kind(p){ return p.d < 0 ? 'rise' : (p.d === 0 ? 'fix' : 'fall'); }
+function el(tag, cls, text){ var e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
+function row(tb, cells, cls){ var tr = document.createElement('tr'); if (cls) tr.className = cls; cells.forEach(function(c, i){ var td = document.createElement(i < 0 ? 'th' : 'td'); if (typeof c === 'object' && c && c.th){ td = document.createElement('th'); c = c.th; } td.textContent = typeof c === 'number' ? fmt(c) : c; if (i === 0 && cls === 'head') td.className = 'l'; tr.appendChild(td); }); tb.appendChild(tr); return tr; }
+function header(tb, names){ var tr = document.createElement('tr'); names.forEach(function(h){ var th = document.createElement('th'); th.textContent = h; tr.appendChild(th); }); tb.appendChild(tr); }
+var SLOPE = { 1: '−1⁄2', 2: '1⁄4', 3: '5⁄8', 4: '13⁄16', 5: '29⁄32', 6: '61⁄64', 7: '125⁄128', 8: '253⁄256' };
+
+/* ---------- 1. table + rays ---------- */
+function renderTable(){
+  var rows = parseInt($('trows').value, 10), tb = $('ttab'); tb.innerHTML = '';
+  header(tb, ['n', 'n mod 4', 'x', 'S(n)', 'f(n) = n − S(n)']);
+  for (var i = 0; i < rows; i++){ var p = dropOf(2 * i + 1); row(tb, [p.n, p.n % 4, p.x, p.s, p.d], kind(p)); }
+}
+$('trows').addEventListener('change', renderTable);
+var rayPts = [];
+function renderRays(){
+  var N = parseInt($('rn').value, 10); $('rnv').textContent = fmt(N);
+  var W = 1000, H = 620, ml = 70, mr = 96, mt = 18, mb = 44, pw = W - ml - mr, ph = H - mt - mb;
+  var ymin = -N / 2, ymax = N;
+  var X = function(n){ return ml + n / N * pw; }, Y = function(v){ return mt + (ymax - v) / (ymax - ymin) * ph; };
+  var s = [], i, x, n;
+  var yt = niceTicks(ymin, ymax, 7);
+  yt.forEach(function(v){ s.push('<line class="grid" x1="' + ml + '" y1="' + Y(v).toFixed(1) + '" x2="' + (ml + pw) + '" y2="' + Y(v).toFixed(1) + '"/><text x="' + (ml - 8) + '" y="' + (Y(v) + 4).toFixed(1) + '" text-anchor="end">' + fmt(v) + '</text>'); });
+  var xt = niceTicks(0, N, 8);
+  xt.forEach(function(v){ s.push('<line class="grid" x1="' + X(v).toFixed(1) + '" y1="' + mt + '" x2="' + X(v).toFixed(1) + '" y2="' + (mt + ph) + '"/><text x="' + X(v).toFixed(1) + '" y="' + (mt + ph + 18) + '" text-anchor="middle">' + fmt(v) + '</text>'); });
+  s.push('<line class="zero" x1="' + ml + '" y1="' + Y(0).toFixed(1) + '" x2="' + (ml + pw) + '" y2="' + Y(0).toFixed(1) + '"/>');
+  s.push('<line class="axis" x1="' + ml + '" y1="' + mt + '" x2="' + ml + '" y2="' + (mt + ph) + '"/><line class="axis" x1="' + ml + '" y1="' + (mt + ph) + '" x2="' + (ml + pw) + '" y2="' + (mt + ph) + '"/>');
+  s.push('<text x="' + (ml + pw / 2) + '" y="' + (H - 8) + '" text-anchor="middle">odd n</text><text transform="translate(16 ' + (mt + ph / 2) + ') rotate(-90)" text-anchor="middle">f(n) = n − S(n)</text>');
+  for (x = 1; x <= 9; x++){
+    var a = 1 - 3 / Math.pow(2, x), b = -1 / Math.pow(2, x), y1 = a * N + b;
+    s.push('<line class="ray' + (x >= 6 ? ' far' : '') + '" x1="' + X(0).toFixed(1) + '" y1="' + Y(b).toFixed(1) + '" x2="' + X(N).toFixed(1) + '" y2="' + Y(y1).toFixed(1) + '"/>');
+    if (x <= 5) s.push('<text class="lab" x="' + (ml + pw + 6) + '" y="' + (Y(y1) + 4).toFixed(1) + '">x = ' + x + ' · ' + SLOPE[x] + '</text>');
+  }
+  s.push('<text class="lab" x="' + (ml + pw + 6) + '" y="' + (Y(N * (1 - 3 / 64)) - 8).toFixed(1) + '">x ≥ 6</text>');
+  rayPts = [];
+  var r = N <= 256 ? 3.2 : (N <= 768 ? 2.4 : 1.7);
+  for (n = 1; n < N; n += 2){ var p = dropOf(n); rayPts.push(p); s.push('<circle class="pt ' + kind(p) + '" cx="' + X(n).toFixed(1) + '" cy="' + Y(p.d).toFixed(1) + '" r="' + r + '"/>'); }
+  s.push('<circle id="rhl" class="hl" r="' + (r + 3) + '" cx="-20" cy="-20"/>');
+  $('rsvg').innerHTML = s.join('');
+  $('rsvg')._geom = { N: N, X: X, Y: Y, ml: ml, pw: pw };
+}
+function niceTicks(lo, hi, count){ var span = hi - lo, raw = span / count, mag = Math.pow(10, Math.floor(Math.log10(raw))), step = [1, 2, 2.5, 5, 10].map(function(m){ return m * mag; }).filter(function(v){ return v >= raw; })[0]; var out = []; for (var v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) out.push(Math.round(v * 1e6) / 1e6); return out; }
+$('rn').addEventListener('input', renderRays);
+(function(){
+  var svg = $('rsvg'), tip = $('rtip'), card = $('rcard');
+  function move(ev){
+    var g = svg._geom; if (!g) return;
+    var rect = svg.getBoundingClientRect(), mx = (ev.clientX - rect.left) / rect.width * 1000;
+    var n = Math.round(((mx - g.ml) / g.pw * g.N - 1) / 2) * 2 + 1; if (n < 1) n = 1; if (n >= g.N) n = g.N - 1;
+    var p = dropOf(n), hl = $('rhl'); hl.setAttribute('cx', g.X(n).toFixed(1)); hl.setAttribute('cy', g.Y(p.d).toFixed(1));
+    tip.innerHTML = '<div class="v">n = ' + fmt(n) + '</div><div>x = ' + p.x + ' · S(n) = ' + fmt(p.s) + '</div><div>f(n) = <b>' + fmt(p.d) + '</b> · ' + (p.d < 0 ? 'rise by ' + fmt(-p.d) : (p.d === 0 ? 'fixed point' : 'fall by ' + fmt(p.d))) + '</div><div class="s">' + (p.d < 0 ? 'n ≡ 3 (mod 4)' : 'n ≡ ' + (heightClass(p.x).n0 % Math.pow(2, p.x + 1)) + ' (mod ' + fmt(Math.pow(2, p.x + 1)) + ')') + ' · slope ' + (SLOPE[p.x] || ('1 − 3/2^' + p.x)) + '</div>';
+    tip.hidden = false; var cw = card.clientWidth, px = (ev.clientX - card.getBoundingClientRect().left); tip.style.left = Math.min(px + 14, cw - 300) + 'px'; tip.style.top = (ev.clientY - card.getBoundingClientRect().top + 14) + 'px';
+  }
+  svg.addEventListener('mousemove', move); svg.addEventListener('mouseleave', function(){ tip.hidden = true; $('rhl').setAttribute('cx', -20); });
+})();
+
+/* ---------- 2. value set ---------- */
+function lookup(){
+  var d = parseInt($('fd').value, 10), out = $('fout');
+  if (!isFinite(d) || Math.abs(d) > 1e12){ out.textContent = 'need an integer d with |d| ≤ 10¹².'; return; }
+  if (d % 2 !== 0){ out.textContent = 'd = ' + fmt(d) + ' is odd: it is never a drop (n and S(n) are both odd).'; return; }
+  var fb = fiber(d), lines = [];
+  if (d < 0) lines.push('d = ' + fmt(d) + ' < 0: only height 1 fits, (2 − 3)·s = 3d + 1 gives s = ' + fmt(-3 * d - 1) + ', and the one source is n = 2|d| − 1 = ' + fmt(-2 * d - 1) + '  (n ≡ 3 mod 4, a rise by ' + fmt(-d) + ').');
+  else if (d === 0) lines.push('d = 0: (2^x − 3)·s = 1 forces x = 2, s = 1: the only source is n = 1, the fixed point.');
+  else {
+    var m = 3 * d + 1, fs = factor(m), divs = fb.map(function(p){ return m3(p.x) + ' (x = ' + p.x + ')'; });
+    lines.push('d = ' + fmt(d) + ':  3d + 1 = ' + fmt(m) + (fs.length > 1 ? ' = ' + fs.map(fmt).join(' · ') : ' (prime)') + '.');
+    lines.push('divisors of the form 2^x − 3: ' + divs.join(', ') + '  →  ' + fb.length + ' source' + (fb.length === 1 ? '' : 's') + '.');
+    fb.slice().reverse().forEach(function(p){ lines.push('  x = ' + String(p.x).padStart(2) + ':  s = ' + fmt(p.s) + ',  n = s + d = ' + fmt(p.n) + '   (check: 3n+1 = ' + fmt(3 * p.n + 1) + ' = 2^' + p.x + ' · ' + fmt(p.s) + ')'); });
+  }
+  out.textContent = lines.join('\n');
+}
+$('fgo').addEventListener('click', lookup); $('fd').addEventListener('keydown', function(e){ if (e.key === 'Enter') lookup(); });
+function renderStrip(){
+  var st = $('dstrip'); st.innerHTML = '';
+  for (var d = -10; d <= 96; d += 2){
+    var fb = fiber(d), c = el('div', 'cell ' + (d < 0 ? 'rise' : (d === 0 ? 'fix' : 'fall')) + (fb.length >= 2 ? ' m' + Math.min(fb.length, 4) : ''));
+    c.appendChild(el('div', 'r', fmt(d)));
+    c.appendChild(el('div', 'src', fb.map(function(p){ return fmt(p.n); }).join(' ')));
+    c.appendChild(el('div', '', fb.length + (fb.length === 1 ? ' source' : ' sources')));
+    c.title = 'd = ' + d + ': ' + fb.map(function(p){ return 'n = ' + p.n + ' (x = ' + p.x + ', s = ' + p.s + ')'; }).join('; ');
+    st.appendChild(c);
+  }
+}
+function renderDistribution(){
+  var LIM = 100000, counts = {}, first = {}, total = 0, k;
+  for (var d = 2; d <= LIM; d += 2){ k = fiber(d).length; counts[k] = (counts[k] || 0) + 1; if (!(k in first)) first[k] = d; total++; }
+  var ks = Object.keys(counts).map(Number).sort(function(a, b){ return a - b; }), box = $('dist'); box.innerHTML = '';
+  ks.forEach(function(k){ box.appendChild(el('div', '', k + ' source' + (k === 1 ? '' : 's'))); var b = el('div', 'b'); b.style.width = Math.max(0.4, 100 * counts[k] / counts[ks[0]]) + '%'; box.appendChild(b); box.appendChild(el('div', '', fmt(counts[k]) + ' · ' + (100 * counts[k] / total).toFixed(2) + ' %')); });
+  var six = fiber(958208);
+  $('distnote').textContent = 'Even drops 2 … ' + fmt(LIM) + '. First drop with k sources: ' + ks.map(function(k){ return k + ' → ' + fmt(first[k]); }).join(', ') + ', 6 → 958 208 (sources ' + six.map(function(p){ return fmt(p.n); }).join(', ') + ', heights ' + six.map(function(p){ return p.x; }).join(', ') + ').';
+}
+function renderHeights(){
+  var tb = $('htab'); tb.innerHTML = ''; header(tb, ['x', '2^x − 3', 'sources n ≡', 'first n', '→ s', 'first drop', 'step', 'slope']);
+  for (var x = 1; x <= 12; x++){ var h = heightClass(x); row(tb, [x, (m3(x) > 1 && isPrime(m3(x)) ? fmt(m3(x)) + ' ·p' : fmt(m3(x))), fmt(h.n0) + ' (mod ' + fmt(h.nStep) + ')', h.n0, h.s0, h.d0, (x === 1 ? MINUS + '2' : '+' + fmt(h.dStep)), SLOPE[x] || ('1 − 3/2^' + x)], x === 1 ? 'rise' : 'fall'); }
+}
+
+/* ---------- 3. trajectory ---------- */
+var CHIPS = [27, 97, 871, 6171, 77031, 837799];
+function trajectory(n){ var steps = [], guard = 0; while (n !== 1 && guard++ < 100000){ var p = dropOf(n); steps.push(p); n = p.s; } return steps; }
+function renderTrajectory(){
+  var n0 = parseInt($('tn').value, 10), err = $('terr');
+  if (!(n0 >= 1) || n0 % 2 === 0 || n0 > 1e14){ err.textContent = 'need an odd n between 1 and 10¹⁴.'; return; } err.textContent = '';
+  var steps = trajectory(n0), L = steps.length, rises = 0, rt = 0, ft = 0, run = 0, runs = [], dmin = 0, dmax = 0, i;
+  steps.forEach(function(p){ if (p.d < 0){ rises++; rt -= p.d; } else ft += p.d; run += p.d; runs.push(run); dmin = Math.min(dmin, p.d, run); dmax = Math.max(dmax, p.d, run); });
+  var big = L ? Math.max.apply(null, steps.map(function(p){ return p.d; })) : 0, small = L ? Math.min.apply(null, steps.map(function(p){ return p.d; })) : 0;
+  $('tstat').innerHTML = '<b>n = ' + fmt(n0) + ':</b> ' + L + ' odd steps · ' + rises + ' rises totalling ' + fmt(rt) + ' · ' + (L - rises) + ' falls totalling ' + fmt(ft) + ' · falls − rises = ' + fmt(ft - rt) + (ft - rt === n0 - 1 ? ' = n − 1 ✓' : ' ✗') + (L ? ' · largest drop ' + fmt(big) + ' · deepest rise ' + fmt(small) : '');
+  var tb = $('ttbl'); tb.innerHTML = ''; header(tb, ['i', 'n', 'x', 'S(n)', 'f(n)', 'running sum', 'n₀ − S(n)']);
+  steps.forEach(function(p, j){ row(tb, [j + 1, p.n, p.x, p.s, p.d, runs[j], n0 - p.s], kind(p)); });
+  var W = 1000, H = 420, ml = 90, mr = 16, mt = 16, mb = 36, pw = W - ml - mr, ph = H - mt - mb;
+  if (dmax === dmin){ dmax = 1; }
+  var Y = function(v){ return mt + (dmax - v) / (dmax - dmin) * ph; }, X = function(j){ return ml + (j + 0.5) / Math.max(L, 1) * pw; }, bw = Math.max(1, pw / Math.max(L, 1) * 0.72);
+  var s = [];
+  niceTicks(dmin, dmax, 6).forEach(function(v){ s.push('<line class="grid" x1="' + ml + '" y1="' + Y(v).toFixed(1) + '" x2="' + (ml + pw) + '" y2="' + Y(v).toFixed(1) + '"/><text x="' + (ml - 8) + '" y="' + (Y(v) + 4).toFixed(1) + '" text-anchor="end">' + fmt(v) + '</text>'); });
+  s.push('<line class="zero" x1="' + ml + '" y1="' + Y(0).toFixed(1) + '" x2="' + (ml + pw) + '" y2="' + Y(0).toFixed(1) + '"/>');
+  steps.forEach(function(p, j){ var y0 = Y(0), y1 = Y(p.d); s.push('<rect class="bar ' + kind(p) + '" x="' + (X(j) - bw / 2).toFixed(1) + '" y="' + Math.min(y0, y1).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + Math.max(0.8, Math.abs(y1 - y0)).toFixed(1) + '"/>'); });
+  if (L) s.push('<polyline class="run" points="' + runs.map(function(v, j){ return X(j).toFixed(1) + ',' + Y(v).toFixed(1); }).join(' ') + '"/>');
+  s.push('<line class="axis" x1="' + ml + '" y1="' + (mt + ph) + '" x2="' + (ml + pw) + '" y2="' + (mt + ph) + '"/>');
+  s.push('<text x="' + (ml + pw / 2) + '" y="' + (H - 8) + '" text-anchor="middle">odd step i (1 … ' + L + ')</text>');
+  var svg = $('tsvg'); svg.innerHTML = s.join(''); svg._t = { steps: steps, runs: runs, X: X, Y: Y, ml: ml, pw: pw, L: L, n0: n0 };
+}
+$('tn').addEventListener('change', renderTrajectory); $('tn').addEventListener('keydown', function(e){ if (e.key === 'Enter') renderTrajectory(); });
+CHIPS.forEach(function(v){ var b = el('button', 'chip', fmt(v)); b.type = 'button'; b.addEventListener('click', function(){ $('tn').value = v; renderTrajectory(); }); $('tchips').appendChild(b); });
+(function(){
+  var svg = $('tsvg'), tip = $('ttip'), card = $('tcard');
+  svg.addEventListener('mousemove', function(ev){
+    var t = svg._t; if (!t || !t.L) return;
+    var rect = svg.getBoundingClientRect(), mx = (ev.clientX - rect.left) / rect.width * 1000, j = Math.floor((mx - t.ml) / t.pw * t.L); if (j < 0 || j >= t.L){ tip.hidden = true; return; }
+    var p = t.steps[j];
+    tip.innerHTML = '<div class="v">step ' + (j + 1) + ': ' + fmt(p.n) + ' → ' + fmt(p.s) + '</div><div>x = ' + p.x + ' · f = <b>' + fmt(p.d) + '</b></div><div class="s">running sum ' + fmt(t.runs[j]) + ' = ' + fmt(t.n0) + ' − ' + fmt(p.s) + '</div>';
+    tip.hidden = false; var cr = card.getBoundingClientRect(), px = ev.clientX - cr.left; tip.style.left = Math.min(px + 14, card.clientWidth - 300) + 'px'; tip.style.top = (ev.clientY - cr.top + 14) + 'px';
+  });
+  svg.addEventListener('mouseleave', function(){ tip.hidden = true; });
+})();
+
+/* ---------- 4. zero-sum finder ---------- */
+function isChain(set){
+  var inSet = {}; set.forEach(function(n){ inSet[n] = true; });
+  for (var i = 0; i < set.length; i++) if (!inSet[dropOf(set[i]).s]) return false;
+  var n = set[0], seen = 0; do { n = dropOf(n).s; seen++; } while (n !== set[0] && seen <= set.length);
+  return n === set[0] && seen === set.length;
+}
+var CAP = { 2: 2000000, 3: 6000, 4: 600 };
+function findZero(){
+  var N = parseInt($('zn').value, 10), k = parseInt($('zk').value, 10), out = $('zout'), tb = $('ztbl'); tb.innerHTML = '';
+  if (!(N >= 10)){ out.textContent = 'need a bound of at least 10.'; return; }
+  if (N > CAP[k]){ out.textContent = 'for size ' + k + ' the bound is capped at ' + fmt(CAP[k]) + ' to keep the search under a second; try a smaller N.'; return; }
+  var odds = [], val = {}, by = {}, n, i, j, l;
+  for (n = 3; n < N; n += 2){ odds.push(n); var d = dropOf(n).d; val[n] = d; (by[d] = by[d] || []).push(n); }
+  var found = [], t0 = performance.now();
+  if (k === 2){ odds.forEach(function(b){ if (val[b] > 0 && by[-val[b]]) by[-val[b]].forEach(function(a){ found.push([a, b]); }); }); }
+  else if (k === 3){ for (i = 0; i < odds.length; i++) for (j = i + 1; j < odds.length; j++){ var need = -(val[odds[i]] + val[odds[j]]), c = by[need]; if (c) for (l = 0; l < c.length; l++) if (c[l] > odds[j]) found.push([odds[i], odds[j], c[l]]); } }
+  else { for (i = 0; i < odds.length; i++) for (j = i + 1; j < odds.length; j++) for (var m = j + 1; m < odds.length; m++){ var need4 = -(val[odds[i]] + val[odds[j]] + val[odds[m]]), c4 = by[need4]; if (c4) for (l = 0; l < c4.length; l++) if (c4[l] > odds[m]) found.push([odds[i], odds[j], odds[m], c4[l]]); } }
+  var chains = found.filter(isChain), ms = performance.now() - t0;
+  var lines = ['zero-sum sets of ' + k + ' distinct odd numbers in [3, ' + fmt(N) + '): ' + fmt(found.length) + '   (' + ms.toFixed(0) + ' ms)',
+    'chains among them (each member\'s target is another member, one loop): ' + chains.length + (chains.length ? '  ✗ — a cycle!' : '  — none, as expected: a chain is a cycle')];
+  if (k === 2 && found.length) lines.push('every pair is {2d − 1, a source of d}: ' + found.slice(0, 5).map(function(p){ return '{' + p.join(', ') + '}' + ' with d = ' + fmt(val[p[1]]); }).join(', ') + (found.length > 5 ? ', …' : ''));
+  out.textContent = lines.join('\n');
+  header(tb, ['set', 'drops', 'targets', 'chain?']);
+  found.slice(0, 40).forEach(function(set){ row(tb, ['{' + set.map(fmt).join(', ') + '}', set.map(function(n){ return fmt(val[n]); }).join(' '), set.map(function(n){ return fmt(dropOf(n).s); }).join(' '), isChain(set) ? 'yes' : 'no']); });
+  if (found.length > 40) row(tb, ['… ' + fmt(found.length - 40) + ' more', '', '', '']);
+}
+$('zgo').addEventListener('click', findZero); $('zn').addEventListener('keydown', function(e){ if (e.key === 'Enter') findZero(); });
+
+renderTable(); renderRays(); lookup(); renderStrip(); renderDistribution(); renderHeights(); renderTrajectory(); findZero();
+})();
+</script>

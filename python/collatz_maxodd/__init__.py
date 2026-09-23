@@ -15,6 +15,7 @@ Modules
 ``sieve``      residue sieves on ``M`` (mod 4, 12, 36, ``3^k``; and mod ``2^a``)
 ``backtree``   the backward tree from a hypothetical ``M``, with the exact T6 test
 ``cycleeq``    the cycle equation, ``2^B/3^L``, ``log2 3`` convergents, length bounds
+``drop``       the drop ``f_q(n) = n - S_q(n)``: fibers via divisors of ``3d+q`` of the form ``2^x - 3``
 """
 
 from __future__ import annotations
@@ -45,6 +46,21 @@ from .cycleeq import (
     smallest_admissible_length,
 )
 from .cycles import Cycle, find_cycles, find_cycles_multi
+from .drop import (
+    DropStep,
+    HeightClass,
+    cycle_drops,
+    drop,
+    drop_fiber,
+    drop_multiplicity,
+    drop_with_exponent,
+    height_class,
+    multiplicity_witness,
+    rise_fall_totals,
+    sources_at_height,
+    trajectory_drops,
+    two_pow_minus_3,
+)
 from .sieve import (
     Verdict,
     can_be_max_odd,
@@ -129,4 +145,18 @@ __all__ = [
     "smallest_admissible_length",
     "BARINA_2025_LIMIT",
     "BARINA_2025_PAPER_LIMIT",
+    # drop
+    "DropStep",
+    "HeightClass",
+    "cycle_drops",
+    "drop",
+    "drop_fiber",
+    "drop_multiplicity",
+    "drop_with_exponent",
+    "height_class",
+    "multiplicity_witness",
+    "rise_fall_totals",
+    "sources_at_height",
+    "trajectory_drops",
+    "two_pow_minus_3",
 ]
