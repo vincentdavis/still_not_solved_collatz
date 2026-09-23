@@ -717,6 +717,31 @@ with the `m = 92` deadlock marked. Status: **P (identities, cited gates) / C (en
 bounds)**; `python/tests/test_ledger.py` (2), `test_satcycles.py` (25,
 skipped without python-sat), `test_multiplicative.py` (3).
 
+### The landing form `(s, x)` (`docs/LANDING.md`)
+
+A user-led pass (2026-09-23, `web/landing.html`; four explorers, two
+adversarial referees per claim, a three-round repair loop): every odd step is
+a *landing* on an odd target `s` from height `x = v₂(3n+1)`, and
+`n ↦ (S(n), x)` is a bijection from the positive odds onto
+`{(s, x): 3 ∤ s, s ≡ (−1)^x (mod 3)}` with inverse `(2^x s − 1)/3` — Lemma U
+as a table (Wirsching's back-tracing, Crandall's odd map run backwards, the
+pruned tree of Applegate–Lagarias). **Restated, nothing new:** a cycle is a
+cyclic chain of landings, `3 s_{i−1} + 1 = 2^{x_i} s_i`, giving T7; the
+additive ledger reads `Σ s_i (2^{x_i} − 3) = L`; reachability alone excludes
+exactly the odd multiples of 3 (T0) and then stops — the source at height `x`
+is dead iff `2^x s ≡ 1 (mod 9)`, one in three admissible heights (the lowest
+one iff `s ≡ 5, 7 (mod 9)`: Monks et al. 2013 Lemma 5.5 / Fig. 5.2; at the
+maximum this is T4), so every target has infinitely many live sources
+(`sieve.surviving_residues_mod3_no_size`); the forward 2-adic sieve (§4b) is
+the other unconditional exclusion and saturates at density 0.2863; everything
+beyond is the size bound, i.e. the death-depth sieve (§6). The height word is
+the halving word and the forward residue automaton is `Φ_k` of WORDS.md,
+*definite*: `S^k(n) ≡ Φ_k(x_k, …, x_1) (mod 3^k)` regardless of the start.
+Elementary new-to-repo items are listed in the doc's provenance (a
+superadditivity upgrade of W2, `S_k` as the shadow of the negative rational
+cycles, the general-`q` first-source rule). Status: **P (restatements, cited)
+/ C (counts)**; `python/tests/test_landing.py` (24).
+
 ### Verification status
 
 | result | Python | Lean |
@@ -736,6 +761,7 @@ skipped without python-sat), `test_multiplicative.py` (3).
 | q-transfer: `S_k(q) = q·S_k(1)`, `a_k` q-blind (docs/FILTER.md) | ✓ (`k ≤ 10`, six `q`) | ✓ `QTransfer.lean` (`k ≤ 4`, four offsets incl. `q ≡ −1`) |
 | words: realization, bump law, sign law (docs/WORDS.md) | ✓ (`test_words.py`, 26 tests) | ✓ `Words.lean` (first collision, uniqueness at `k=4`, sign law `k ≤ 8`, deficit `n=5`) |
 | ledger identity `E = 4O + 2Lq`; SAT box = `find_cycles` on every tested box, 3-adic gates as circuits; multiplicative ledger and the squeeze's `(L, B)` at `2^40 … 2^100` (docs/LEDGER.md) | ✓ (`test_ledger.py`, `test_satcycles.py`, `test_multiplicative.py`) | ✗ — not formalized (one-line identity; the CNF is computation) |
+| landing form: bijection, leaf rule mod 9, saturation, automaton = `Φ_k`, `S_k(q) = q·S_k(1)` (docs/LANDING.md) | ✓ (`test_landing.py`, 24) | ✗ — not formalized (Lemma U and T0 are; the rest is bookkeeping) |
 | over-dispersion, tail rate, box dimension | ✓ | ✗ — infeasible in-kernel, open, unresolved limit |
 
 Lean total: **341 declarations**, all certifying `[propext, Quot.sound]` or
