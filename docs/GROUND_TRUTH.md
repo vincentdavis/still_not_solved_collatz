@@ -676,7 +676,8 @@ at every (2,2)-level.
 
 ### The cycle ledger and the SAT box (`docs/LEDGER.md`)
 
-A visualization-led pass (2026-09-23, `web/ledger.html`) on four ideas: the
+A visualization-led pass (2026-09-23, `web/ledger.html`, `3n+1` only on the
+page by the user's decision; general `q` survives as the test harness) on four ideas: the
 ascent/descent balance of a cycle, the pairs `(n, D(n))`, the gates at both
 ends, and a SAT formulation. **Proved, one line each, nothing new:** around
 any `S_q`-cycle `Σ(2nᵢ+q) = Σ descents = E/2`, i.e. **`E = 4·O + 2Lq`** (the

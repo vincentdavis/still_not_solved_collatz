@@ -8,7 +8,6 @@
   --paper:#E8EAE5; --surface:#F2F3EF; --ink:#171A1C; --ink-2:#4A5254; --ink-3:#79817F;
   --rule:#C9CDC4; --grid:#DEE1DA; --axis:#B4B9AD;
   --ray:#2a78d6; --rise:#eb6834; --fall:#1baf7a; --fix:#79817F; --band:rgba(23,26,28,.06);
-  --rise-soft:rgba(235,104,52,.16); --fall-soft:rgba(27,175,122,.16); --ray-soft:rgba(42,120,214,.14);
   --focus:#24478F; --ok:#1baf7a; --warn:#eb6834;
   --f-sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
@@ -18,7 +17,6 @@
     --paper:#14171A; --surface:#1C2126; --ink:#E8EAE5; --ink-2:#A9B1AF; --ink-3:#6E7876;
     --rule:#2B3138; --grid:#242A30; --axis:#3A424A;
     --ray:#3987e5; --rise:#d95926; --fall:#199e70; --fix:#8B9492; --band:rgba(232,234,229,.08);
-    --rise-soft:rgba(217,89,38,.22); --fall-soft:rgba(25,158,112,.22); --ray-soft:rgba(57,135,229,.2);
     --focus:#7FA8EE; --ok:#199e70; --warn:#d95926;
   }
 }
@@ -26,7 +24,6 @@
   --paper:#14171A; --surface:#1C2126; --ink:#E8EAE5; --ink-2:#A9B1AF; --ink-3:#6E7876;
   --rule:#2B3138; --grid:#242A30; --axis:#3A424A;
   --ray:#3987e5; --rise:#d95926; --fall:#199e70; --fix:#8B9492; --band:rgba(232,234,229,.08);
-  --rise-soft:rgba(217,89,38,.22); --fall-soft:rgba(25,158,112,.22); --ray-soft:rgba(57,135,229,.2);
   --focus:#7FA8EE; --ok:#199e70; --warn:#d95926;
 }
 *{box-sizing:border-box}
@@ -53,6 +50,7 @@ input[type=checkbox]{accent-color:var(--ray);width:15px;height:15px}
 .chip{font:inherit;font-size:.8rem;font-family:var(--f-mono);border:1px solid var(--rule);background:var(--surface);color:var(--ink-2);border-radius:999px;padding:3px 10px;cursor:pointer}
 .chip:hover{border-color:var(--ink-3);color:var(--ink)}
 .btn{font:inherit;font-weight:500;font-size:.88rem;border:1px solid var(--ink);background:var(--ink);color:var(--paper);border-radius:5px;padding:6px 14px;cursor:pointer}
+.btn.alt{background:transparent;color:var(--ink)}
 .btn[disabled]{opacity:.5;cursor:default}
 .mono{font-variant-numeric:tabular-nums}
 .card{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:12px 10px 8px;position:relative}
@@ -99,34 +97,34 @@ li{margin:4px 0}
 
 <div class="wrap">
   <header>
-    <div class="eyebrow">3n+q cycles as a balance sheet</div>
+    <div class="eyebrow">3n+1 cycles as a balance sheet</div>
     <h1>Cycle Ledger</h1>
   </header>
-  <p class="lede">Every <code>3n+q</code> step is a credit of <code>2n+q</code>; every halving is a debit of half the number.
-  A trajectory closes into a cycle exactly when the credits and debits cancel. This page keeps that ledger, pairs each odd
-  <code>n</code> with the descent that follows it, reads off the residue gates that the largest and smallest members must pass,
-  and then hands the whole question to a SAT solver running in this page — with an honest account of what that can and cannot settle.</p>
+  <p class="lede">Every <code>3n+1</code> step is a credit of <code>2n+1</code>; every halving is a debit of half the number.
+  A trajectory closes into a cycle exactly when the credits and debits cancel, and for <code>3n+1</code> the only balance anyone has ever
+  seen is <code>1 → 4 → 2 → 1</code>. This page keeps that ledger, pairs each odd <code>n</code> with the descent that follows it,
+  reads off what the largest and smallest members of any other cycle would have to look like, and hands the finite version of the question
+  to a SAT solver running in this page — with an honest account of what that can and cannot settle.</p>
 
   <!-- ============ 1. the ledger ============ -->
   <h2>1 · The ledger <span class="tag">identity · proved</span></h2>
-  <p class="note">Start at an odd <code>n</code>. The odd step <code>n → 3n+q</code> ascends by <code>2n+q</code>; each halving
+  <p class="note">Start at an odd <code>n</code>. The odd step <code>n → 3n+1</code> ascends by <code>2n+1</code>; each halving
   <code>m → m/2</code> descends by <code>m/2</code>. Your example: <code>13 → 40</code> ascends 27, then
   <code>40 → 20 → 10 → 5</code> descends <code>20+10+5 = 35</code>, net <code>−8 = 5 − 13</code>.
-  Around a closed cycle the nets sum to zero, so <b>Σ ascents = Σ descents</b>.</p>
+  Around a closed cycle the nets sum to zero, so <b>Σ ascents = Σ descents</b>. Every start tried so far ends in the same three-step balance at 1.</p>
   <div class="controls" role="group" aria-label="Ledger controls">
-    <label class="ctl">q <input type="number" id="lq" min="1" step="2" value="1" aria-label="q, odd and not divisible by 3"></label>
     <label class="ctl">start n <input type="number" id="ln" min="1" step="2" value="13" aria-label="odd start"></label>
     <div class="seg" role="group" aria-label="Vertical scale"><button id="llin" aria-pressed="true">Linear</button><button id="llog" aria-pressed="false">log₂</button></div>
     <span class="status" id="lerr"></span>
   </div>
   <div class="chips" id="lchips" aria-label="Examples">
-    <button class="chip" data-q="1" data-n="13">q=1, n=13 — your example</button>
-    <button class="chip" data-q="1" data-n="27">q=1, n=27</button>
-    <button class="chip" data-q="5" data-n="19">q=5, n=19 — a 3-cycle</button>
-    <button class="chip" data-q="7" data-n="5">q=7, n=5 — the 2-cycle {5, 11}</button>
-    <button class="chip" data-q="13" data-n="367">q=13, n=367 — a 5-cycle</button>
-    <button class="chip" data-q="5" data-n="187">q=5, n=187 — a 17-cycle</button>
-    <button class="chip" data-q="1" data-n="97">q=1, n=97</button>
+    <button class="chip" data-n="13">13 — your example</button>
+    <button class="chip" data-n="27">27</button>
+    <button class="chip" data-n="97">97</button>
+    <button class="chip" data-n="871">871</button>
+    <button class="chip" data-n="6171">6171</button>
+    <button class="chip" data-n="77031">77031</button>
+    <button class="chip" data-n="837799">837799 — longest under a million</button>
   </div>
   <div class="card">
     <div class="chart">
@@ -134,7 +132,7 @@ li{margin:4px 0}
       <div class="tip" id="ltip" hidden></div>
     </div>
     <div class="legend" aria-label="Legend">
-      <span><i style="background:var(--rise)"></i>ascent <code>+ (2n+q)</code>, the <code>3n+q</code> step</span>
+      <span><i style="background:var(--rise)"></i>ascent <code>+ (2n+1)</code>, the <code>3n+1</code> step</span>
       <span><i style="background:var(--fall)"></i>descent <code>− m/2</code>, one halving</span>
       <span><i style="background:var(--ray);border-radius:50%"></i>odd member</span>
       <span><i style="background:var(--band);border:1px solid var(--rule)"></i>the closed cycle</span>
@@ -146,20 +144,18 @@ li{margin:4px 0}
     <div class="tbl"><table id="ltbl"></table></div>
   </details>
   <div class="proof"><b>Identity.</b> Let a cycle have odd members <code>n₁…n_L</code> (sum <code>O</code>), even members with sum <code>E</code>, and <code>B</code> halvings.
-  Summing <code>S(nᵢ) − nᵢ</code> around the cycle gives 0, i.e. <code>Σ(2nᵢ+q) = Σ</code> descents <code>= E/2</code>. So
-  <b><code>E = 4·O + 2Lq</code></b>: the even members weigh exactly four times the odd ones plus <code>2Lq</code>.
-  Checked on all 2 127 known cycles with <code>q ≤ 999</code>, <code>M ≤ 20 000</code>. It is a consequence of closing, not an extra test —
-  but it is the <em>linear</em> consequence, the row an integer program would carry; closure itself is the nonlinear part.</div>
+  Summing <code>S(nᵢ) − nᵢ</code> around the cycle gives 0, i.e. <code>Σ(2nᵢ+1) = Σ</code> descents <code>= E/2</code>. So
+  <b><code>E = 4·O + 2L</code></b>: the even members weigh exactly four times the odd ones plus <code>2L</code>. For <code>1 → 4 → 2 → 1</code>: <code>6 = 4 + 2</code>.
+  It is a consequence of closing, not an extra test — but it is the <em>linear</em> consequence, the row an integer program would carry; closure itself is the nonlinear part.</div>
 
   <!-- ============ 2. pairs ============ -->
   <h2>2 · Pairs <code>(n, D(n))</code> <span class="tag">structure</span></h2>
-  <p class="note">Pair each odd <code>n</code> with its descending sum <code>D(n) = (3n+q)(1 − 2<sup>−x</sup>)</code>, <code>x = v₂(3n+q)</code>.
+  <p class="note">Pair each odd <code>n</code> with its descending sum <code>D(n) = (3n+1)(1 − 2<sup>−x</sup>)</code>, <code>x = v₂(3n+1)</code>.
   The pairs lie on a fan of lines with slopes <code>3/2, 9/4, 21/8, 45/16, …</code> (one per height <code>x</code>), all below the limiting slope 3.
-  The ascent <code>2n+q</code> is a single dashed line. A point below it is a rise (its successor is larger), above it a fall; the vertical
-  distance to the line is <code>n − S(n)</code>, and a cycle is a set of points whose distances cancel.</p>
+  The ascent <code>2n+1</code> is a single dashed line. A point below it is a rise (its successor is larger), above it a fall; the vertical
+  distance to the line is <code>n − S(n)</code>, and a cycle is a set of points whose distances cancel. Only <code>n = 1</code>, sitting exactly on the line, has ever done so.</p>
   <div class="controls">
     <label class="ctl">odd n up to <input type="range" id="fn" min="20" max="400" step="10" value="120" aria-label="largest n"><span class="mono" id="fnv">120</span></label>
-    <span class="status">q follows the ledger above; the cycle found there is ringed.</span>
   </div>
   <div class="card">
     <div class="chart">
@@ -167,116 +163,113 @@ li{margin:4px 0}
       <div class="tip" id="ftip" hidden></div>
     </div>
     <div class="legend">
-      <span><i style="background:var(--rise);border-radius:50%"></i>rise: <code>D(n) &lt; 2n+q</code>, height 1</span>
-      <span><i style="background:var(--fall);border-radius:50%"></i>fall: <code>D(n) &gt; 2n+q</code>, height ≥ 2</span>
-      <span><i style="border:2px solid var(--fix);border-radius:50%;width:12px;height:12px"></i>fixed point <code>n = q</code>, on the height-2 line</span>
-      <span><i style="border:2px solid var(--ink);border-radius:50%;width:12px;height:12px"></i>member of the ledger's cycle</span>
+      <span><i style="background:var(--rise);border-radius:50%"></i>rise: <code>D(n) &lt; 2n+1</code>, height 1, <code>n ≡ 3 (mod 4)</code></span>
+      <span><i style="background:var(--fall);border-radius:50%"></i>fall: <code>D(n) &gt; 2n+1</code>, height ≥ 2, <code>n ≡ 1 (mod 4)</code></span>
+      <span><i style="border:2px solid var(--fix);border-radius:50%;width:12px;height:12px"></i>the fixed point <code>n = 1</code>, on the height-2 line</span>
     </div>
     <div class="stat" id="fstat"></div>
   </div>
 
   <!-- ============ 3. gates ============ -->
-  <h2>3 · The gates at the top and the bottom <span class="tag">proved · lean-checked at both ends</span></h2>
-  <p class="note">The largest member <code>M</code> is <em>entered</em> by a rise and <em>left</em> by a fall; the smallest member <code>m</code> the other way round.
-  A rise is exactly one halving and a fall at least two (for members <code>≥ q</code>), and one halving is a congruence mod 4 while
-  landing at all is a congruence mod 3. That is the whole content of the gates:</p>
+  <h2>3 · What another cycle would have to look like <span class="tag">proved · lean-checked at both ends</span></h2>
+  <p class="note">Suppose <code>3n+1</code> had a second cycle. Its largest member <code>M</code> is <em>entered</em> by a rise and <em>left</em> by a fall; its smallest member <code>m</code> the other way round.
+  A rise is exactly one halving and a fall at least two, one halving is a congruence mod 4, and being landed on at all is a congruence mod 3. That is the whole content of the gates:</p>
   <div class="two">
-    <div class="proof"><b>Maximum.</b> Leaving: <code>S(M) ≤ M</code> forces <code>v₂(3M+q) ≥ 2</code>, so <code>M ≡ q (mod 4)</code> — no hypothesis (T1).
-    Entering: if <code>M &gt; q</code> the in-step is one halving, <code>2M = 3y+q</code>, so <code>M ≡ 2q (mod 3)</code> (T2).
-    Together <code>M ≡ 5q (mod 12)</code> (T3). For <code>q = 1</code>: <b><code>M ≡ 5 (mod 12)</code></b>. Deeper 3-adic levels (T4, D2, D3, the sieve) live on the main page.</div>
-    <div class="proof"><b>Minimum</b> (<code>L ≥ 2</code>). Entering: the predecessor is larger, so the in-step has <code>≥ 2</code> halvings — no hypothesis.
-    Leaving: if <code>m ≥ q</code> the out-step is one halving (two would give <code>S(m) ≤ (3m+q)/4 ≤ m</code>), so <code>3m+q ≡ 2 (mod 4)</code>,
-    i.e. <code>m ≡ q+2 (mod 4)</code>; and <code>3 ∤ m</code> because <code>m</code> is landed on (T0). For <code>q = 1</code>: <b><code>m ≡ 7 or 11 (mod 12)</code></b>.
-    This is the mirror of <code>docs/STRUCTURE.md</code>, Lean-checked as <code>min_bb_out</code>; the census here gives 434/434 with <code>m ≥ q</code> and 1 681/1 681 entries.</div>
-  </div>
-  <div class="controls" style="margin-top:6px">
-    <label class="ctl">q <input type="number" id="gq" min="1" step="2" value="1" aria-label="q for the gates"></label>
-    <span class="status" id="gerr"></span>
+    <div class="proof"><b>Maximum.</b> Leaving: <code>S(M) &lt; M</code> forces <code>v₂(3M+1) ≥ 2</code>, so <code>M ≡ 1 (mod 4)</code> (T1).
+    Entering: the in-step is one halving, <code>2M = 3y+1</code>, so <code>M ≡ 2 (mod 3)</code> (T2). Together <b><code>M ≡ 5 (mod 12)</code></b> (T3).
+    One 3-adic level deeper, <code>y</code> itself must be landable, so <code>M ≢ 5 (mod 9)</code>: <code>M ≡ 17 or 29 (mod 36)</code> (T4).
+    One 2-adic level deeper, <code>M ≢ 9 (mod 16)</code>: <code>M ≡ 5, 17, 29 (mod 48)</code> (T8). In binary: <code>M = …01₂</code> and <code>M ≠ …1001₂</code>.</div>
+    <div class="proof"><b>Minimum.</b> Entering: the predecessor is larger, so the in-step has <code>≥ 2</code> halvings.
+    Leaving: the out-step is one halving (two would give <code>S(m) ≤ (3m+1)/4 &lt; m</code>), so <code>3m+1 ≡ 2 (mod 4)</code>,
+    i.e. <code>m ≡ 3 (mod 4)</code>; and <code>3 ∤ m</code> because <code>m</code> is landed on (T0). So <b><code>m ≡ 7 or 11 (mod 12)</code></b>.
+    In binary: <code>m = …11₂</code>. This is the mirror of <code>docs/STRUCTURE.md</code>, Lean-checked as <code>min_bb_out</code>.</div>
   </div>
   <div class="card">
-    <div class="eyebrow" style="letter-spacing:.1em">Odd residues mod 12 for q = <span id="gqv">1</span></div>
+    <div class="eyebrow" style="letter-spacing:.1em">Odd residues mod 12</div>
     <div class="strip" id="strip" aria-label="Residue classes mod 12"></div>
-    <div class="stat" id="gstat"></div>
-    <div class="tbl"><table id="gtbl"></table></div>
+    <div class="stat">max ≡ 5 (mod 12) — refined to 17, 29 (mod 36) and 5, 17, 29 (mod 48) · min ≡ 7 or 11 (mod 12) · classes 3 and 9 hold no cycle member at all · the trivial cycle {1} is exempt: it has no rise into it and no fall out of it</div>
   </div>
+  <p class="note"><b>And beyond the gates, what is known.</b></p>
+  <ul>
+    <li>Every member exceeds <code>2<sup>71</sup> ≈ 2.4 × 10<sup>21</sup></code> — Barina's verification of convergence below that bound (<em>J. Supercomputing</em> 81, 2025).</li>
+    <li>More than <code>1.375 × 10<sup>11</sup></code> odd members — Hercher (<em>J. Integer Sequences</em> 26, 2023, Cor. 29), made unconditional by Barina's bound.</li>
+    <li>At least 92 local maxima — Hercher 2023, Thm 23: no cycle with 91 or fewer.</li>
+    <li>Halvings outnumber odd steps by more than <code>log₂3</code> to 1, since <code>M(2<sup>B</sup> − 3<sup>L</sup>) &gt; 0</code> (T7); and at least 41.5 % of the odd steps are single halvings (<code>docs/STRUCTURE.md</code>).</li>
+    <li>The deeper 3-adic gates on <code>M</code> — the sieve with survivor counts <code>a_k</code> — live on the main page.</li>
+  </ul>
 
   <!-- ============ 4. SAT ============ -->
   <h2>4 · As a SAT problem <span class="tag">computed · MiniSat in this page</span></h2>
-  <p class="note">"There is an <code>S_q</code>-cycle with <code>L</code> odd members, all below <code>2<sup>W</sup></code>" is a finite statement,
+  <p class="note">"There is a <code>3n+1</code> cycle with <code>L</code> odd members, all below <code>2<sup>W</sup></code>" is a finite statement,
   and finite statements can be written as clauses. The encoding below does exactly that; the solver is MiniSat, running in your browser.
-  Every model it returns is checked arithmetically and compared with an exhaustive search of the same box.</p>
+  Every box it can afford comes back <em>unsat</em> above <code>L = 1</code> — as it must, since every member of a second cycle exceeds <code>2<sup>71</sup></code> and the page runs at <code>W ≤ 26</code>.
+  At <code>L = 1</code> it finds the one fixed point, <code>1</code>. The point of running it is to see the formulation work, and to see its scale.</p>
   <ul>
-    <li><b>Variables.</b> <code>nᵢ</code> as <code>W</code> bits (<code>n₀</code> the maximum); <code>tᵢ = 3nᵢ+q</code> as <code>W+2</code> bits through two ripple-carry adders;
+    <li><b>Variables.</b> <code>nᵢ</code> as <code>W</code> bits (<code>n₀</code> the maximum); <code>tᵢ = 3nᵢ+1</code> as <code>W+2</code> bits through two ripple-carry adders;
       one-hot <code>y<sub>i,k</sub></code> meaning "<code>tᵢ</code> has exactly <code>k</code> trailing zeros".</li>
     <li><b>Clauses.</b> <code>nᵢ</code> odd; <code>y<sub>i,k</sub> ⇒</code> the low <code>k</code> bits of <code>tᵢ</code> are 0, bit <code>k</code> is 1, and <code>n<sub>i+1</sub> = tᵢ ≫ k</code> (indices mod <code>L</code>);
       exactly one <code>k</code> per step; <code>nᵢ &lt; n₀</code> strictly for <code>i ≥ 1</code>, which fixes the rotation and forbids a shorter cycle run twice.</li>
-    <li><b>Gates as clauses.</b> T1 is one unit clause on bit 1 of <code>n₀</code>; T2 is one clause behind a comparator <code>n₀ &gt; q</code>; for <code>q = 1</code>, T8
-      (<code>M ≢ 9 mod 16</code>) is one 3-literal clause. Every <em>2-adic</em> gate is local in binary. The <em>3-adic</em> gates — T0, the mod-3 half of T2, T4, the sieve —
+    <li><b>Gates as clauses.</b> T1 is one unit clause (bit 1 of <code>n₀</code> is 0); T8 is one 3-literal clause (not <code>…1001₂</code>); T2 is one clause behind "<code>n₀ &gt; 1</code>";
+      the minimum's <code>m ≡ 3 (mod 4)</code> is one clause saying some other member has bit 1 set. Every <em>2-adic</em> gate is local in binary. The <em>3-adic</em> gates — T0, the mod-3 half of T2, T4, the sieve —
       are not: each needs a mod-3 circuit. A bit-level encoding sees the 2-adic half of the problem for free and the 3-adic half not at all.</li>
-    <li><b>Enumeration.</b> After each model the value of <code>n₀</code> is blocked; for fixed <code>L</code> the maximum determines the cycle, so each cycle appears once.</li>
+    <li><b>Enumeration.</b> After each model the value of <code>n₀</code> is blocked; for fixed <code>L</code> the maximum determines the cycle, so each cycle would appear once.</li>
   </ul>
   <div class="controls" style="margin-top:8px" role="group" aria-label="SAT controls">
-    <label class="ctl">q <input type="number" id="sq" min="1" step="2" value="5"></label>
-    <label class="ctl">L odd members <input type="number" id="sl" min="1" max="20" value="3"></label>
-    <label class="ctl">W bits <input type="number" id="sw" min="4" max="26" value="8"></label>
+    <label class="ctl">L odd members <input type="number" id="sl" min="1" max="20" value="6"></label>
+    <label class="ctl">W bits <input type="number" id="sw" min="4" max="26" value="16"></label>
     <label class="ctl"><input type="checkbox" id="sg" checked> gates as extra clauses</label>
-    <button class="btn" id="srun">Solve</button>
+    <button class="btn" id="srun">Solve this box</button>
+    <label class="ctl">ladder L = 1 … <input type="number" id="slmax" min="1" max="20" value="8" style="width:4.5em"></label>
+    <button class="btn alt" id="sladder">Run the ladder</button>
+    <button class="btn alt" id="sclear">Clear</button>
     <span class="status" id="sstat">loading MiniSat…</span>
   </div>
-  <div class="chips" aria-label="SAT examples">
-    <button class="chip" data-q="5" data-l="3" data-w="8">q=5, L=3, W=8</button>
-    <button class="chip" data-q="13" data-l="5" data-w="12">q=13, L=5, W=12 — seven 5-cycles</button>
-    <button class="chip" data-q="5" data-l="17" data-w="12">q=5, L=17, W=12 — two 17-cycles</button>
-    <button class="chip" data-q="1" data-l="6" data-w="16">q=1, L=6, W=16 — unsat</button>
-    <button class="chip" data-q="1" data-l="10" data-w="20">q=1, L=10, W=20 — unsat, slower</button>
-  </div>
   <div class="card">
-    <div class="out" id="sout">Pick a box and press Solve.</div>
-    <details style="border-top:1px solid var(--rule);margin-top:6px">
-      <summary>The CNF, DIMACS head</summary>
+    <div class="out" id="sout">Press Solve, or run the ladder.</div>
+    <div class="tbl"><table id="stbl"></table></div>
+    <details style="border-top:1px solid var(--rule);margin-top:10px">
+      <summary>The last CNF, DIMACS head</summary>
       <pre id="sdimacs" style="margin-top:8px"></pre>
     </details>
   </div>
   <p class="note" style="margin-top:6px"><b>What this settles, and what it cannot.</b></p>
   <ul>
     <li><b>Inside a box, everything.</b> The encoding is sound and complete for <code>(L, W)</code>: its models are exactly the cycles with <code>L</code> odd members and maximum below <code>2<sup>W</sup></code>.
-      The Python twin (<code>collatz_maxodd/satcycles.py</code>, CaDiCaL through python-sat) agrees with exhaustive search on every box tested — 20 regression tests, including the two 17-cycles of <code>3n+5</code>.</li>
-    <li><b>Outside a box, nothing.</b> A nontrivial <code>3n+1</code> cycle has more than <code>1.375 × 10<sup>11</sup></code> odd members (Hercher 2023, Cor. 29, made unconditional by Barina's 2025 verification below <code>2<sup>71</sup></code>)
-      and a minimum above <code>2<sup>71</sup></code>. The box that could matter has <code>L &gt; 10<sup>11</sup></code> and <code>W &gt; 71</code>: about <code>10<sup>14</sup></code> clauses, and "unsat" for any smaller box was already known.
-      Bounded model checking never closes an unbounded question; the cycle bounds come from Diophantine approximation of <code>log₂3</code>, not from search.</li>
+      The Python twin (<code>collatz_maxodd/satcycles.py</code>, CaDiCaL through python-sat) is regression-tested against exhaustive search on 20 boxes; the ability to <em>find</em> a cycle can only be tested where cycles exist, so that harness runs the same encoder on the maps <code>3n+q</code> that have them. This page runs <code>3n+1</code> only.</li>
+    <li><b>Outside a box, nothing.</b> The box that could matter has <code>L &gt; 1.375 × 10<sup>11</sup></code> and <code>W &gt; 71</code>: about <code>10<sup>14</sup></code> clauses. "Unsat" for every smaller box was already known from Barina's verification and the Diophantine bounds on <code>2<sup>B</sup>/3<sup>L</sup></code>.
+      Bounded model checking never closes an unbounded question.</li>
     <li><b>Where SAT has actually helped.</b> Yolcu, Aaronson and Heule (CADE 2021; <em>J. Automated Reasoning</em> 2023) turned the conjecture into termination of a string-rewriting system and used SAT to search for
       termination <em>certificates</em> (matrix interpretations) — a proof, not a counterexample. It proved nontrivial weakenings, not Collatz. That is the direction with any life in it: encode the search for an inductive invariant, not for a cycle.</li>
     <li><b>The balance as a constraint.</b> Section 1's identity is implied by the closure clauses; on its own it only says <code>Σ S(nᵢ) = Σ nᵢ</code>, weaker than closure. It belongs to an integer program, not a SAT instance, and adds nothing the solver does not already propagate.</li>
   </ul>
-  <p class="note">Everything above the SAT section is elementary and, for the maximum, already Lean-checked in this repository (<code>Cycle.T0–T3</code>); the minimum's mirror is Lean-checked too (<code>Minimum.lean</code>); nothing here is claimed new.
+  <p class="note">Everything above the SAT section is elementary and Lean-checked in this repository (<code>Cycle.T0–T3</code>, <code>T8</code>, <code>Minimum.lean</code>); nothing here is claimed new.
   Companion pages: <a href="https://claude.ai/code/artifact/6b158da1-5d06-4e60-8807-bb0044b4691d">halving rays</a>, <a href="https://claude.ai/code/artifact/b128753e-8771-43da-9ff7-d6d0e29867ef">halving surface</a>, <a href="https://claude.ai/code/artifact/5fd7a07b-0c94-49af-9f21-1055d13f6ede">parity atlas</a>.</p>
 </div>
 
 <script>
 (function(){
 'use strict';
+var q = 1;
 var $ = function(id){ return document.getElementById(id); };
 var SVGNS = 'http://www.w3.org/2000/svg';
 function el(tag, attrs, text){ var e = document.createElementNS(SVGNS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); if (text != null) e.textContent = text; return e; }
 function fmt(v){ return Number(v).toLocaleString('en-US'); }
-function okq(q){ return Number.isInteger(q) && q > 0 && q % 2 === 1 && q % 3 !== 0; }
-function step(n, q){ var t = 3*n + q, x = 0; while (t % 2 === 0){ t /= 2; x++; } return { next: t, x: x }; }
+function step(n){ var t = 3*n + 1, x = 0; while (t % 2 === 0){ t /= 2; x++; } return { next: t, x: x }; }
 function niceTicks(max, count){ var raw = max / count, p = Math.pow(10, Math.floor(Math.log10(raw))), m = raw / p, s = m < 1.5 ? 1 : m < 3.5 ? 2 : m < 7.5 ? 5 : 10, st = s * p, out = []; for (var v = 0; v <= max + 1e-9; v += st) out.push(v); return out; }
 function showTip(tip, host, evt, html){ tip.innerHTML = html; tip.hidden = false; var r = host.getBoundingClientRect(); var x = evt.clientX - r.left + 14, y = evt.clientY - r.top + 14; if (x + 290 > r.width) x = evt.clientX - r.left - 300; if (y + 90 > r.height) y = evt.clientY - r.top - 80; tip.style.left = x + 'px'; tip.style.top = y + 'px'; }
 
 /* ---------------- 1. ledger ---------------- */
-var L = { q: 1, n: 13, log: false, result: null };
-
-function ledger(q, n0, capOdd){
+var L = { n: 13, log: false, result: null };
+function ledger(n0, capOdd){
   var odds = [], steps = [], seen = new Map(), n = n0, cycle = null;
   while (odds.length < capOdd){
     if (seen.has(n)){ cycle = { start: seen.get(n), end: odds.length }; break; }
     seen.set(n, odds.length);
-    var t = 3*n + q, s0 = steps.length;
+    var t = 3*n + 1, s0 = steps.length;
     steps.push({ a: n, b: t, kind: 'asc', oi: odds.length });
     var m = t, x = 0, desc = 0, parts = [];
     while (m % 2 === 0){ steps.push({ a: m, b: m/2, kind: 'desc', oi: odds.length }); desc += m/2; parts.push(m/2); m /= 2; x++; }
-    odds.push({ n: n, asc: 2*n + q, t: t, x: x, desc: desc, parts: parts, next: m, net: m - n, s0: s0, s1: steps.length });
+    odds.push({ n: n, asc: 2*n + 1, t: t, x: x, desc: desc, parts: parts, next: m, net: m - n, s0: s0, s1: steps.length });
     n = m;
   }
   var summary = null;
@@ -287,40 +280,35 @@ function ledger(q, n0, capOdd){
   }
   return { odds: odds, steps: steps, cycle: cycle, summary: summary };
 }
-
 function renderLedger(){
-  var q = L.q, n0 = L.n, R = ledger(q, n0, 400); L.result = R;
+  var n0 = L.n, R = ledger(n0, 600); L.result = R;
   var svg = $('lsvg'); while (svg.firstChild) svg.removeChild(svg.firstChild);
-  svg.appendChild(el('title', {}, 'Waterfall of ascents and descents from ' + n0 + ' under 3n+' + q));
+  svg.appendChild(el('title', {}, 'Waterfall of ascents and descents from ' + n0 + ' under 3n+1'));
   var W = 1000, H = 400, ML = 72, MR = 16, MT = 26, MB = 50, pw = W - ML - MR, ph = H - MT - MB;
   var steps = R.steps, S = steps.length;
   var vmax = 1; steps.forEach(function(s){ if (s.b > vmax) vmax = s.b; if (s.a > vmax) vmax = s.a; });
   var Y = L.log ? function(v){ return MT + ph - ph * Math.log2(v) / Math.log2(vmax); } : function(v){ return MT + ph - ph * v / vmax; };
   var bw = pw / S, gap = bw > 6 ? bw * 0.22 : bw * 0.1;
-  // grid + y axis
   var ticks = L.log ? (function(){ var out = []; var top = Math.floor(Math.log2(vmax)); var stepk = Math.max(1, Math.ceil(top / 6)); for (var k = 0; k <= top; k += stepk) out.push(Math.pow(2, k)); return out; })() : niceTicks(vmax, 5);
-  ticks.forEach(function(v){ if (v <= 0 && L.log) return; var y = Y(Math.max(v, 1)); if (v === 0) y = MT + ph; svg.appendChild(el('line', { x1: ML, x2: W - MR, y1: y, y2: y, stroke: 'var(--grid)', 'stroke-width': 1 })); svg.appendChild(el('text', { x: ML - 8, y: y + 4, 'text-anchor': 'end', 'font-size': 11, fill: 'var(--ink-3)', 'font-family': 'var(--f-mono)' }, fmt(v))); });
+  ticks.forEach(function(v){ var y = (v === 0) ? MT + ph : Y(Math.max(v, 1)); svg.appendChild(el('line', { x1: ML, x2: W - MR, y1: y, y2: y, stroke: 'var(--grid)', 'stroke-width': 1 })); svg.appendChild(el('text', { x: ML - 8, y: y + 4, 'text-anchor': 'end', 'font-size': 11, fill: 'var(--ink-3)', 'font-family': 'var(--f-mono)' }, fmt(v))); });
   svg.appendChild(el('line', { x1: ML, x2: ML, y1: MT, y2: MT + ph, stroke: 'var(--axis)', 'stroke-width': 1 }));
   svg.appendChild(el('line', { x1: ML, x2: W - MR, y1: MT + ph, y2: MT + ph, stroke: 'var(--axis)', 'stroke-width': 1 }));
   svg.appendChild(el('text', { x: ML, y: 14, 'font-size': 11, fill: 'var(--ink-3)', 'font-family': 'var(--f-mono)' }, L.log ? 'value (log₂ scale)' : 'value'));
-  // cycle band
   if (R.cycle){
     var o0 = R.odds[R.cycle.start], o1 = R.odds[R.cycle.end - 1];
     var x0 = ML + o0.s0 * bw, x1 = ML + o1.s1 * bw;
     svg.appendChild(el('rect', { x: x0, y: MT - 4, width: Math.max(2, x1 - x0), height: ph + 4, fill: 'var(--band)' }));
     var sm = R.summary;
-    svg.appendChild(el('text', { x: Math.min(x0 + 6, W - MR - 300), y: MT + 10, 'font-size': 11.5, fill: 'var(--ink-2)', 'font-family': 'var(--f-mono)' }, 'cycle: ' + sm.L + ' odd · ' + sm.B + ' halvings · Σ↑ = Σ↓ = ' + fmt(sm.A)));
+    svg.appendChild(el('text', { x: Math.min(x0 + 6, W - MR - 330), y: MT + 10, 'font-size': 11.5, fill: 'var(--ink-2)', 'font-family': 'var(--f-mono)' }, 'the cycle 1 → 4 → 2 → 1: Σ↑ = Σ↓ = ' + fmt(sm.A)));
   }
-  // bars
   var host = svg.parentNode, tip = $('ltip');
   steps.forEach(function(s, i){
     var y1 = Y(s.a), y2 = Y(s.b), top = Math.min(y1, y2), h = Math.max(1.2, Math.abs(y1 - y2));
     var r = el('rect', { x: ML + i * bw + gap / 2, y: top, width: Math.max(1, bw - gap), height: h, fill: s.kind === 'asc' ? 'var(--rise)' : 'var(--fall)', rx: bw > 8 ? 1.5 : 0 });
-    r.addEventListener('mousemove', function(evt){ var html = s.kind === 'asc' ? '<div class="v">' + fmt(s.a) + ' → ' + fmt(s.b) + '</div><div class="s">3n+' + q + ': ascent +' + fmt(s.b - s.a) + '</div>' : '<div class="v">' + fmt(s.a) + ' → ' + fmt(s.b) + '</div><div class="s">halving: descent −' + fmt(s.b) + '</div>'; showTip(tip, host, evt, html); });
+    r.addEventListener('mousemove', function(evt){ var html = s.kind === 'asc' ? '<div class="v">' + fmt(s.a) + ' → ' + fmt(s.b) + '</div><div class="s">3n+1: ascent +' + fmt(s.b - s.a) + '</div>' : '<div class="v">' + fmt(s.a) + ' → ' + fmt(s.b) + '</div><div class="s">halving: descent −' + fmt(s.b) + '</div>'; showTip(tip, host, evt, html); });
     r.addEventListener('mouseleave', function(){ tip.hidden = true; });
     svg.appendChild(r);
   });
-  // odd markers + labels
   var showLabels = R.odds.length <= 26;
   R.odds.forEach(function(o){
     var cx = ML + o.s0 * bw + bw / 2, cy = Y(o.n);
@@ -328,116 +316,87 @@ function renderLedger(){
     if (showLabels) svg.appendChild(el('text', { x: cx, y: MT + ph + 16, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--ink-2)', 'font-family': 'var(--f-mono)' }, o.n));
   });
   svg.appendChild(el('text', { x: W - MR, y: MT + ph + 34, 'text-anchor': 'end', 'font-size': 11, fill: 'var(--ink-3)', 'font-family': 'var(--f-mono)' }, S + ' steps: ' + R.odds.length + ' odd, ' + (S - R.odds.length) + ' halvings' + (showLabels ? '' : ' (odd members labelled in the table)')));
-  // stat
   var A = 0, D = 0; R.odds.forEach(function(o){ A += o.asc; D += o.desc; });
   var last = R.odds.length ? R.odds[R.odds.length - 1].next : n0;
-  var lines = ['<b>whole run</b> Σ ascents = ' + fmt(A) + ' · Σ descents = ' + fmt(D) + ' · difference ' + fmt(A - D) + ' = ' + fmt(last) + ' − ' + fmt(n0)];
-  if (R.summary){ var sm = R.summary; lines.push('<b>closed cycle</b> {' + sm.members.join(', ') + '}: L = ' + sm.L + ', B = ' + sm.B + ' · Σ ascents = Σ descents = ' + fmt(sm.A) + ' · even members sum E = ' + fmt(sm.E) + ' = 4·' + fmt(sm.O) + ' + 2·' + sm.L + '·' + q + ' ✓ · max ' + fmt(sm.M) + ' ≡ ' + (sm.M % 12) + ', min ' + fmt(sm.m) + ' ≡ ' + (sm.m % 12) + ' (mod 12)'); }
-  else lines.push('<b>no cycle within 400 odd steps</b> — the ledger never balanced');
+  var lines = ['<b>whole run</b> Σ ascents = ' + fmt(A) + ' · Σ descents = ' + fmt(D) + ' · difference ' + fmt(A - D) + ' = ' + fmt(last) + ' − ' + fmt(n0) + ' · peak ' + fmt(vmax)];
+  if (R.summary){ var sm = R.summary; lines.push('<b>closed cycle</b> {' + sm.members.join(', ') + '}: L = ' + sm.L + ', B = ' + sm.B + ' · Σ ascents = Σ descents = ' + fmt(sm.A) + ' · even members sum E = ' + fmt(sm.E) + ' = 4·' + fmt(sm.O) + ' + 2·' + sm.L + ' ✓' + (R.cycle.start ? ' · reached after ' + R.cycle.start + ' odd steps' : '')); }
+  else lines.push('<b>no cycle within 600 odd steps</b> — the ledger never balanced in the drawn window');
   $('lstat').innerHTML = lines.join('<br>');
-  // table
   var tb = $('ltbl'); tb.innerHTML = '';
-  var hr = document.createElement('tr'); ['n', '2n+q', '3n+q', 'halvings', 'descents', 'D(n)', 'S(n)', 'net', 'in cycle'].forEach(function(h, i){ var th = document.createElement('th'); th.textContent = h; if (i === 4) th.className = 'l'; hr.appendChild(th); }); tb.appendChild(hr);
+  var hr = document.createElement('tr'); ['n', '2n+1', '3n+1', 'halvings', 'descents', 'D(n)', 'S(n)', 'net', 'in cycle'].forEach(function(h, i){ var th = document.createElement('th'); th.textContent = h; if (i === 4) th.className = 'l'; hr.appendChild(th); }); tb.appendChild(hr);
   var lim = Math.min(R.odds.length, 80);
   for (var i = 0; i < lim; i++){ var o = R.odds[i], tr = document.createElement('tr'); var inc = R.cycle && i >= R.cycle.start; if (inc) tr.className = 'cyc'; [o.n, o.asc, o.t, o.x, o.parts.join(' + '), o.desc, o.next, (o.net > 0 ? '+' : '') + o.net, inc ? '●' : ''].forEach(function(v, j){ var td = document.createElement('td'); td.textContent = typeof v === 'number' ? fmt(v) : v; if (j === 4) td.className = 'l'; tr.appendChild(td); }); tb.appendChild(tr); }
-  if (R.odds.length > lim){ var tr2 = document.createElement('tr'), td2 = document.createElement('td'); td2.colSpan = 9; td2.className = 'l'; td2.textContent = '… ' + (R.odds.length - lim) + ' more odd steps'; tr2.appendChild(td2); tb.appendChild(tr2); }
+  if (R.odds.length > lim){ var tr2 = document.createElement('tr'), td2 = document.createElement('td'); td2.colSpan = 9; td2.className = 'l'; td2.textContent = '… ' + (R.odds.length - lim) + ' more odd steps, ending in the cycle {1}'; tr2.appendChild(td2); tb.appendChild(tr2); }
   renderFan();
 }
-function readLedgerInputs(){ var q = parseInt($('lq').value, 10), n = parseInt($('ln').value, 10); var err = ''; if (!okq(q)) err = 'q must be odd and not divisible by 3'; else if (!(Number.isInteger(n) && n > 0 && n % 2 === 1)) err = 'start must be a positive odd number'; else if (n > 1e9) err = 'start ≤ 10⁹ please'; $('lerr').textContent = err; if (err) return; L.q = q; L.n = n; $('gq').value = q; G.q = q; renderLedger(); renderGates(); }
-$('lq').addEventListener('change', readLedgerInputs); $('ln').addEventListener('change', readLedgerInputs);
+function readLedgerInputs(){ var n = parseInt($('ln').value, 10); var err = ''; if (!(Number.isInteger(n) && n > 0 && n % 2 === 1)) err = 'start must be a positive odd number'; else if (n > 1e9) err = 'start ≤ 10⁹ please'; $('lerr').textContent = err; if (err) return; L.n = n; renderLedger(); }
+$('ln').addEventListener('change', readLedgerInputs);
 $('llin').addEventListener('click', function(){ L.log = false; $('llin').setAttribute('aria-pressed', 'true'); $('llog').setAttribute('aria-pressed', 'false'); renderLedger(); });
 $('llog').addEventListener('click', function(){ L.log = true; $('llin').setAttribute('aria-pressed', 'false'); $('llog').setAttribute('aria-pressed', 'true'); renderLedger(); });
-$('lchips').addEventListener('click', function(e){ var b = e.target.closest('button'); if (!b) return; $('lq').value = b.dataset.q; $('ln').value = b.dataset.n; readLedgerInputs(); });
+$('lchips').addEventListener('click', function(e){ var b = e.target.closest('button'); if (!b) return; $('ln').value = b.dataset.n; readLedgerInputs(); });
 
 /* ---------------- 2. fan ---------------- */
 var F = { N: 120 };
 function renderFan(){
-  var q = L.q, N = F.N, svg = $('fsvg'); while (svg.firstChild) svg.removeChild(svg.firstChild);
-  svg.appendChild(el('title', {}, 'Odd n up to ' + N + ' against its descending sum D(n), 3n+' + q));
+  var N = F.N, svg = $('fsvg'); while (svg.firstChild) svg.removeChild(svg.firstChild);
+  svg.appendChild(el('title', {}, 'Odd n up to ' + N + ' against its descending sum D(n)'));
   var W = 1000, H = 470, ML = 72, MR = 78, MT = 18, MB = 46, pw = W - ML - MR, ph = H - MT - MB;
-  var ymax = 3 * N + q; var X = function(n){ return ML + pw * n / N; }, Y = function(v){ return MT + ph - ph * v / ymax; };
+  var ymax = 3 * N + 1; var X = function(n){ return ML + pw * n / N; }, Y = function(v){ return MT + ph - ph * v / ymax; };
   niceTicks(ymax, 5).forEach(function(v){ var y = Y(v); svg.appendChild(el('line', { x1: ML, x2: W - MR, y1: y, y2: y, stroke: 'var(--grid)' })); svg.appendChild(el('text', { x: ML - 8, y: y + 4, 'text-anchor': 'end', 'font-size': 11, fill: 'var(--ink-3)', 'font-family': 'var(--f-mono)' }, fmt(v))); });
   niceTicks(N, 6).forEach(function(v){ var x = X(v); svg.appendChild(el('line', { x1: x, x2: x, y1: MT, y2: MT + ph, stroke: 'var(--grid)' })); svg.appendChild(el('text', { x: x, y: MT + ph + 16, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--ink-3)', 'font-family': 'var(--f-mono)' }, fmt(v))); });
   svg.appendChild(el('line', { x1: ML, x2: ML, y1: MT, y2: MT + ph, stroke: 'var(--axis)' })); svg.appendChild(el('line', { x1: ML, x2: W - MR, y1: MT + ph, y2: MT + ph, stroke: 'var(--axis)' }));
   svg.appendChild(el('text', { x: W - MR, y: MT + ph + 34, 'text-anchor': 'end', 'font-size': 11, fill: 'var(--ink-3)', 'font-family': 'var(--f-mono)' }, 'odd n')); svg.appendChild(el('text', { x: ML, y: 12, 'font-size': 11, fill: 'var(--ink-3)', 'font-family': 'var(--f-mono)' }, 'D(n) = descent after n'));
-  // fan lines: D = (3 - 3/2^x) n + (1 - 1/2^x) q
-  function clipLine(a, b, color, dash, label){ // y = a n + b from n=0 to n=N, clipped to ymax
+  function clipLine(a, b, color, dash, label){
     var nEnd = N, yEnd = a * N + b; if (yEnd > ymax){ nEnd = (ymax - b) / a; yEnd = ymax; }
     var attrs = { x1: X(0), y1: Y(b), x2: X(nEnd), y2: Y(yEnd), stroke: color, 'stroke-width': 1.3, fill: 'none' }; if (dash) attrs['stroke-dasharray'] = dash;
     svg.appendChild(el('line', attrs));
-    if (label){ var lx = X(nEnd) + 6, ly = Y(yEnd) + 4, anchor = 'start'; if (nEnd < N){ lx = X(nEnd) + 4; ly = Y(yEnd) - 4; } svg.appendChild(el('text', { x: lx, y: ly, 'text-anchor': anchor, 'font-size': 11, fill: color, 'font-family': 'var(--f-mono)' }, label)); }
+    if (label){ var lx = X(nEnd) + 6, ly = Y(yEnd) + 4; if (nEnd < N){ lx = X(nEnd) + 4; ly = Y(yEnd) - 4; } svg.appendChild(el('text', { x: lx, y: ly, 'text-anchor': 'start', 'font-size': 11, fill: color, 'font-family': 'var(--f-mono)' }, label)); }
   }
-  for (var x = 6; x >= 1; x--){ var a = 3 - 3 / Math.pow(2, x), b = (1 - 1 / Math.pow(2, x)) * q; clipLine(a, b, x === 1 ? 'var(--rise)' : 'var(--fall)', x === 1 ? null : null, 'x = ' + x + (x <= 3 ? ' · ' + (3 * (Math.pow(2, x) - 1)) + '/' + Math.pow(2, x) : '')); }
-  clipLine(2, q, 'var(--ink)', '6 5', 'ascent 2n+q');
-  // points
+  for (var x = 6; x >= 1; x--){ var a = 3 - 3 / Math.pow(2, x), b = 1 - 1 / Math.pow(2, x); clipLine(a, b, x === 1 ? 'var(--rise)' : 'var(--fall)', null, 'x = ' + x + (x <= 3 ? ' · ' + (3 * (Math.pow(2, x) - 1)) + '/' + Math.pow(2, x) : '')); }
+  clipLine(2, 1, 'var(--ink)', '6 5', 'ascent 2n+1');
   var host = svg.parentNode, tip = $('ftip'), r = N <= 160 ? 3.6 : N <= 260 ? 3 : 2.4;
-  var members = new Set(L.result && L.result.summary ? L.result.summary.members : []);
   var rises = 0, falls = 0;
   for (var n = 1; n <= N; n += 2){ (function(n){
-    var s = step(n, q), t = 3*n + q, D = t - s.next, kind = s.next > n ? 'rise' : s.next < n ? 'fall' : 'fix'; if (kind === 'rise') rises++; else if (kind === 'fall') falls++;
+    var s = step(n), t = 3*n + 1, D = t - s.next, kind = s.next > n ? 'rise' : s.next < n ? 'fall' : 'fix'; if (kind === 'rise') rises++; else if (kind === 'fall') falls++;
     var cx = X(n), cy = Y(D);
-    if (members.has(n)){ svg.appendChild(el('line', { x1: cx, x2: cx, y1: cy, y2: Y(2*n + q), stroke: 'var(--ink)', 'stroke-width': 1.2 })); svg.appendChild(el('circle', { cx: cx, cy: cy, r: r + 4, fill: 'none', stroke: 'var(--ink)', 'stroke-width': 1.6 })); }
     var c = el('circle', { cx: cx, cy: cy, r: kind === 'fix' ? r + 1 : r, fill: kind === 'fix' ? 'none' : (kind === 'rise' ? 'var(--rise)' : 'var(--fall)'), stroke: kind === 'fix' ? 'var(--fix)' : 'var(--surface)', 'stroke-width': kind === 'fix' ? 2 : 1 });
-    c.addEventListener('mousemove', function(evt){ var parts = []; var m = t; while (m % 2 === 0){ parts.push(fmt(m / 2)); m /= 2; } showTip(tip, host, evt, '<div class="v">(' + fmt(n) + ', ' + fmt(D) + ')</div><div class="s">3·' + fmt(n) + '+' + q + ' = ' + fmt(t) + ', halved ' + s.x + '×: ' + parts.join(' + ') + ' = ' + fmt(D) + '</div><div class="s">ascent ' + fmt(2*n + q) + ' → net ' + (s.next - n > 0 ? '+' : '') + fmt(s.next - n) + ', S(n) = ' + fmt(s.next) + '</div>'); });
+    c.addEventListener('mousemove', function(evt){ var parts = []; var m = t; while (m % 2 === 0){ parts.push(fmt(m / 2)); m /= 2; } showTip(tip, host, evt, '<div class="v">(' + fmt(n) + ', ' + fmt(D) + ')</div><div class="s">3·' + fmt(n) + '+1 = ' + fmt(t) + ', halved ' + s.x + '×: ' + parts.join(' + ') + ' = ' + fmt(D) + '</div><div class="s">ascent ' + fmt(2*n + 1) + ' → net ' + (s.next - n > 0 ? '+' : '') + fmt(s.next - n) + ', S(n) = ' + fmt(s.next) + '</div>'); });
     c.addEventListener('mouseleave', function(){ tip.hidden = true; });
     svg.appendChild(c);
   })(n); }
-  if (N >= 13 && q === 1){ svg.appendChild(el('text', { x: X(13) + 8, y: Y(35) + 4, 'font-size': 11, fill: 'var(--ink-2)', 'font-family': 'var(--f-mono)' }, '(13, 35)')); }
-  var offs = '';
-  if (L.result && L.result.summary){ var sm = L.result.summary; var parts = sm.members.map(function(n){ var s = step(n, q); var d = n - s.next; return (d >= 0 ? '+' : '') + fmt(d); }); offs = ' · <b>cycle offsets</b> n − S(n): ' + parts.join(' ') + ' = 0'; }
-  $('fstat').innerHTML = '<b>odd n ≤ ' + N + '</b> ' + rises + ' rises (height 1) · ' + falls + ' falls (height ≥ 2)' + (q <= N ? ' · fixed point n = q = ' + q : '') + offs;
+  if (N >= 13) svg.appendChild(el('text', { x: X(13) + 8, y: Y(35) + 4, 'font-size': 11, fill: 'var(--ink-2)', 'font-family': 'var(--f-mono)' }, '(13, 35)'));
+  $('fstat').innerHTML = '<b>odd n ≤ ' + N + '</b> ' + rises + ' rises (height 1) · ' + falls + ' falls (height ≥ 2) · the fixed point 1 · a cycle would be a set of these points whose offsets n − S(n) sum to 0; only {1} does, with offset 0';
 }
 $('fn').addEventListener('input', function(){ F.N = parseInt(this.value, 10); $('fnv').textContent = F.N; renderFan(); });
 
 /* ---------------- 3. gates ---------------- */
-var G = { q: 1, census: null };
-function findCycles(q, bound){
+function renderGates(){
+  var strip = $('strip'); strip.innerHTML = '';
+  for (var r = 0; r < 12; r++){
+    var d = document.createElement('div'), cls = 'cell'; if (r % 2 === 0) cls += ' even'; else if (r % 3 === 0) cls += ' never'; d.className = cls;
+    var lab = document.createElement('div'); lab.className = 'r'; lab.textContent = r; d.appendChild(lab);
+    if (r % 2 === 1){ if (r % 3 === 0){ var b0 = document.createElement('span'); b0.className = 'badge never'; b0.textContent = 'never'; d.appendChild(b0); }
+      else { if (r === 5){ var b1 = document.createElement('span'); b1.className = 'badge max'; b1.textContent = 'max'; d.appendChild(b1); } if (r % 4 === 3){ var b2 = document.createElement('span'); b2.className = 'badge min'; b2.textContent = 'min'; d.appendChild(b2); } } }
+    strip.appendChild(d);
+  }
+}
+
+/* ---------------- 4. SAT ---------------- */
+function findCycles(bound){
   var resolved = new Uint8Array(bound + 2), out = new Map();
   for (var s = 1; s <= bound; s += 2){
     if (resolved[s]) continue;
     var path = new Map(), order = [], x = s;
     while (true){
       if (resolved[x]) break;
-      if (path.has(x)){ var idx = path.get(x), orbit = order.slice(idx), mi = 0; for (var i = 1; i < orbit.length; i++) if (orbit[i] > orbit[mi]) mi = i; var elms = orbit.slice(mi).concat(orbit.slice(0, mi)); var key = elms.join(','); if (!out.has(key)) out.set(key, { q: q, elements: elms, halvings: elms.map(function(n){ return step(n, q).x; }) }); break; }
+      if (path.has(x)){ var idx = path.get(x), orbit = order.slice(idx), mi = 0; for (var i = 1; i < orbit.length; i++) if (orbit[i] > orbit[mi]) mi = i; var elms = orbit.slice(mi).concat(orbit.slice(0, mi)); var key = elms.join(','); if (!out.has(key)) out.set(key, { elements: elms, halvings: elms.map(function(n){ return step(n).x; }) }); break; }
       path.set(x, order.length); order.push(x);
-      x = step(x, q).next; if (x > bound) break;
+      x = step(x).next; if (x > bound) break;
     }
     for (var j = 0; j < order.length; j++) resolved[order[j]] = 1;
   }
   return Array.from(out.values()).sort(function(a, b){ return a.elements[0] - b.elements[0] || a.elements.length - b.elements.length; });
 }
-function censusCheck(){
-  if (G.census) return G.census;
-  var QMAX = 199, BOUND = 4000, total = 0, bigM = 0, bigMok = 0, minChecked = 0, minOk = 0, entryOk = 0, multi = 0, t0ok = 0, elems = 0, viol = [];
-  for (var q = 1; q <= QMAX; q += 2){ if (q % 3 === 0) continue; findCycles(q, BOUND).forEach(function(c){ total++; var e = c.elements, Lc = e.length, M = e[0], m = Math.min.apply(null, e); e.forEach(function(v){ elems++; if (v % 3 !== 0) t0ok++; });
-    if (M > q){ bigM++; if (((M - 5 * q) % 12 + 12) % 12 === 0) bigMok++; else viol.push('q=' + q + ' M=' + M); }
-    if (Lc >= 2){ multi++; var im = e.indexOf(m), into = c.halvings[(im - 1 + Lc) % Lc]; if (into >= 2) entryOk++; if (m >= q){ minChecked++; if (c.halvings[im] === 1 && ((m - q - 2) % 4 + 4) % 4 === 0) minOk++; else viol.push('q=' + q + ' m=' + m); } } }); }
-  G.census = { QMAX: QMAX, BOUND: BOUND, total: total, bigM: bigM, bigMok: bigMok, minChecked: minChecked, minOk: minOk, multi: multi, entryOk: entryOk, elems: elems, t0ok: t0ok, viol: viol };
-  return G.census;
-}
-function renderGates(){
-  var q = G.q; $('gqv').textContent = q;
-  var strip = $('strip'); strip.innerHTML = '';
-  var maxr = ((5 * q) % 12 + 12) % 12, minr4 = ((q + 2) % 4 + 4) % 4;
-  for (var r = 0; r < 12; r++){
-    var d = document.createElement('div'), cls = 'cell'; if (r % 2 === 0) cls += ' even'; else if (r % 3 === 0) cls += ' never'; d.className = cls;
-    var lab = document.createElement('div'); lab.className = 'r'; lab.textContent = r; d.appendChild(lab);
-    if (r % 2 === 1){ if (r % 3 === 0){ var b0 = document.createElement('span'); b0.className = 'badge never'; b0.textContent = 'never'; d.appendChild(b0); }
-      else { if (r === maxr){ var b1 = document.createElement('span'); b1.className = 'badge max'; b1.textContent = 'max'; d.appendChild(b1); } if (r % 4 === minr4){ var b2 = document.createElement('span'); b2.className = 'badge min'; b2.textContent = 'min'; d.appendChild(b2); } } }
-    strip.appendChild(d);
-  }
-  var minrs = []; for (var r2 = 1; r2 < 12; r2 += 2) if (r2 % 3 !== 0 && r2 % 4 === minr4) minrs.push(r2);
-  var C = censusCheck();
-  $('gstat').innerHTML = '<b>q = ' + q + '</b> max ≡ ' + maxr + ' (mod 12) when M &gt; q · min ≡ ' + minrs.join(' or ') + ' (mod 12) when m ≥ q, L ≥ 2 · classes 3, 9 hold no cycle member at all<br>' +
-    '<b>checked in this page</b> every cycle with q ≤ ' + C.QMAX + ' and M ≤ ' + fmt(C.BOUND) + ': ' + C.total + ' cycles, ' + fmt(C.elems) + ' members, ' + fmt(C.t0ok) + ' coprime to 3 · ' + C.bigMok + '/' + C.bigM + ' with M &gt; q pass the max gate · ' + C.minOk + '/' + C.minChecked + ' with m ≥ q pass the min gate · ' + C.entryOk + '/' + C.multi + ' minima are entered by ≥ 2 halvings' + (C.viol.length ? ' · <span class="warn">violations: ' + C.viol.join(', ') + '</span>' : ' · <span class="ok">no violations</span>');
-  var cyc = findCycles(q, 4000), tb = $('gtbl'); tb.innerHTML = '';
-  var hr = document.createElement('tr'); ['cycles of 3n+' + q + ' with M ≤ 4000', 'L', 'M', 'M mod 12', 'M > q', 'm', 'm mod 12', 'm ≥ q', 'halvings'].forEach(function(h, i){ var th = document.createElement('th'); th.textContent = h; if (i === 0 || i === 8) th.className = 'l'; hr.appendChild(th); }); tb.appendChild(hr);
-  cyc.slice(0, 30).forEach(function(c){ var e = c.elements, M = e[0], m = Math.min.apply(null, e), tr = document.createElement('tr'); var show = e.length > 8 ? e.slice(0, 8).join(', ') + ', … (' + e.length + ')' : e.join(', '); [show, e.length, M, M % 12, M > q ? 'yes' : 'no', m, m % 12, m >= q ? 'yes' : 'no', c.halvings.length > 8 ? c.halvings.slice(0, 8).join(' ') + ' …' : c.halvings.join(' ')].forEach(function(v, j){ var td = document.createElement('td'); td.textContent = typeof v === 'number' ? fmt(v) : v; if (j === 0 || j === 8) td.className = 'l'; tr.appendChild(td); }); tb.appendChild(tr); });
-  if (!cyc.length){ var tr0 = document.createElement('tr'), td0 = document.createElement('td'); td0.colSpan = 9; td0.className = 'l'; td0.textContent = 'none'; tr0.appendChild(td0); tb.appendChild(tr0); }
-}
-$('gq').addEventListener('change', function(){ var q = parseInt(this.value, 10); if (!okq(q) || q > 999){ $('gerr').textContent = 'q must be odd, not divisible by 3, ≤ 999'; return; } $('gerr').textContent = ''; G.q = q; renderGates(); });
-
-/* ---------------- 4. SAT ---------------- */
 function Cnf(){ this.nv = 0; this.clauses = []; }
 Cnf.prototype.v = function(){ return ++this.nv; };
 Cnf.prototype.cl = function(lits){ var out = []; for (var i = 0; i < lits.length; i++){ var l = lits[i]; if (l === true) return; if (l === false) continue; out.push(l); } this.clauses.push(out); };
@@ -450,7 +409,7 @@ Cnf.prototype.add = function(A, B){ var n = Math.max(A.length, B.length); A = A.
 Cnf.prototype.lt = function(A, B){ var n = Math.max(A.length, B.length); A = A.concat(new Array(n - A.length).fill(false)); B = B.concat(new Array(n - B.length).fill(false)); var res = false, eq = true; for (var j = n - 1; j >= 0; j--){ res = this.OR(res, this.AND(eq, this.AND(NOT(A[j]), B[j]))); eq = this.AND(eq, NOT(this.XOR(A[j], B[j]))); } return res; };
 Cnf.prototype.impEq = function(y, a, b){ this.cl([-y, NOT(a), b]); this.cl([-y, a, NOT(b)]); };
 function constBits(v, n){ var out = []; for (var j = 0; j < n; j++) out.push(((v >> j) & 1) === 1); return out; }
-function encode(q, Lc, W, gates){
+function encode(Lc, W, gates){
   var c = new Cnf(), n = [], y = [], K = W + 1, i, j, k;
   for (i = 0; i < Lc; i++){ n.push([]); for (j = 0; j < W; j++) n[i].push(c.v()); }
   for (i = 0; i < Lc; i++){ y.push([0]); for (k = 1; k <= K; k++) y[i].push(c.v()); }
@@ -463,52 +422,63 @@ function encode(q, Lc, W, gates){
     for (k = 1; k <= K; k++){ var yk = y[i][k]; for (j = 0; j < k; j++) c.cl([-yk, NOT(t[j])]); c.cl([-yk, t[k]]); for (j = 0; j < W; j++){ var src = (j + k < W + 2) ? t[j + k] : false; c.impEq(yk, nxt[j], src); } }
   }
   for (i = 1; i < Lc; i++) c.cl([c.lt(n[i], n[0])]);
-  if (gates){ c.cl([((q >> 1) & 1) ? n[0][1] : -n[0][1]]); var gt = c.lt(constBits(q, W), n[0]); c.cl([NOT(gt), y[Lc - 1][1]]); if (q === 1 && W >= 4) c.cl([-n[0][3], n[0][2], n[0][1]]); }
-  return { cnf: c, n: n, y: y, q: q, L: Lc, W: W };
+  if (gates){
+    c.cl([-n[0][1]]);                                        // T1: M ≡ 1 (mod 4)
+    var gt = c.lt(constBits(q, W), n[0]); c.cl([NOT(gt), y[Lc - 1][1]]);  // T2: M > 1 ⇒ one halving into M
+    c.cl([-n[0][3], n[0][2], n[0][1]]);                      // T8: M ≢ 9 (mod 16)
+    if (Lc >= 2){ var some = []; for (i = 1; i < Lc; i++) some.push(n[i][1]); c.cl(some); }  // min ≡ 3 (mod 4): some other member has bit 1 set
+  }
+  return { cnf: c, n: n, y: y, L: Lc, W: W };
 }
-var Logic = null, running = false;
+var Logic = null, running = false, rows = [];
 function setStat(s, cls){ var e = $('sstat'); e.textContent = s; e.className = 'status' + (cls ? ' ' + cls : ''); }
-import('https://cdn.jsdelivr.net/npm/logic-solver@2.0.1/+esm').then(function(mod){ Logic = mod.default || mod; if (!Logic._MiniSat) throw new Error('no MiniSat'); setStat('MiniSat ready'); solveBox(); }).catch(function(e){ setStat('MiniSat could not be loaded here — the CNF is still built and the exhaustive search runs', 'warn'); solveBox(); });
+import('https://cdn.jsdelivr.net/npm/logic-solver@2.0.1/+esm').then(function(mod){ Logic = mod.default || mod; if (!Logic._MiniSat) throw new Error('no MiniSat'); setStat('MiniSat ready'); runLadder(6); }).catch(function(e){ setStat('MiniSat could not be loaded here — the CNF is still built and the exhaustive search runs', 'warn'); });
 function yieldUI(){ return new Promise(function(r){ setTimeout(r, 0); }); }
-async function solveBox(){
-  if (running) return; var q = parseInt($('sq').value, 10), Lc = parseInt($('sl').value, 10), W = parseInt($('sw').value, 10), gates = $('sg').checked;
-  var out = $('sout');
-  if (!okq(q)){ out.textContent = 'q must be odd and not divisible by 3.'; return; }
-  if (!(Lc >= 1 && Lc <= 20 && W >= 4 && W <= 26)){ out.textContent = 'need 1 ≤ L ≤ 20 and 4 ≤ W ≤ 26.'; return; }
-  if (q >= Math.pow(2, W)){ out.textContent = 'q must be below 2^W.'; return; }
-  running = true; $('srun').disabled = true;
-  var t0 = performance.now(), enc = encode(q, Lc, W, gates), c = enc.cnf, tEnc = performance.now() - t0;
+async function runBox(Lc, W, gates, out, prefix){
+  var t0 = performance.now(), enc = encode(Lc, W, gates), c = enc.cnf, tEnc = performance.now() - t0;
   var lits = 0; c.clauses.forEach(function(x){ lits += x.length; });
-  var head = ['c S_' + q + '-cycle, L = ' + Lc + ' odd members, max < 2^' + W + (gates ? ', gates on' : ''), 'p cnf ' + c.nv + ' ' + c.clauses.length];
+  var head = ['c 3n+1 cycle, L = ' + Lc + ' odd members, max < 2^' + W + (gates ? ', gates on' : ''), 'p cnf ' + c.nv + ' ' + c.clauses.length];
   c.clauses.slice(0, 14).forEach(function(x){ head.push(x.join(' ') + ' 0'); }); if (c.clauses.length > 14) head.push('… ' + (c.clauses.length - 14) + ' more clauses');
   $('sdimacs').textContent = head.join('\n');
-  var lines = ['box: q = ' + q + ', L = ' + Lc + ', W = ' + W + ' (max < ' + fmt(Math.pow(2, W)) + ')' + (gates ? ', gates on' : ', gates off'), 'CNF: ' + fmt(c.nv) + ' variables, ' + fmt(c.clauses.length) + ' clauses, ' + fmt(lits) + ' literals — built in ' + tEnc.toFixed(0) + ' ms'];
+  var lines = [prefix + 'box: L = ' + Lc + ', W = ' + W + ' (max < ' + fmt(Math.pow(2, W)) + ')' + (gates ? ', gates on' : ', gates off'), 'CNF: ' + fmt(c.nv) + ' variables, ' + fmt(c.clauses.length) + ' clauses, ' + fmt(lits) + ' literals — built in ' + tEnc.toFixed(0) + ' ms'];
   out.textContent = lines.join('\n') + '\nsolving…'; await yieldUI();
-  var found = [], tSolve = 0, unsat = c.clauses.some(function(x){ return x.length === 0; });
+  var found = [], tSolve = 0, unsat = c.clauses.some(function(x){ return x.length === 0; }), verdict = '';
   if (Logic && !unsat){
     var ms = new Logic._MiniSat(); ms.ensureVar(c.nv); c.clauses.forEach(function(x){ ms.addClause(x); });
     var t1 = performance.now();
-    while (found.length < 200){
+    while (found.length < 50){
       var sat = ms.solve(); if (!sat) break;
       var sol = ms.getSolution(), elems = [], xs = [], i, j, k;
       for (i = 0; i < Lc; i++){ var v = 0; for (j = 0; j < W; j++) if (sol[enc.n[i][j]]) v += Math.pow(2, j); elems.push(v); var kk = 0; for (k = 1; k <= W + 1; k++) if (sol[enc.y[i][k]]) kk = k; xs.push(kk); }
-      var okc = true; for (i = 0; i < Lc; i++) if (3 * elems[i] + q !== elems[(i + 1) % Lc] * Math.pow(2, xs[i])) okc = false;
+      var okc = true; for (i = 0; i < Lc; i++) if (3 * elems[i] + 1 !== elems[(i + 1) % Lc] * Math.pow(2, xs[i])) okc = false;
       found.push({ elements: elems, halvings: xs, ok: okc });
       var block = []; for (j = 0; j < W; j++) block.push(((elems[0] >> j) & 1) ? -enc.n[0][j] : enc.n[0][j]); ms.addClause(block);
-      tSolve = performance.now() - t1; out.textContent = lines.join('\n') + '\nsolving… ' + found.length + ' found'; await yieldUI();
+      await yieldUI();
     }
     tSolve = performance.now() - t1;
-    lines.push('MiniSat: ' + (found.length ? found.length + ' cycle' + (found.length > 1 ? 's' : '') : 'unsat — no cycle in this box') + ' in ' + tSolve.toFixed(0) + ' ms' + (found.length >= 200 ? ' (stopped at 200)' : ''));
-    found.sort(function(a, b){ return a.elements[0] - b.elements[0]; });
-    found.forEach(function(f){ lines.push('  M = ' + fmt(f.elements[0]) + ': ' + (f.elements.length > 10 ? f.elements.slice(0, 10).map(fmt).join(' → ') + ' → … (' + f.elements.length + ')' : f.elements.map(fmt).join(' → ') + ' → ' + fmt(f.elements[0])) + '   halvings ' + (f.halvings.length > 10 ? f.halvings.slice(0, 10).join(' ') + ' …' : f.halvings.join(' ')) + (f.ok ? '   ✓ closes' : '   ✗ DOES NOT CLOSE')); });
-  } else if (unsat) lines.push('unsat by constant propagation alone');
-  else lines.push('MiniSat unavailable in this viewer');
-  if (W <= 20){ var ex = findCycles(q, Math.pow(2, W) - 1).filter(function(cc){ return cc.elements.length === Lc; }); var same = Logic && ex.length === found.length && ex.every(function(cc, i){ return cc.elements.join(',') === found[i].elements.join(','); }); lines.push('exhaustive search of the same box: ' + ex.length + ' cycle' + (ex.length === 1 ? '' : 's') + (Logic ? (same ? ' — identical to the SAT models ✓' : ' — DIFFERENT from the SAT models ✗') : '') + (!Logic && ex.length ? ': ' + ex.map(function(cc){ return 'M = ' + fmt(cc.elements[0]); }).join(', ') : '')); }
-  else lines.push('exhaustive cross-check skipped above W = 20');
-  out.textContent = lines.join('\n'); running = false; $('srun').disabled = false;
+    verdict = found.length ? found.length + ' cycle' + (found.length > 1 ? 's' : '') : 'unsat';
+    lines.push('MiniSat: ' + (found.length ? verdict : 'unsat — no cycle in this box') + ' in ' + tSolve.toFixed(0) + ' ms');
+    found.forEach(function(f){ lines.push('  M = ' + fmt(f.elements[0]) + ': ' + f.elements.map(fmt).join(' → ') + ' → ' + fmt(f.elements[0]) + '   halvings ' + f.halvings.join(' ') + (f.ok ? '   ✓ closes' : '   ✗ DOES NOT CLOSE')); });
+  } else if (unsat){ verdict = 'unsat'; lines.push('unsat by constant propagation alone'); }
+  else { verdict = '—'; lines.push('MiniSat unavailable in this viewer'); }
+  var exText = '';
+  if (W <= 20){ var ex = findCycles(Math.pow(2, W) - 1).filter(function(cc){ return cc.elements.length === Lc; }); var same = Logic && ex.length === found.length && ex.every(function(cc, i){ return cc.elements.join(',') === found[i].elements.join(','); }); exText = ex.length + (Logic ? (same ? ' ✓' : ' ✗') : ''); lines.push('exhaustive search of the same box: ' + ex.length + ' cycle' + (ex.length === 1 ? '' : 's') + (Logic ? (same ? ' — identical to the SAT models ✓' : ' — DIFFERENT from the SAT models ✗') : '')); }
+  else { exText = 'skipped'; lines.push('exhaustive cross-check skipped above W = 20'); }
+  out.textContent = lines.join('\n');
+  rows.push({ L: Lc, W: W, gates: gates, nv: c.nv, ncl: c.clauses.length, verdict: verdict, ms: tSolve, ex: exText });
+  renderRows();
 }
-$('srun').addEventListener('click', solveBox);
-document.querySelectorAll('.chips[aria-label="SAT examples"] .chip').forEach(function(b){ b.addEventListener('click', function(){ $('sq').value = b.dataset.q; $('sl').value = b.dataset.l; $('sw').value = b.dataset.w; solveBox(); }); });
+function renderRows(){
+  var tb = $('stbl'); tb.innerHTML = ''; if (!rows.length) return;
+  var hr = document.createElement('tr'); ['L', 'W', 'gates', 'variables', 'clauses', 'MiniSat', 'ms', 'exhaustive'].forEach(function(h){ var th = document.createElement('th'); th.textContent = h; hr.appendChild(th); }); tb.appendChild(hr);
+  rows.forEach(function(r){ var tr = document.createElement('tr'); [r.L, r.W, r.gates ? 'on' : 'off', r.nv, r.ncl, r.verdict, r.ms.toFixed(0), r.ex].forEach(function(v){ var td = document.createElement('td'); td.textContent = typeof v === 'number' ? fmt(v) : v; tr.appendChild(td); }); tb.appendChild(tr); });
+}
+function readBox(){ var Lc = parseInt($('sl').value, 10), W = parseInt($('sw').value, 10); if (!(Lc >= 1 && Lc <= 20 && W >= 4 && W <= 26)){ $('sout').textContent = 'need 1 ≤ L ≤ 20 and 4 ≤ W ≤ 26.'; return null; } return { L: Lc, W: W, gates: $('sg').checked }; }
+async function solveOne(){ if (running) return; var b = readBox(); if (!b) return; running = true; $('srun').disabled = true; $('sladder').disabled = true; await runBox(b.L, b.W, b.gates, $('sout'), ''); running = false; $('srun').disabled = false; $('sladder').disabled = false; }
+async function runLadder(maxL){ if (running) return; var b = readBox(); if (!b) return; var top = maxL || parseInt($('slmax').value, 10); if (!(top >= 1 && top <= 20)) top = 8; running = true; $('srun').disabled = true; $('sladder').disabled = true; for (var Lc = 1; Lc <= top; Lc++){ await runBox(Lc, b.W, b.gates, $('sout'), 'ladder ' + Lc + '/' + top + ' · '); } running = false; $('srun').disabled = false; $('sladder').disabled = false; }
+$('srun').addEventListener('click', solveOne);
+$('sladder').addEventListener('click', function(){ runLadder(); });
+$('sclear').addEventListener('click', function(){ rows = []; renderRows(); $('sout').textContent = 'Cleared.'; });
 
 renderLedger(); renderGates();
 })();

@@ -32,7 +32,9 @@ Encoding (LSB-first bit vectors, Tseitin with constant folding)
 * Optional *gates* (``docs/GROUND_TRUTH.md``): T1, ``M = q (mod 4)``, is one
   unit clause on bit 1 of ``n_0``; T2, ``M > q  =>  v2(3 n_{L-1} + q) = 1``, is
   one clause guarded by a comparator; for ``q = 1`` T8, ``M != 9 (mod 16)``, is
-  one 3-literal clause.  Every 2-adic gate is a clause on the low bits.  The
+  one 3-literal clause, and the minimum's mirror ``m = 3 (mod 4)`` (valid for
+  ``q = 1``, ``L >= 2``, since then ``m >= 3 > q``) is one clause saying some
+  member other than ``n_0`` has bit 1 set.  Every 2-adic gate is a clause on the low bits.  The
   3-adic gates (T0, T2's ``M = 2q (mod 3)``, T4, the whole sieve) are not
   bit-local and would each need a mod-3 circuit -- that asymmetry is the
   honest reason a bit-level encoding sees the 2-adic half of the problem for
@@ -223,6 +225,8 @@ def encode(q: int, L: int, W: int, gates: bool = True) -> Encoding:
         c.clause([c.NOT(gt), y[L - 1][1]])
         if q == 1:  # T8: M != 9 (mod 16)
             c.clause([-n[0][3], n[0][2], n[0][1]])
+        if q == 1 and L >= 2:  # the minimum's mirror: m = 3 (mod 4), so some member other than M has bit 1 set
+            c.clause([n[i][1] for i in range(1, L)])
     return Encoding(q, L, W, gates, c, n, y)
 
 

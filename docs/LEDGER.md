@@ -1,8 +1,9 @@
 # The cycle ledger — balance, pairs, gates, and a SAT box
 
 **Provenance.** A visualization-led pass of 2026-09-23 on four ideas
-(`web/ledger.html`): that the `3n+q` ascents and the halving descents of a
-cycle must balance; that the largest member must be reached from a smaller one
+(`web/ledger.html`, which by the user's decision treats **`3n+1` only** — the
+general `q` below is the test harness, not the page): that the `3n+1` ascents
+and the halving descents of a cycle must balance; that the largest member must be reached from a smaller one
 and the smallest left for a larger one; that each odd `n` can be paired with
 its descending sum `(13, 35)`; and that the whole question can be handed to a
 SAT solver.  Labels follow the house scheme: **PROVED** (complete proof),
@@ -85,7 +86,11 @@ sieve of `docs/DEATH_DEPTH.md`) are where the project actually lives.
 "There is an `S_q`-cycle with `L` odd members, all below `2^W`" is finite, so
 it has a CNF.  `python/collatz_maxodd/satcycles.py` writes it (pure Python;
 Tseitin gates with constant folding) and `web/ledger.html` carries the same
-encoding in JavaScript with MiniSat (logic-solver 2.0.1) running in the page.
+encoding in JavaScript, specialised to `q = 1`, with MiniSat (logic-solver
+2.0.1) running in the page; there every affordable box (`W ≤ 26`) is unsat
+above `L = 1`, as Barina's `2^71` bound says it must be, and the page says so.
+The encoder's ability to *find* a cycle can only be tested where cycles exist,
+which is why the Python harness keeps general `q`.
 
 **Encoding.** `nᵢ` as `W` bits, `n₀` the maximum; `tᵢ = 3nᵢ + q` as `W+2`
 bits through two ripple-carry adders (`nᵢ + (nᵢ ≪ 1)`, then `+ q`; the top
@@ -95,7 +100,9 @@ carry is provably 0 for `q < 2^W`); one-hot `y_{i,k}`, `k = 1..W+1`, meaning
 `i ≥ 1` (fixes the rotation and forbids a shorter cycle traversed twice; with
 `L = 1` the models are the fixed points `n(2^b − 3) = q`).  Optional gates:
 T1 is one unit clause on bit 1 of `n₀`; T2 is one clause behind a comparator
-`n₀ > q`; for `q = 1`, T8 (`M ≢ 9 mod 16`) is one 3-literal clause.
+`n₀ > q`; for `q = 1`, T8 (`M ≢ 9 mod 16`) is one 3-literal clause and the
+minimum's mirror `m ≡ 3 (mod 4)` is one clause saying some member other than
+`n₀` has bit 1 set (sound for `q = 1`, `L ≥ 2`, where `m ≥ 3 > q`).
 Enumeration blocks the value of `n₀` after each model — for fixed `L` the
 maximum determines the cycle — so each cycle appears exactly once.
 
