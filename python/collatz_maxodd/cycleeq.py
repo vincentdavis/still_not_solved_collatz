@@ -144,7 +144,14 @@ def log2_3(prec: int = 200) -> Decimal:
     three = Decimal(3)
     two = Decimal(2)
     val = ctx.divide(three.ln(context=ctx), two.ln(context=ctx))
-    return +val
+    # Round to ``prec`` digits with an explicit context.  (An earlier ``+val``
+    # rounded to the *caller's* global context and, being cached, froze the
+    # first caller's precision for everyone: a 28-digit ``log2_3(300)`` then
+    # made ``log2_3_cf`` emit a garbage term of ~10^270 and
+    # ``best_upper_approximations`` loop over it forever.)
+    out = ctx.copy()
+    out.prec = prec
+    return out.plus(val)
 
 
 @lru_cache(maxsize=None)
@@ -163,7 +170,7 @@ def log2_3_cf(n: int = 20, prec: int = 200) -> tuple[int, ...]:
     for _ in range(n):
         a = int(x.to_integral_value(rounding="ROUND_FLOOR"))
         terms.append(a)
-        frac = x - a
+        frac = ctx.subtract(x, Decimal(a))  # not ``x - a``: that would round to the caller's global context
         if frac == 0:  # pragma: no cover - log2 3 is irrational
             break
         x = ctx.divide(Decimal(1), frac)
@@ -210,22 +217,24 @@ def best_upper_approximations(
     conv = log2_3_convergents(n, prec)
     terms = log2_3_cf(n, prec)
     alpha = log2_3(prec)
+    ctx = getcontext().copy()
+    ctx.prec = prec
     cands: set[tuple[int, int]] = set()
     for k in range(1, len(conv)):
         p_prev, q_prev = conv[k - 1]
         p_k, q_k = conv[k]
         cands.add((p_k, q_k))
         a_next = terms[k + 1] if k + 1 < len(terms) else 1
+        if a_next > 10**6:  # a term this large means the digits ran out; refuse to loop over garbage
+            raise ValueError(f"continued-fraction term {a_next} at index {k + 1} exceeds 10^6: increase prec")
         for i in range(0, a_next + 1):
             cands.add((p_prev + i * p_k, q_prev + i * q_k))
     upper = sorted(
-        (pq for pq in cands if pq[1] > 0 and Decimal(pq[0]) / Decimal(pq[1]) > alpha),
+        (pq for pq in cands if pq[1] > 0 and ctx.divide(Decimal(pq[0]), Decimal(pq[1])) > alpha),
         key=lambda pq: pq[1],
     )
     out: list[tuple[int, int]] = []
     best: Decimal | None = None
-    ctx = getcontext().copy()
-    ctx.prec = prec
     for p, q in upper:
         gap = ctx.subtract(ctx.divide(Decimal(p), Decimal(q)), alpha)
         if best is None or gap < best:
@@ -284,13 +293,11 @@ def smallest_admissible_length(
     ctx = getcontext().copy()
     ctx.prec = prec
     alpha = log2_3(prec)
-    eps = ctx.ln(1 + ctx.divide(Decimal(q), Decimal(3 * min_element))) / ctx.ln(
-        Decimal(2)
-    )
+    eps = ctx.divide(ctx.ln(ctx.add(Decimal(1), ctx.divide(Decimal(q), Decimal(3 * min_element)))), ctx.ln(Decimal(2)))
     for p, L in best_upper_approximations(terms, prec):
         gap = ctx.subtract(ctx.divide(Decimal(p), Decimal(L)), alpha)
         if gap <= eps:
-            return L, p, +(eps - gap)
+            return L, p, ctx.subtract(eps, gap)
     raise ValueError(
         f"no admissible length found within {terms} continued-fraction terms; "
         "increase `terms`"

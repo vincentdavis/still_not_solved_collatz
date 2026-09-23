@@ -2,30 +2,32 @@
 
 from __future__ import annotations
 
-from decimal import Decimal, getcontext
+from decimal import Decimal, localcontext
 
 from collatz_maxodd.cycleeq import best_upper_approximations, log2_3, smallest_admissible_length
 
 
 def test_log_form_of_the_product_identity(census):
     """B = L*log2(3) + sum log2(1 + q/(3 n_i)) around every cycle, to 40 digits."""
-    getcontext().prec = 60
-    alpha = log2_3(60)
-    ln2 = Decimal(2).ln()
-    for c in census:
-        corr = sum((1 + Decimal(c.q) / Decimal(3 * n)).ln() / ln2 for n in c.elements)
-        assert abs(Decimal(c.B) - Decimal(c.L) * alpha - corr) < Decimal(10) ** -40, c
+    with localcontext() as ctx:
+        ctx.prec = 60
+        alpha = log2_3(60)
+        ln2 = Decimal(2).ln()
+        for c in census:
+            corr = sum((1 + Decimal(c.q) / Decimal(3 * n)).ln() / ln2 for n in c.elements)
+            assert abs(Decimal(c.B) - Decimal(c.L) * alpha - corr) < Decimal(10) ** -40, c
 
 
 def test_best_upper_approximations_are_the_records_by_brute_force():
-    getcontext().prec = 80
-    alpha = log2_3(80)
-    records, best = [], None
-    for q in range(1, 3001):
-        p = int((alpha * q).to_integral_value(rounding="ROUND_FLOOR")) + 1
-        gap = Decimal(p) / Decimal(q) - alpha
-        if best is None or gap < best:
-            best, _ = gap, records.append((p, q))
+    with localcontext() as ctx:
+        ctx.prec = 80
+        alpha = log2_3(80)
+        records, best = [], None
+        for q in range(1, 3001):
+            p = int((alpha * q).to_integral_value(rounding="ROUND_FLOOR")) + 1
+            gap = Decimal(p) / Decimal(q) - alpha
+            if best is None or gap < best:
+                best, _ = gap, records.append((p, q))
     assert records == [pq for pq in best_upper_approximations(70, 300) if pq[1] <= 3000]
 
 

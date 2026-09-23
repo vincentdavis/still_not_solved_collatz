@@ -224,6 +224,15 @@ whose fraction is within `δ` of `log₂3` (`cycleeq.smallest_admissible_length`
 | `2^71` (Barina 2025, in print; `2075·2^60` gives the same) | `2.04×10⁻²²` | 72 057 431 991 | 114 208 327 604 | 186 265 759 595 |
 | `2^100` (hypothetical) | `3.79×10⁻³¹` | 3 332 857 981 044 265 | 5 282 454 920 184 382 | 8 615 312 901 228 647 |
 
+(Pinning these rows exposed a latent bug: `cycleeq.log2_3`, `log2_3_cf`,
+`best_upper_approximations` and `smallest_admissible_length` each did one
+operation in the *caller's global* Decimal context, and `log2_3` is cached, so
+a first call under the 28-digit default froze a 28-digit value for everyone;
+`log2_3_cf` then emitted garbage terms from index 29 on and
+`best_upper_approximations` looped over a term of order `10^270`.  Every
+operation now runs in an explicit context at the requested precision, and the
+loop refuses terms above `10^6`.  The earlier session-level numbers were
+computed under a 320-digit global context and are unaffected.)
 The page recomputes the list and the crossing in exact integer arithmetic
 (`log₂3` to 90 decimals, 70 continued-fraction terms, denominators to
 `10^34`) with a slider for `k`; the five rows above are pinned by
