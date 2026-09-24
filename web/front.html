@@ -109,7 +109,7 @@ a:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:
     <div class="tile"><div class="n">&gt; 1.375 × 10<sup>11</sup></div><div class="l">odd members in any second cycle</div><div class="s">Hercher 2023, Cor. 29, via Barina</div></div>
     <div class="tile"><div class="n">≥ 92</div><div class="l">circuits in any second cycle; m ≤ 91 is impossible</div><div class="s">Hercher 2023; m = 92 still stands</div></div>
     <div class="tile"><div class="n">2 127</div><div class="l">real cycles of the 3n+q family used as the test bed</div><div class="s">every q ≤ 999, maxima ≤ 20 000</div></div>
-    <div class="tile"><div class="n">421 · 341</div><div class="l">Python tests · Lean declarations, no Mathlib, no sorry</div><div class="s">this repository</div></div>
+    <div class="tile"><div class="n">426 · 341</div><div class="l">Python tests · Lean declarations, no Mathlib, no sorry</div><div class="s">this repository</div></div>
   </div>
 
   <!-- ===== pages ===== -->
@@ -161,7 +161,7 @@ a:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:
     <div class="card">
       <h3><a href="https://claude.ai/artifact/4ZAdqTQfk4D9br1KtGKcRk">Drop Function</a><span class="kind">web/drop.html</span></h3>
       <p><b>Shows.</b> The drop <code>f(n) = n − S(n)</code> of every odd <code>n</code>: a table and the rays of slope <code>1 − 3/2<sup>x</sup></code>; which even numbers are drops and every odd number that produces each one; the drop ledger along a trajectory, where the falls exceed the rises by exactly <code>n − 1</code>; a finder for sets of drops that sum to zero, with a chain test.</p>
-      <p><b>Establishes.</b> <span class="tag p">proved</span> every even integer is a drop and no odd one; a negative drop has exactly one source, <code>2|d| − 1</code>, zero has only 1, and a positive <code>d</code> has one source per divisor of <code>3d+1</code> of the form <code>2<sup>x</sup> − 3</code>, so the number of sources is unbounded; zero-sum sets exist for every size (<code>{3, 7, …, 4k−5, (2k−1)²}</code>), a zero-sum chain is exactly a cycle, and there is no 2-chain. <span class="tag c">computed</span> 83 zero-sum pairs below 400, 383 triples below 120, 511 quadruples below 60, none a chain; the drop 628 has four sources and 958 208 six.</p>
+      <p><b>Establishes.</b> <span class="tag p">proved</span> every even integer is a drop and no odd one; a negative drop has exactly one source, <code>2|d| − 1</code>, zero has only 1, and a positive <code>d</code> has one source per divisor of <code>3d+1</code> of the form <code>2<sup>x</sup> − 3</code>, so the number of sources is unbounded; zero-sum sets exist for every size (<code>{3, 7, …, 4k−5, (2k−1)²}</code>), a zero-sum chain is exactly a cycle, and there is no 2-chain. <span class="tag c">computed</span> 83 zero-sum pairs below 400, 383 triples below 120, 511 quadruples below 60, none a chain; with the gates a cycle's two ends must pass, the 2 109 pairs below 10 000 fall to 18 at depth 4 and 7 at depth 6, still none a chain; the drop 628 has four sources and 958 208 six.</p>
       <p><b>Does not.</b> The sum constrains only the multiset of drops; the chain condition is the cycle equation again, and the page adds no bound. Nothing here is new: the statements reorganise the inverse map <code>(2<sup>x</sup>s − 1)/3</code> by the drop instead of by the target.</p>
     </div>
   </div>
@@ -215,7 +215,7 @@ a:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:
   <h2>The repository</h2>
   <div class="repo">
     <div><b>Source</b><a href="https://github.com/vincentdavis/still_not_solved_collatz">github.com/vincentdavis/still_not_solved_collatz</a>, public. Three tracks share one specification, <code>docs/GROUND_TRUTH.md</code>.</div>
-    <div><b>Python</b>the package <code>collatz_maxodd</code>, standard library only, run with <code>uv</code>; 421 tests check every claim against the census, real integers, and exact big-integer brute force (25 of them need <code>python-sat</code>).</div>
+    <div><b>Python</b>the package <code>collatz_maxodd</code>, standard library only, run with <code>uv</code>; 426 tests check every claim against the census, real integers, and exact big-integer brute force (25 of them need <code>python-sat</code>).</div>
     <div><b>Lean 4</b>341 declarations, no Mathlib, audited by <code>#print axioms</code> at build time: each certifies <code>[propext, Quot.sound]</code>, <code>[propext]</code> or nothing; a five-step gate rejects <code>sorry</code>, <code>axiom</code>, <code>native_decide</code> and unsafe code, and was shown to fail on four injected defects.</div>
     <div><b>Web</b>the main page is generated from a template and a 140 KB data file; the six standalone pages are single files with everything inline, published as private artifacts and linked above.</div>
   </div>

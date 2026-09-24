@@ -145,6 +145,58 @@ is the smallest case of Steiner's theorem (CITED: R. P. Steiner, *A theorem
 on the Syracuse problem*, Proc. 7th Manitoba Conf. Numerical Math. 1977,
 553–559: no cycle with a single rise-run other than `{1}`).
 
+**Z5 (the gates at both ends).** A cycle's largest member `M` and smallest
+member `m` satisfy conditions that involve only the number itself, so they can
+be imposed on a zero-sum set that is not a chain (the user's question of
+2026-09-23).  *Maximum gate at depth `D`* (`sieve.can_be_max_odd`, exact and
+unconditional): `3 ∤ M`; `S^j(M) ≤ M` for `j ≤ D` (depth 1 is T1, depth 2
+adds T8); some chain of `D` predecessors `≤ M` avoids multiples of 3 (depth 1
+is T2 and T4).  *Minimum gate at depth `D`* (`drop.can_be_min_odd`): `3 ∤ m`
+and `S^j(m) ≥ m` for `j ≤ D`, because every iterate of `m` is a member; it
+has no backward half, since predecessors above `m` always exist
+(`y_b = (2^b m − 1)/3 ≥ m` for `b ≥ 2`, and among `b, b+2, b+4` one avoids
+multiples of 3 because `y_{b+2} = 4y_b + 1`).  In Terras's language (CITED,
+Terras 1976) the minimum of a second cycle has infinite stopping time, and the
+depth-`D` gate keeps the residue classes that have not stopped after `D` odd
+steps.
+
+PROVED: depth 1 of the minimum gate is `m ≡ 3 (mod 4)` and `3 ∤ m` (Lean
+`Minimum.min_mod4_q1`, `min_not_three`).  Depth 2 adds `m ≢ 3 (mod 16)` for
+`m > 5`: with `m ≡ 3 (mod 4)`, `S(m) = (3m+1)/2`, `3S(m)+1 = (9m+5)/2` and
+`S²(m) = (9m+5)/2^{x+1}` with `x = v₂((9m+5)/2)`; `S²(m) ≥ m` forces
+`2^{x+1} ≤ 9 + 5/m < 10`, so `x ≤ 2`, i.e. `16 ∤ 9m+5`, i.e. `m ≢ 3 (mod 16)`
+(`9^{-1} ≡ 9 (mod 16)`).  Exact below `2^14`: `test_min_gate_depths`.
+
+COMPUTED (`test_gated_zero_sum_counts`, `test_gated_pairs`,
+`test_gate_survivor_shares`, `test_end_gates_on_the_census`):
+
+| bound, size | ungated | depth 1 | 2 | 3 | 4 | 6 |
+|---|---|---|---|---|---|---|
+| < 400, pairs | 83 | 11 | 4 | 1 | 1 | 0 |
+| < 10 000, pairs | 2 109 | 277 | 93 | 35 | 18 | 7 |
+| < 120, triples | 383 | 11 | 5 | 2 | 0 | 0 |
+| < 400, triples | 4 701 | 169 | 61 | 27 | 1 | 0 |
+| < 60, quadruples | 511 | 14 | 9 | 0 | 0 | 0 |
+| < 100, quadruples | 2 737 | 124 | 9 | 0 | 0 | 0 |
+
+No gated set is a chain.  Survivors at depth 4: the pairs `{79, 161}`,
+`{223, 449}`, `{295, 593}`, `{319, 641}`, `{967, 1937}`, …, and the one
+triple below 400, `{31, 47, 161}` (drops `−16, −24, 40`).  Every gated pair is
+`{2d − 1, 4d + 1}`: the larger member must be a fall source, `≡ 1 (mod 4)`,
+and the fall source of `d` exceeds the rise source `2d − 1` only at height 2
+(for `d ≥ 4`).  The smallest `d` giving a gated pair is 4 at depths 1–2, 40
+at 3–4, 112 at 5–6, 592 at 7–8; below `d = 200 000` there are 22 222, 7 408,
+2 776, 1 340, 570, 335, 221, 128 of them at depths 1–8.  Among odd numbers
+below `2^16` the minimum gate passes 0.3333, 0.2500, 0.1354, 0.0597 at depths
+1, 2, 4, 8 and the maximum gate 0.1111, 0.0556, 0.0183, 0.0041.  Every cycle
+of the 3n+q census passes both gates, with its own `q`, at depth 6.  Whether
+some depth excludes every gated pair is not settled here: for large members
+both gates are conditions on residues (the forward halvings are fixed by the
+class mod a power of 2, the backward chain by the class mod a power of 3), so
+this is the sieve of the main page seen from a zero-sum set instead of a
+chain, and it inherits the sieve's limits (`docs/GROUND_TRUTH.md`, the
+equivalence theorem).
+
 **Why zero-sum is so much weaker than chain.** The sum constrains only the
 multiset of drops; a chain fixes each member from the previous one,
 `nᵢ₊₁ = nᵢ − f(nᵢ)`, leaving one number free, and its closure is the cycle
@@ -165,7 +217,8 @@ the multiplicative ledger.
   statement found nothing.  The statement is a two-line consequence of the
   inverse map and we claim nothing beyond bookkeeping for it.
 * D5, Z1–Z3 are telescoping and construction; Z4 is a special case of
-  Steiner 1977.
+  Steiner 1977; Z5's minimum gate is the stopping-time sieve of Terras 1976
+  applied to the minimum, and its maximum gate is the repo's own sieve.
 * The `q`-general remark (module only): `f_q(n) = 0` iff `(2^x − 3) | q`,
   i.e. the fixed points of `S_q` are `n = q/(2^x − 3)` — for `q = 5` the
   fixed points 1 (`x = 3`) and 5 (`x = 2`) of the census.
@@ -181,5 +234,6 @@ the multiplicative ledger.
 | D5 telescoping `n < 20 001`; the six trajectories; the census balances; one lap for `q = 5` | `test_d5_*` |
 | Z1–Z3 counts, pair structure, the family, chain = cycle on the census | `test_zero_sum_*`, `test_chain_iff_cycle_on_the_census` |
 | Z4 | `test_no_two_cycle_in_drop_coordinates` |
+| Z5 minimum gate depths 1–2, no backward half; both gates on the census at depth 6; gated counts; gated pairs `{2d−1, 4d+1}`, smallest `d`, 128 below 200 000 at depth 8; survivor shares | `test_min_gate_depths`, `test_end_gates_on_the_census`, `test_gated_zero_sum_counts`, `test_gated_pairs`, `test_gate_survivor_shares` |
 
-Run: `cd python && uv run pytest tests/test_drop.py` (21 tests).
+Run: `cd python && uv run pytest tests/test_drop.py` (26 tests).

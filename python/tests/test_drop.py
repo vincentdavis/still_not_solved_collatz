@@ -248,32 +248,13 @@ def test_no_two_cycle_in_drop_coordinates() -> None:
 # zero-sum combinations (page section 4)
 # ---------------------------------------------------------------------------
 
-from itertools import combinations  # noqa: E402
-
-
-def is_chain(members: tuple[int, ...]) -> bool:
-    ms = set(members)
-    if any(syracuse_with_exponent(n)[0] not in ms for n in members):
-        return False
-    n, seen = members[0], 0
-    while True:
-        n = syracuse_with_exponent(n)[0]
-        seen += 1
-        if n == members[0] or seen > len(members):
-            break
-    return n == members[0] and seen == len(members)
-
-
-def zero_sum_sets(bound: int, k: int) -> list[tuple[int, ...]]:
-    """Zero-sum k-sets of distinct odd numbers in [3, bound); 1 is left out (drop 0)."""
-    odds = list(range(3, bound, 2))
-    val = {n: drop(n) for n in odds}
-    if k == 2:
-        by: dict[int, list[int]] = {}
-        for n in odds:
-            by.setdefault(val[n], []).append(n)
-        return [(a, b) for b in odds if val[b] > 0 for a in by.get(-val[b], [])]
-    return [c for c in combinations(odds, k) if sum(val[n] for n in c) == 0]
+from collatz_maxodd.drop import (  # noqa: E402
+    can_be_min_odd,
+    is_chain,
+    max_gate_ok,
+    min_gate_ok,
+    zero_sum_sets,
+)
 
 
 #: (bound, size, zero-sum sets, chains) as quoted on the page
@@ -291,9 +272,12 @@ def test_zero_sum_counts() -> None:
 
 def test_zero_sum_pairs_are_rise_source_plus_a_source_of_d() -> None:
     zs = zero_sum_sets(10_000, 2)
-    for a, b in zs:
-        d = drop(b)
-        assert d > 0 and a == 2 * d - 1 and b in drop_fiber(d)
+    for pair in zs:
+        rise = [n for n in pair if drop(n) < 0]
+        assert len(rise) == 1
+        d = -drop(rise[0])
+        fall = pair[1] if pair[0] == rise[0] else pair[0]
+        assert rise[0] == 2 * d - 1 and fall in drop_fiber(d)
     falls = sum(1 for b in range(5, 10_000, 4) if drop(b) <= (10_000 - 1) // 2)
     assert falls == len(zs) == 2109
 
@@ -317,3 +301,76 @@ def test_chain_iff_cycle_on_the_census(census) -> None:
         assert sum(st.d for st in cycle_drops(c.elements, c.q)) == 0
     assert is_chain((1,))
     assert not is_chain((3, 9)) and not is_chain((3, 7, 25))
+
+
+# ---------------------------------------------------------------------------
+# the gates at both ends on zero-sum sets (page section 4, docs/DROP.md Z5)
+# ---------------------------------------------------------------------------
+
+#: gated zero-sum counts, as quoted on the page: (bound, size) -> {depth: count}
+GATED_COUNTS = {
+    (400, 2): {1: 11, 2: 4, 3: 1, 4: 1, 6: 0},
+    (10_000, 2): {1: 277, 2: 93, 3: 35, 4: 18, 6: 7},
+    (120, 3): {1: 11, 2: 5, 3: 2, 4: 0, 6: 0},
+    (400, 3): {1: 169, 2: 61, 3: 27, 4: 1, 6: 0},
+    (60, 4): {1: 14, 2: 9, 3: 0, 4: 0, 6: 0},
+    (100, 4): {1: 124, 2: 9, 3: 0, 4: 0, 6: 0},
+}
+
+
+def test_min_gate_depths() -> None:
+    for m in range(3, 1 << 14, 2):
+        assert can_be_min_odd(m, 1, 1) == (m % 4 == 3 and m % 3 != 0)
+        if m > 5 and m % 3:
+            assert can_be_min_odd(m, 1, 2) == (m % 4 == 3 and m % 16 != 3)
+    assert min_gate_ok(1, 1, 8) and not min_gate_ok(3, 1, 2)
+    assert min_gate_ok(7, 1, 3) and not min_gate_ok(7, 1, 4)  # 7 -> 11 -> 17 -> 13 -> 5
+    # no backward half: predecessors above m avoiding multiples of 3 always exist
+    for m in range(5, 3001, 2):
+        if m % 3:
+            b = 1 if m % 3 == 2 else 2
+            preds = [((1 << bb) * m - 1) // 3 for bb in (b + 2, b + 4, b + 6)]
+            assert all(p > m and syracuse_with_exponent(p)[0] == m for p in preds)
+            assert any(p % 3 for p in preds)
+
+
+def test_end_gates_on_the_census(census) -> None:
+    for c in census:
+        assert max_gate_ok(c.M, c.q, 6)
+        assert min_gate_ok(min(c.elements), c.q, 6)
+
+
+def test_gated_zero_sum_counts() -> None:
+    for (bound, k), by_depth in GATED_COUNTS.items():
+        for depth, want in by_depth.items():
+            zs = zero_sum_sets(bound, k, gated=True, depth=depth)
+            assert len(zs) == want
+            assert not any(is_chain(t) for t in zs)
+    assert zero_sum_sets(10_000, 2, gated=True, depth=4)[:5] == [(79, 161), (223, 449), (295, 593), (319, 641), (967, 1937)]
+    assert zero_sum_sets(400, 3, gated=True, depth=4) == [(31, 47, 161)]
+    assert [drop(n) for n in (31, 47, 161)] == [-16, -24, 40]
+
+
+def test_gated_pairs() -> None:
+    for a, b in zero_sum_sets(10_000, 2, gated=True, depth=1):
+        d = drop(b)
+        assert d > 0 and a == 2 * d - 1 and b == 4 * d + 1
+
+    def first_d(depth: int) -> int:
+        d = 2
+        while not (max_gate_ok(4 * d + 1, 1, depth) and min_gate_ok(2 * d - 1, 1, depth)):
+            d += 2
+        return d
+
+    assert [first_d(depth) for depth in range(1, 9)] == [4, 4, 40, 40, 112, 112, 592, 592]
+    assert sum(1 for d in range(2, 200_000, 2) if max_gate_ok(4 * d + 1, 1, 8) and min_gate_ok(2 * d - 1, 1, 8)) == 128
+
+
+def test_gate_survivor_shares() -> None:
+    odds = range(3, 1 << 16, 2)
+
+    def share(gate, depth: int) -> float:
+        return round(sum(gate(m, 1, depth) for m in odds) / len(odds), 4)
+
+    assert [share(min_gate_ok, depth) for depth in (1, 2, 4, 8)] == [0.3333, 0.25, 0.1354, 0.0597]
+    assert [share(max_gate_ok, depth) for depth in (1, 2, 4, 8)] == [0.1111, 0.0556, 0.0183, 0.0041]

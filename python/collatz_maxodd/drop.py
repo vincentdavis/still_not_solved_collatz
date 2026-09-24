@@ -42,7 +42,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from math import lcm
 
-from .syracuse import check_q, syracuse_with_exponent
+from .sieve import can_be_max_odd
+from .syracuse import check_q, syracuse, syracuse_with_exponent
 
 __all__ = [
     "two_pow_minus_3",
@@ -58,6 +59,11 @@ __all__ = [
     "trajectory_drops",
     "cycle_drops",
     "rise_fall_totals",
+    "can_be_min_odd",
+    "max_gate_ok",
+    "min_gate_ok",
+    "is_chain",
+    "zero_sum_sets",
 ]
 
 
@@ -230,3 +236,100 @@ def rise_fall_totals(steps: list[DropStep]) -> tuple[int, int]:
     rises = sum(-st.d for st in steps if st.x == 1)
     falls = sum(st.d for st in steps if st.x >= 2)
     return rises, falls
+
+
+# ---------------------------------------------------------------------------
+# the gates at both ends, and zero-sum sets that respect them
+# ---------------------------------------------------------------------------
+
+
+def can_be_min_odd(n: int, q: int = 1, depth: int = 4) -> bool:
+    """Forward sieve for the *smallest* odd member ``m`` of an ``S_q``-cycle.
+
+    Every forward iterate of ``m`` stays in the cycle, hence ``S_q^j(m) >= m`` for all
+    ``j``; and ``3`` does not divide ``m`` (T0).  This checks ``j <= depth``.  Exact and
+    unconditional.  At depth 1 with ``m > q`` it is ``m = q + 2 (mod 4)`` (Lean
+    ``Minimum.min_mod4'``); at depth 2 for ``q = 1``, ``m > 5``, it adds ``m != 3 (mod 16)``.
+    It is the mirror of the forward half of :func:`sieve.can_be_max_odd`; there is no
+    backward half, because predecessors above ``m`` always exist.
+    """
+    check_q(q)
+    if n <= 0 or n % 2 == 0 or n % 3 == 0:
+        return False
+    x = n
+    for _ in range(depth):
+        x = syracuse(x, q)
+        if x < n:
+            return False
+    return True
+
+
+def max_gate_ok(n: int, q: int = 1, depth: int = 4) -> bool:
+    """The repo's exact sieve for the largest odd member (:func:`sieve.can_be_max_odd`):
+    T0, forward iterates ``<= n`` for ``depth`` steps (depth 1 is T1, depth 2 adds T8),
+    and a backward chain of ``depth`` predecessors ``<= n`` avoiding multiples of 3
+    (depth 1 is T2 + T4)."""
+    return bool(can_be_max_odd(n, q, depth=depth))
+
+
+def min_gate_ok(n: int, q: int = 1, depth: int = 4) -> bool:
+    """Alias of :func:`can_be_min_odd` with the same signature as :func:`max_gate_ok`."""
+    return can_be_min_odd(n, q, depth)
+
+
+def is_chain(members: tuple[int, ...] | list[int], q: int = 1) -> bool:
+    """Can the members be ordered so that each one's target is the next, closing up?
+    (Then they are one lap of an ``S_q``-cycle, and their drops sum to zero.)"""
+    ms = set(members)
+    if any(syracuse(n, q) not in ms for n in members):
+        return False
+    n, seen = members[0], 0
+    while True:
+        n = syracuse(n, q)
+        seen += 1
+        if n == members[0] or seen > len(members):
+            break
+    return n == members[0] and seen == len(members)
+
+
+def zero_sum_sets(
+    bound: int, k: int, *, gated: bool = False, depth: int = 4, q: int = 1
+) -> list[tuple[int, ...]]:
+    """Zero-sum ``k``-sets of distinct odd numbers in ``[3, bound)``, increasing tuples.
+
+    1 is left out (its drop is 0, so it would pad every set).  With ``gated=True`` the
+    largest member must pass :func:`max_gate_ok` and the smallest :func:`min_gate_ok`
+    at the given depth -- the necessary conditions on the two ends of any cycle, applied
+    to a set that need not be a chain.  ``k`` is 2, 3 or 4.
+    """
+    if k not in (2, 3, 4):
+        raise ValueError("k must be 2, 3 or 4")
+    odds = list(range(3, bound, 2))
+    val = {n: drop(n, q) for n in odds}
+    by: dict[int, list[int]] = {}
+    for n in odds:
+        by.setdefault(val[n], []).append(n)
+
+    def closers(need: int, above: int) -> list[int]:
+        return [c for c in by.get(need, ()) if c > above]
+
+    out: list[tuple[int, ...]] = []
+    if k == 2:
+        for a in odds:
+            if val[a] < 0:
+                out.extend((a, c) for c in closers(-val[a], 0))
+    elif k == 3:
+        for i, a in enumerate(odds):
+            for b in odds[i + 1 :]:
+                out.extend((a, b, c) for c in closers(-(val[a] + val[b]), b))
+    else:
+        for i, a in enumerate(odds):
+            for j in range(i + 1, len(odds)):
+                b = odds[j]
+                for c in odds[j + 1 :]:
+                    out.extend((a, b, c, e) for e in closers(-(val[a] + val[b] + val[c]), c))
+    out = [tuple(sorted(t)) for t in out]
+    out.sort()
+    if gated:
+        out = [t for t in out if max_gate_ok(t[-1], q, depth) and min_gate_ok(t[0], q, depth)]
+    return out

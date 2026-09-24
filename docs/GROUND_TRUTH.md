@@ -758,8 +758,12 @@ of `3d+1` of the form `2^x − 3` (`x ≥ 2`), so the fiber size is unbounded
 (`{3, 7, …, 4k−5, (2k−1)²}`), a zero-sum *chain* is exactly a cycle, and
 there is no 2-chain (the smallest case of Steiner 1977).  COMPUTED: 83
 zero-sum pairs below 400, 383 triples below 120, 511 quadruples below 60,
-none a chain.  Literature: the drop sequence is not in the OEIS, `2^x − 3` is
-A036563; nothing is claimed new.  Witnesses: `test_drop.py` (21).
+none a chain; with the gates at both ends (maximum: `can_be_max_odd`;
+minimum: `3 ∤ m` and forward iterates `≥ m`, the stopping-time sieve) the
+2 109 pairs below 10 000 fall to 18 at depth 4 and 7 at depth 6, and gated
+pairs `{2d−1, 4d+1}` persist at every depth tried (128 below `d = 200 000`
+at depth 8).  Literature: the drop sequence is not in the OEIS, `2^x − 3` is
+A036563; nothing is claimed new.  Witnesses: `test_drop.py` (26).
 
 ### Verification status
 
@@ -781,7 +785,7 @@ A036563; nothing is claimed new.  Witnesses: `test_drop.py` (21).
 | words: realization, bump law, sign law (docs/WORDS.md) | ✓ (`test_words.py`, 26 tests) | ✓ `Words.lean` (first collision, uniqueness at `k=4`, sign law `k ≤ 8`, deficit `n=5`) |
 | ledger identity `E = 4O + 2Lq`; SAT box = `find_cycles` on every tested box, 3-adic gates as circuits; multiplicative ledger and the squeeze's `(L, B)` at `2^40 … 2^100` (docs/LEDGER.md) | ✓ (`test_ledger.py`, `test_satcycles.py`, `test_multiplicative.py`) | ✗ — not formalized (one-line identity; the CNF is computation) |
 | landing form: bijection, leaf rule mod 9, saturation, automaton = `Φ_k`, `S_k(q) = q·S_k(1)` (docs/LANDING.md) | ✓ (`test_landing.py`, 24) | ✗ — not formalized (Lemma U and T0 are; the rest is bookkeeping) |
-| drop function: parity/sign, height classes, fibers = divisors of `3d+1` of the form `2^x − 3`, unbounded multiplicity, telescoping, zero-sum sets vs chains (docs/DROP.md) | ✓ (`test_drop.py`, 21) | ✗ — not formalized (two-line identities and computation) |
+| drop function: parity/sign, height classes, fibers = divisors of `3d+1` of the form `2^x − 3`, unbounded multiplicity, telescoping, zero-sum sets vs chains, the gates at both ends on zero-sum sets (docs/DROP.md) | ✓ (`test_drop.py`, 26) | ✗ — not formalized (two-line identities and computation) |
 | over-dispersion, tail rate, box dimension | ✓ | ✗ — infeasible in-kernel, open, unresolved limit |
 
 Lean total: **341 declarations**, all certifying `[propext, Quot.sound]` or
