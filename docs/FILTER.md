@@ -133,9 +133,16 @@ verified convergence bound `X₀` (Barina), and archimedean/valuation bounds on
 | residue-only factorization constraints | ✗ | — | ✗ | — | — | congruence sieve in disguise |
 | magnitude factorization (largest-prime-factor) | ✓ | ✓ | ✓ | ✓ | ✓ | Baker in disguise — admissible, currently weak |
 | Baker / continued-fraction elimination | ✓ | ✓ | ✓ | ✓ | ✓ | **the only known coupler** — see the Hercher ladder |
+| loop sieve: cross out what reaches 1 (the tree of 1) | ✓ | ✓ | ✓ | ✓ | ✗² | sound and complete per number; its union *is* the verification — cannot finish (docs/LOOP_SIEVE.md) |
+| loop sieve: the shadow of the verified bound | ✓ | ✓ | ✓ | ✗ | — | density measurement; never excludes a finite cycle |
+| remainder-only membership rules beyond T0 | — | — | ✗ | — | — | impossible: rational loops meet every class prime to 3 (docs/LOOP_SIEVE.md L5) |
 
 ¹ also covered by the in-repo impossibility theorem: the sieve has no finite
 transfer matrix (state grows like `2^{1.76j}` — `deathdepth.py`).
+
+² a semi-decision procedure: uniform over the Conway family, it halts on
+reach-1 inputs and never on a cycle member, so it can certify numbers one
+family at a time but never decide cyclelessness.
 
 Nothing in this file advances cyclelessness by an inch. It is a gate, and the
 cost of running it is two minutes per proposal — which is the point.

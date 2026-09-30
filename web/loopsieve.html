@@ -1,0 +1,434 @@
+<meta charset="utf-8">
+<title>Loop Sieve</title>
+<meta name="description" content="A sieve of Eratosthenes for 3n+1 loops: which odd numbers can be crossed out of any loop other than 1 → 4 → 2 → 1, how much each rule removes, and why only size-based rules can go further than the multiples of 3.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --paper:#E8EAE5; --surface:#F2F3EF; --ink:#171A1C; --ink-2:#4A5254; --ink-3:#79817F;
+  --rule:#C9CDC4; --grid:#DEE1DA; --axis:#B4B9AD;
+  --ray:#2a78d6; --rise:#eb6834; --fall:#1baf7a; --fix:#79817F; --band:rgba(23,26,28,.06);
+  --out:#cfe0f5; --out-ink:#6f7f93; --new:#2a78d6; --hatch:rgba(23,26,28,.14);
+  --focus:#24478F; --ok:#1baf7a; --warn:#eb6834;
+  --f-sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#14171A; --surface:#1C2126; --ink:#E8EAE5; --ink-2:#A9B1AF; --ink-3:#6E7876;
+    --rule:#2B3138; --grid:#242A30; --axis:#3A424A;
+    --ray:#3987e5; --rise:#d95926; --fall:#199e70; --fix:#8B9492; --band:rgba(232,234,229,.08);
+    --out:#1d2f45; --out-ink:#7d8ea3; --new:#3987e5; --hatch:rgba(232,234,229,.12);
+    --focus:#7FA8EE; --ok:#199e70; --warn:#d95926;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#14171A; --surface:#1C2126; --ink:#E8EAE5; --ink-2:#A9B1AF; --ink-3:#6E7876;
+  --rule:#2B3138; --grid:#242A30; --axis:#3A424A;
+  --ray:#3987e5; --rise:#d95926; --fall:#199e70; --fix:#8B9492; --band:rgba(232,234,229,.08);
+  --out:#1d2f45; --out-ink:#7d8ea3; --new:#3987e5; --hatch:rgba(232,234,229,.12);
+  --focus:#7FA8EE; --ok:#199e70; --warn:#d95926;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-sans);font-size:15px;line-height:1.5}
+.wrap{max-width:1080px;margin:0 auto;padding:28px 16px 56px;display:flex;flex-direction:column;gap:18px}
+.eyebrow{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+h1{margin:2px 0 0;font-size:clamp(1.6rem,3.4vw,2.2rem);font-weight:600;letter-spacing:-.01em;text-wrap:balance;line-height:1.15}
+h2{margin:26px 0 0;font-size:1.25rem;font-weight:600;letter-spacing:-.005em;text-wrap:balance}
+h2 .tag{font-family:var(--f-mono);font-size:.7rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-left:10px;vertical-align:2px}
+h3{margin:14px 0 0;font-size:1rem;font-weight:600}
+.lede{max-width:68ch;color:var(--ink-2);margin:0}
+p{max-width:70ch}
+a{color:var(--ink);text-decoration-color:var(--ink-3);text-underline-offset:2px}
+code,.mono{font-family:var(--f-mono);font-size:.92em}
+p code,li code,td code,.note code{color:var(--ink)}
+.controls{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;font-size:.88rem;color:var(--ink-2)}
+button:focus-visible,input:focus-visible,summary:focus-visible,select:focus-visible,.cell:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+label.ctl{display:inline-flex;align-items:center;gap:8px}
+input[type=number],select{font:inherit;font-family:var(--f-mono);width:7.5em;padding:4px 6px;border:1px solid var(--rule);border-radius:4px;background:var(--surface);color:var(--ink)}
+select{width:auto}
+input[type=range]{width:min(260px,60vw);accent-color:var(--ray)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:inherit;font-size:.8rem;font-family:var(--f-mono);border:1px solid var(--rule);background:var(--surface);color:var(--ink-2);border-radius:999px;padding:3px 10px;cursor:pointer}
+.chip:hover{border-color:var(--ink-3);color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.btn{font:inherit;font-weight:500;font-size:.88rem;border:1px solid var(--ink);background:var(--ink);color:var(--paper);border-radius:5px;padding:6px 14px;cursor:pointer}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:12px 10px 8px;position:relative}
+.chart{position:relative;width:100%}
+svg{display:block;width:100%;height:auto}
+svg text{font-family:var(--f-mono);font-size:11px;fill:var(--ink-3)}
+svg .axis{stroke:var(--axis);stroke-width:1}
+svg .grid{stroke:var(--grid);stroke-width:1}
+svg .curve{fill:none;stroke:var(--ray);stroke-width:2}
+svg .ref{fill:none;stroke:var(--ink-3);stroke-width:1;opacity:.55}
+svg .sel{fill:none;stroke:var(--new);stroke-width:2.4}
+svg .dot{fill:var(--ray)}
+svg .lab{fill:var(--ink-2);font-size:10.5px}
+.legend{display:flex;flex-wrap:wrap;gap:8px 20px;font-size:.84rem;color:var(--ink-2);padding:2px 4px}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.legend i{display:inline-block;width:18px;height:14px;border-radius:3px;border:1px solid var(--rule)}
+.note{max-width:70ch;color:var(--ink-2);font-size:.9rem;margin:0}
+.stat{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:.86rem;color:var(--ink);padding:6px 4px 2px;line-height:1.55}
+.stat b{font-weight:500;color:var(--ink-2)}
+.tbl{overflow-x:auto;margin-top:8px}
+table{border-collapse:collapse;font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:.82rem;white-space:nowrap}
+th,td{padding:4px 10px;text-align:right;border-bottom:1px solid var(--grid);color:var(--ink)}
+th{color:var(--ink-3);font-weight:500}
+td.l,th.l{text-align:left;white-space:normal}
+.proof{border-left:3px solid var(--rule);padding:2px 0 2px 14px;margin:8px 0;color:var(--ink-2);font-size:.92rem;max-width:70ch}
+.proof b{color:var(--ink)}
+.out{font-family:var(--f-mono);font-size:.84rem;line-height:1.55;white-space:pre-wrap;padding:8px 4px 2px;min-height:2.5em;overflow-wrap:anywhere}
+ul{margin:6px 0 0;padding-left:20px;max-width:72ch}
+li{margin:4px 0}
+.status{font-size:.82rem;color:var(--ink-3);font-family:var(--f-mono)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:760px){.two{grid-template-columns:1fr}}
+/* the sieve grid */
+.sieve{display:grid;grid-template-columns:repeat(auto-fill,minmax(42px,1fr));gap:3px;margin-top:10px}
+.cell{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:11px;line-height:1;height:24px;display:flex;align-items:center;justify-content:center;border-radius:3px;border:1px solid var(--ink-3);background:var(--surface);color:var(--ink);font-weight:500;cursor:pointer;padding:0;user-select:none}
+.cell.out{background:var(--out);border-color:transparent;color:var(--out-ink);font-weight:400;text-decoration:line-through;text-decoration-color:var(--out-ink)}
+.cell.new{background:var(--new);border-color:transparent;color:#fff;text-decoration:none;font-weight:500}
+.cell.dead{background:repeating-linear-gradient(135deg,transparent 0 4px,var(--hatch) 4px 5px);border:1px dashed var(--rule);color:var(--ink-3);font-weight:400;text-decoration:line-through}
+.cell.one{border:2px solid var(--fall);background:transparent;color:var(--fall)}
+.cell.door{box-shadow:inset 0 0 0 2px var(--rise)}
+.cell.sel{outline:2px solid var(--ink);outline-offset:1px}
+.bars{display:grid;grid-template-columns:auto 1fr auto;gap:5px 12px;align-items:center;font-family:var(--f-mono);font-size:.82rem;max-width:560px;margin-top:8px}
+.bars .b{height:12px;background:var(--rise);border-radius:2px;min-width:2px}
+.verdict td:nth-child(n+2){text-align:center}
+.ok{color:var(--ok)} .warn{color:var(--warn)}
+@media (prefers-reduced-motion:no-preference){.cell{transition:background-color .12s,color .12s}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">a sieve of Eratosthenes for 3n+1 loops</div>
+    <h1>Loop Sieve</h1>
+  </header>
+  <p class="lede">A second loop, anything other than <code>1 → 4 → 2 → 1</code>, would be a list of odd numbers that the 3n+1 rule keeps cycling through.
+  This page crosses out numbers that cannot be on such a list, one rule at a time, the way the sieve of Eratosthenes crosses out numbers that cannot be prime.
+  It starts from your rule — if <code>3n+1</code> is a power of 2, then <code>n</code> falls straight into the known loop — and follows it as far as it goes.
+  Along the way it measures how much each rule removes, and it shows why only rules that use the <em>size</em> of numbers can cross out more than the multiples of 3.</p>
+
+  <!-- ============ 1. your rule ============ -->
+  <h2>1 · Your rule: <code>3n + 1</code> is a power of 2 <span class="tag">pass 1 · proved</span></h2>
+  <p class="note"><b>Why it works.</b> If <code>n</code> is in a loop, the next odd number <code>S(n) = (3n+1)/2<sup>x</sup></code> is in the same loop — a loop is closed under the rule.
+  If <code>3n + 1 = 2<sup>i</sup></code>, the next odd number is 1, whose loop is <code>{1}</code>. So <code>n</code> is in no other loop.
+  Since <code>2<sup>i</sup> ≡ 1 (mod 3)</code> only for even <code>i</code>, these are the numbers <code>n = (4<sup>k</sup> − 1)/3</code>: <code>5, 21, 85, 341, 1 365, 5 461, 21 845, 87 381, …</code> (OEIS A002450), in binary <code>101, 10101, 1010101, …</code>.
+  Every third one (<code>21, 1 365, 87 381, …</code>) is a multiple of 3, a dead end that nothing reaches.</p>
+  <p class="note"><b>They are the doorways into the known loop.</b> On every trajectory that reaches 1, the last odd number before 1 is one of them. Below <code>2<sup>20</sup></code> almost everything enters through 5 (that is the familiar ending <code>… → 5 → 16 → 8 → 4 → 2 → 1</code>):</p>
+  <div class="bars" id="doors" aria-label="doorway traffic below 2^20"></div>
+  <p class="status" id="doorsnote">computing…</p>
+
+  <!-- ============ 2. the passes ============ -->
+  <h2>2 · Pass after pass: cross out whatever lands on a crossed-out number <span class="tag">closure · proved</span></h2>
+  <p class="note">The same argument repeats. If the next odd number of <code>n</code> is already crossed out, then <code>n</code> is crossed out too: a loop through <code>n</code> would pass through its next odd number.
+  Pass 1 is your rule. Pass 2 crosses out the numbers that land on a pass-1 number, such as <code>3 → 5</code>, <code>13 → 5</code>, <code>113 → 85</code>, <code>227 → 341</code>. In closed form they are <code>(2<sup>x</sup>(4<sup>k</sup> − 1) − 3)/9</code>, with <code>x</code> even when <code>k ≡ 1</code> and odd when <code>k ≡ 2 (mod 3)</code>.
+  Pass <code>d</code> crosses out exactly the numbers that reach 1 in <code>d</code> odd steps. The multiples of 3 are crossed out before anything else (section 3), and 1 itself is the known loop.</p>
+  <div class="controls" role="group" aria-label="Sieve controls">
+    <label class="ctl">odd numbers below <select id="gn" aria-label="grid size"><option>500</option><option selected>1000</option><option>2000</option></select></label>
+    <label class="ctl">passes run <input type="range" id="gp" min="0" max="65" value="1" aria-label="passes run"> <span class="mono" id="gpv">1</span></label>
+    <div class="chips" id="gchips" role="group" aria-label="jump to a pass"></div>
+  </div>
+  <div class="legend">
+    <span><i style="background:var(--surface);border-color:var(--ink-3)"></i>still standing</span>
+    <span><i style="background:var(--new)"></i>crossed out by the latest pass</span>
+    <span><i style="background:var(--out)"></i>crossed out earlier</span>
+    <span><i style="background:repeating-linear-gradient(135deg,transparent 0 4px,var(--hatch) 4px 5px);border-style:dashed"></i>multiple of 3</span>
+    <span><i style="border:2px solid var(--fall)"></i>1, the known loop</span>
+    <span><i style="box-shadow:inset 0 0 0 2px var(--rise)"></i>your rule's numbers</span>
+  </div>
+  <div class="stat" id="gstat" aria-live="polite"></div>
+  <div class="sieve" id="grid" role="grid" aria-label="odd numbers"></div>
+  <div class="out" id="gpath" aria-live="polite">Click a number to see its path to 1 and the pass that crosses it out.</div>
+
+  <div class="two">
+    <div>
+      <h3>How many passes a range needs</h3>
+      <div class="card chart"><svg id="pchart" viewBox="0 0 560 330" role="img" aria-label="share of odd numbers below N crossed out after each pass"></svg></div>
+      <div class="legend" id="plegend"></div>
+      <p class="note" id="pnote">Each curve is the share of odd numbers below <code>N</code> crossed out after each pass, not counting the multiples of 3 separately. The dot marks the average pass.</p>
+    </div>
+    <div>
+      <h3>A fixed number of passes removes almost nothing</h3>
+      <div class="tbl"><table id="ptab" aria-label="numbers crossed out at each pass below 2^20"></table></div>
+      <div class="proof"><b>Proved: a polylogarithmic sliver.</b> Along a path of <code>d</code> odd steps from <code>n</code> to 1 with <code>X</code> halvings, <code>2<sup>X</sup> = 3<sup>d</sup> n ∏(1 + 1/(3nᵢ)) ≤ 4<sup>d</sup> n</code>. So a number below <code>N</code> crossed out at pass <code>d</code> has <code>X &lt; log₂N + 2d</code>, and there are at most <code>C(⌊log₂N⌋ + 2d, d)</code> such halving patterns.
+      Any fixed number of passes crosses out a share that shrinks to zero as <code>N</code> grows. To clear everything below <code>N</code> takes as many passes as the slowest number: 65 below 2<sup>10</sup>, 195 below 2<sup>20</sup>.</div>
+    </div>
+  </div>
+  <p class="note"><b>This is the backward tree of 1</b>, drawn on the <a href="https://claude.ai/artifact/LUiAkgnva2tjYNP1Bwwrgo">main page</a> with the closed form of every path back from 1. Its verdict stands here too. A second loop would sit in its own part of the graph, which no path back from 1 ever reaches. So running the passes to the end is the same as checking that every number reaches 1, which is the conjecture itself.</p>
+
+  <!-- ============ 3. dead ends ============ -->
+  <h2>3 · The dead ends: multiples of 3 <span class="tag">T0 · proved</span></h2>
+  <p class="note"><code>3m + 1</code> always leaves remainder 1 when divided by 3. So no odd number ever maps to a multiple of 3, and a multiple of 3 has no predecessor in any loop.
+  This is the only rule on the page that removes a fixed share, a third of all odd numbers, at every size and without following a single orbit. The multiples of 3 also reach 1 like everything else, so the passes would cross them out anyway at their own pass. In the grid they are hatched from the start.</p>
+
+  <!-- ============ 4. verified region + shadow ============ -->
+  <h2>4 · Where the passes stop: 2<sup>71</sup>, and the shadow above it <span class="tag">cited · computed</span></h2>
+  <p class="note">By computer, every odd number below <code>2<sup>71</sup> ≈ 2.36 × 10<sup>21</sup></code> reaches 1 (Barina 2025). So every pass of this sieve has already been run on every number below that size, and every member of a second loop would have to be larger.
+  Above <code>2<sup>71</sup></code> a number is crossed out as soon as its orbit dips below <code>2<sup>71</sup></code>. Your rule relaxed is the first step of this: <code>3n + 1 = 2<sup>i</sup> · s</code> with <code>s &lt; 2<sup>71</sup></code>.
+  The chart below shows, for numbers <code>h</code> bits above <code>2<sup>71</sup></code>, the share whose orbit has dipped within <code>k</code> odd steps. It is computed exactly from halving patterns. Each pattern of total <code>X</code> halvings is one residue class, holding a share <code>2<sup>−X</sup></code> of the odd numbers, and it dips at step <code>j</code> when <code>X<sub>j</sub> &gt; h + j·log₂3</code>.</p>
+  <div class="controls" role="group" aria-label="Shadow controls">
+    <label class="ctl">odd steps <code>k</code> <input type="range" id="sk" min="1" max="400" value="100" aria-label="odd steps"> <span class="mono" id="skv">100</span></label>
+    <span class="status" id="sstatus">computing…</span>
+  </div>
+  <div class="card chart"><svg id="schart" viewBox="0 0 1000 360" role="img" aria-label="share crossed out against height above 2^71"></svg></div>
+  <div class="legend"><span><i style="background:var(--new)"></i>selected <code>k</code></span><span><i style="background:var(--ink-3);opacity:.55"></i><code>k</code> = 1, 10, 50, 200, 400 for reference</span></div>
+  <div class="stat" id="sstat"></div>
+  <p class="note"><b>The stragglers never all go.</b> For every height the share still standing shrinks to zero, because an odd step loses <code>2 − log₂3 ≈ 0.415</code> bits on average. It shrinks like <code>0.9465<sup>k</sup></code>, where <code>0.9465 = λ/3</code> and <code>λ = α<sup>α</sup>/(α−1)<sup>α−1</sup></code> with <code>α = log₂3</code>. That is the same constant as the project's tail-rate bound, because both count the same halving patterns.
+  But the stragglers are whole residue classes: <code>n ≡ −1 (mod 2<sup>j+1</sup>)</code> rises <code>j</code> times in a row before anything can dip. So the shadow is a statement about <em>almost all</em> numbers, and a loop is a finite set, which "almost all" never excludes.</p>
+
+  <!-- ============ 5. remainders ============ -->
+  <h2>5 · Why remainders alone cannot cross out anything else <span class="tag">proved · computed</span></h2>
+  <p class="note">Rules like "multiples of 3 are out" look only at remainders. It is natural to hunt for more of them: maybe some class mod 16, or mod 36, never holds a loop member. None exists that can be proved from remainders alone.
+  The reason is that 3n+1 has loops among fractions with odd denominators, one for every halving pattern: <code>−1 → −1</code>, <code>−5 → −7 → −5</code>, <code>1/5 → 1/5</code>, <code>−19/11 → −23/11 → −29/11 → −19/11</code>, … Remainders make sense for these fractions, and <b>they pass through every class except the multiples of 3</b>.
+  An argument that used only remainders would apply to them word for word and cross them out, but they exist. So every further rule has to use how big the numbers are, as the passes and the shadow do.</p>
+  <div class="controls" role="group" aria-label="Loop finder">
+    <label class="ctl">class <input type="number" id="fr" value="7" min="0" step="1" aria-label="residue"></label>
+    <label class="ctl">mod <select id="fm" aria-label="modulus"><option>8</option><option selected>16</option><option>32</option><option>64</option><option>12</option><option>36</option><option>72</option><option>144</option><option>108</option><option>432</option></select></label>
+    <button class="btn" id="fgo">find a loop through it</button>
+  </div>
+  <div class="out" id="fout" aria-live="polite"></div>
+  <div class="two">
+    <div class="proof"><b>Proof.</b> Mod <code>2<sup>a</sup></code>: a class fixes the first few halvings of an odd number, say <code>x₁, …, x<sub>j</sub></code>, and then only says the next halving count is at least <code>t</code>. The loop with halving pattern <code>(x₁, …, x<sub>j</sub>, t)</code> repeated starts in that class.
+    Mod <code>3<sup>b</sup></code>: after <code>b</code> odd steps the remainder mod <code>3<sup>b</sup></code> depends only on the last <code>b</code> halving counts. Every class prime to 3 arises this way, because every such number has chains of predecessors of any length. Putting the 2-adic pattern first and the 3-adic one last gives a single loop that lands in both classes. ∎</div>
+    <div>
+      <div class="tbl"><table aria-label="coverage of classes by rational loops">
+        <tr><th class="l">modulus</th><th>classes open</th><th>all hit with ≤ B halvings</th></tr>
+        <tr><td class="l">2<sup>a</sup>, a ≤ 7</td><td>2<sup>a−1</sup></td><td>B = a</td></tr>
+        <tr><td class="l">2<sup>a</sup>·3</td><td>2<sup>a</sup></td><td>B = a + 1</td></tr>
+        <tr><td class="l">2<sup>a</sup>·9, a = 1…7</td><td>3·2<sup>a</sup></td><td>5, 7, 8, 9, 10, 11, 12</td></tr>
+        <tr><td class="l">2<sup>a</sup>·27, a = 1…7</td><td>9·2<sup>a</sup></td><td>8, 9, 11, 12, 13, 14, 15</td></tr>
+      </table></div>
+      <p class="note" style="margin-top:6px">Computed exactly. "Open" means odd and not a multiple of 3. The only positive whole number on any of these loops is 1.</p>
+    </div>
+  </div>
+
+  <!-- ============ 6. roles ============ -->
+  <h2>6 · Largest and smallest: roles, not membership <span class="tag">pointers</span></h2>
+  <p class="note">The strongest filters in this project do not cross numbers out of loops at all. They restrict which member can be the largest or the smallest, and they use size through the order: the largest member falls on its next step, the smallest rises.
+  At depth 1, 2, 4 and 8 the largest-member gate passes 11.1 %, 5.6 %, 1.8 % and 0.4 % of odd numbers, and the smallest-member gate 33 %, 25 %, 13.5 % and 6.0 % (the <a href="https://claude.ai/artifact/LUiAkgnva2tjYNP1Bwwrgo">main page</a> and the <a href="https://claude.ai/artifact/4ZAdqTQfk4D9br1KtGKcRk">drop function</a>). Every loop needs one number of each kind, but a number that fails both can still sit in the middle of a loop.</p>
+
+  <!-- ============ 7. verdict ============ -->
+  <h2>7 · What this sieve can and cannot do <span class="tag">strategy filter</span></h2>
+  <p class="note">The project runs every proposed strategy through five quick tests first (<code>docs/FILTER.md</code>). Here is how the rules on this page fare.</p>
+  <div class="tbl"><table class="verdict" aria-label="strategy filter verdicts">
+    <tr><th class="l">rule</th><th>q = 5 has real loops</th><th>sign</th><th>fractions / 2-adic</th><th>"almost all"</th><th class="l">verdict</th></tr>
+    <tr><td class="l">passes: cross out what reaches 1</td><td class="ok">sound</td><td class="ok">sound</td><td class="ok">uses real orbits</td><td class="ok">exact</td><td class="l">complete for each number it reaches; its union is the verification, so it cannot finish</td></tr>
+    <tr><td class="l">shadow of 2<sup>71</sup></td><td class="ok">sound</td><td class="ok">sound</td><td class="ok">uses size</td><td class="warn">density only</td><td class="l">a measurement; never excludes a finite loop</td></tr>
+    <tr><td class="l">remainder-only rules beyond 3</td><td>—</td><td>—</td><td class="warn">fails</td><td>—</td><td class="l">impossible, section 5</td></tr>
+  </table></div>
+  <p class="note" style="margin-top:8px">What can finish has to use size together with the arithmetic of 2 and 3. The results that do are about the <em>length</em> of a loop, not its members. A second loop needs at least <code>1.375 × 10<sup>11</sup></code> odd members (Hercher 2023, the <a href="https://claude.ai/artifact/TUdU2rAtKnP9q2HsFcKPa5">multiplicative ledger</a>), and it cannot be made of 91 or fewer runs of rises.</p>
+
+  <p class="note" style="margin-top:22px"><b>Provenance.</b> Proofs are in <code>docs/LOOP_SIEVE.md</code>, and every number on this page is pinned by <code>python/tests/test_loopsieve.py</code> (the grid, the charts and the finder recompute them live). Nothing here is new. Your numbers are OEIS A002450, the pass records are A033958/A033959, the tree of 1 is Lagarias 1985 and Böhm &amp; Sontacchi 1978, the stopping-time share at height 0 is Terras 1976, the loops among fractions are Lagarias 1990, and the verified limit is Barina 2025.
+  Companion pages: <a href="https://claude.ai/artifact/Ka93oeMYfWhb5aLUX2Kooi">front door</a>, <a href="https://claude.ai/artifact/LUiAkgnva2tjYNP1Bwwrgo">main page</a>, <a href="https://claude.ai/artifact/4ZAdqTQfk4D9br1KtGKcRk">drop function</a>, <a href="https://claude.ai/artifact/3SGVtUyiuHJmw1Ms5HxrpP">landing form</a>, <a href="https://claude.ai/artifact/SnaWUkMG6NSKjCD1HYmX8m">cycle ledger</a>, <a href="https://claude.ai/artifact/TUdU2rAtKnP9q2HsFcKPa5">multiplicative ledger</a>, <a href="https://claude.ai/code/artifact/6b158da1-5d06-4e60-8807-bb0044b4691d">halving rays</a>, <a href="https://claude.ai/code/artifact/5fd7a07b-0c94-49af-9f21-1055d13f6ede">parity atlas</a>.
+  Source: <a href="https://github.com/vincentdavis/still_not_solved_collatz">github.com/vincentdavis/still_not_solved_collatz</a>.</p>
+</div>
+
+<script>
+(function(){
+'use strict';
+var $ = function(id){ return document.getElementById(id); };
+var SEP = ' ', MINUS = '−', LOG2_3 = Math.log2(3);
+function fmt(v){ var neg = v < 0, s = String(Math.abs(v)), out = ''; while (s.length > 3){ out = SEP + s.slice(-3) + out; s = s.slice(0, -3); } return (neg ? MINUS : '') + s + out; }
+function S(n){ var t = 3 * n + 1; while (t % 2 === 0) t /= 2; return t; }
+function el(tag, cls, text){ var e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
+
+/* ---------- odd steps to 1 and doorways, memoised, odd n < 2^20 ---------- */
+var NMAX = 1 << 20, HALF = NMAX / 2;
+var steps = new Int16Array(HALF), door = new Int32Array(HALF);   // index (n-1)/2
+(function(){
+  for (var i = 1; i < HALF; i++){
+    var n = 2 * i + 1, x = n, c = 0, prev = n, dw = 0;
+    while (true){
+      var s = S(x); c++;
+      if (s === 1){ dw = x; break; }
+      if (s < n){ dw = door[(s - 1) / 2]; c += steps[(s - 1) / 2]; break; }
+      x = s;
+    }
+    steps[i] = c; door[i] = dw;
+  }
+})();
+function pathToOne(n){ var p = [n]; while (n !== 1){ n = S(n); p.push(n); } return p; }
+
+/* ---------- 1. doorways ---------- */
+(function(){
+  var cnt = {}, tot = 0;
+  for (var i = 1; i < HALF; i++){ cnt[door[i]] = (cnt[door[i]] || 0) + 1; tot++; }
+  var keys = Object.keys(cnt).map(Number).sort(function(a, b){ return cnt[b] - cnt[a] || a - b; });
+  var box = $('doors'), top = cnt[keys[0]];
+  keys.forEach(function(k){
+    box.appendChild(el('div', '', fmt(k) + (k % 3 === 0 ? ' ·dead end' : '')));
+    var b = el('div', 'b'); b.style.width = Math.max(0.3, 100 * cnt[k] / top) + '%'; box.appendChild(b);
+    box.appendChild(el('div', '', fmt(cnt[k]) + ' · ' + (100 * cnt[k] / tot).toFixed(cnt[k] / tot < 0.001 ? 4 : 2) + ' %'));
+  });
+  $('doorsnote').textContent = 'All ' + fmt(tot) + ' odd numbers 3 … 2²⁰ − 1, by the last odd number before 1. The dead ends 21, 1 365 and 87 381 carry only themselves; one multiple of 3 climbs above 2²⁰ and enters through 1 398 101.';
+})();
+
+/* ---------- 2. the sieve grid ---------- */
+var sel = null;
+function gridN(){ return parseInt($('gn').value, 10); }
+function maxPass(N){ var m = 0; for (var i = 0; i < N / 2; i++) if (steps[i] > m) m = steps[i]; return m; }
+function buildGrid(){
+  var N = gridN(), g = $('grid'); g.innerHTML = '';
+  for (var n = 1; n < N; n += 2){
+    var c = el('button', 'cell', String(n)); c.type = 'button'; c.dataset.n = n; c.setAttribute('role', 'gridcell');
+    g.appendChild(c);
+  }
+  var mp = maxPass(N); $('gp').max = mp;
+  if (parseInt($('gp').value, 10) > mp) $('gp').value = mp;
+  renderChips(mp); paintGrid();
+}
+var P1 = { 5: 1, 21: 1, 85: 1, 341: 1, 1365: 1 };
+function paintGrid(){
+  var N = gridN(), d = parseInt($('gp').value, 10); $('gpv').textContent = d;
+  var cells = $('grid').children, standing = 0, newly = 0, dead = 0, crossed = 0, last = null, lastPass = -1;
+  for (var k = 0; k < cells.length; k++){
+    var c = cells[k], n = 2 * k + 1, p = steps[k], cls = 'cell';
+    if (n === 1) cls += ' one';
+    else if (n % 3 === 0) { cls += ' dead'; dead++; }
+    else if (p <= d){ cls += (p === d && d > 0) ? ' new' : ' out'; crossed++; if (p === d && d > 0) newly++; }
+    else standing++;
+    if (P1[n] && d >= 1) cls += ' door';
+    if (sel === n) cls += ' sel';
+    c.className = cls;
+    if (n % 3 && n !== 1 && p > lastPass){ lastPass = p; last = n; }
+    c.title = n === 1 ? '1 — the known loop' : (n % 3 === 0 ? n + ' — a multiple of 3: nothing maps here' : n + ' — crossed out at pass ' + p);
+  }
+  var total = N / 2;
+  $('gstat').innerHTML = '<b>after pass ' + d + ':</b> ' + fmt(standing) + ' of ' + fmt(total) + ' odd numbers below ' + fmt(N) + ' still standing · ' + fmt(dead) + ' multiples of 3 · ' + fmt(crossed) + ' crossed out by passes' + (d > 0 ? ' (' + newly + ' by pass ' + d + ')' : '') + ' · last to go: ' + fmt(last) + ' at pass ' + lastPass;
+}
+function renderChips(mp){
+  var box = $('gchips'); box.innerHTML = '';
+  [[0, 'start'], [1, 'your rule'], [2, 'pass 2'], [10, 'pass 10'], [40, 'pass 40'], [mp, 'all ' + mp]].forEach(function(pr){
+    var b = el('button', 'chip', pr[1]); b.type = 'button';
+    b.addEventListener('click', function(){ $('gp').value = pr[0]; paintGrid(); });
+    box.appendChild(b);
+  });
+}
+$('gn').addEventListener('change', function(){ sel = null; buildGrid(); });
+$('gp').addEventListener('input', paintGrid);
+$('grid').addEventListener('click', function(e){
+  var t = e.target.closest('.cell'); if (!t) return;
+  var n = parseInt(t.dataset.n, 10); sel = n; paintGrid();
+  var out = $('gpath');
+  if (n === 1){ out.textContent = '1 → 4 → 2 → 1: the known loop itself.'; return; }
+  var p = pathToOne(n), k = (n - 1) / 2;
+  var shown = p.length > 26 ? p.slice(0, 12).map(fmt).join(' → ') + ' → … → ' + p.slice(-8).map(fmt).join(' → ') : p.map(fmt).join(' → ');
+  var lines = [fmt(n) + ' reaches 1 in ' + steps[k] + ' odd steps: ' + shown];
+  if (n % 3 === 0) lines.push('It is a multiple of 3, so it was out from the start: nothing maps to it. The passes would reach it at pass ' + steps[k] + ' as well.');
+  else if (steps[k] === 1) lines.push('3·' + fmt(n) + ' + 1 = ' + fmt(3 * n + 1) + ' = 2^' + Math.round(Math.log2(3 * n + 1)) + ': your rule crosses it out at pass 1.');
+  else lines.push('It is crossed out at pass ' + steps[k] + ', because its next odd number ' + fmt(p[1]) + ' was crossed out at pass ' + (steps[k] - 1) + '. It lands on 1 through the doorway ' + fmt(p[p.length - 2]) + '.');
+  out.textContent = lines.join('\n');
+});
+
+/* ---------- 2b. pass chart and table ---------- */
+function niceTicks(lo, hi, count){ var span = hi - lo, raw = span / count, mag = Math.pow(10, Math.floor(Math.log10(raw))), step = [1, 2, 2.5, 5, 10].map(function(m){ return m * mag; }).filter(function(v){ return v >= raw; })[0]; var out = []; for (var v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) out.push(Math.round(v * 1e6) / 1e6); return out; }
+(function(){
+  var W = 560, H = 330, ml = 46, mr = 14, mt = 14, mb = 40, pw = W - ml - mr, ph = H - mt - mb, XMAX = 200;
+  var X = function(d){ return ml + d / XMAX * pw; }, Y = function(v){ return mt + (1 - v) * ph; };
+  var s = [];
+  niceTicks(0, 1, 5).forEach(function(v){ s.push('<line class="grid" x1="' + ml + '" y1="' + Y(v).toFixed(1) + '" x2="' + (ml + pw) + '" y2="' + Y(v).toFixed(1) + '"/><text x="' + (ml - 6) + '" y="' + (Y(v) + 4).toFixed(1) + '" text-anchor="end">' + Math.round(v * 100) + '%</text>'); });
+  niceTicks(0, XMAX, 8).forEach(function(v){ s.push('<line class="grid" x1="' + X(v).toFixed(1) + '" y1="' + mt + '" x2="' + X(v).toFixed(1) + '" y2="' + (mt + ph) + '"/><text x="' + X(v).toFixed(1) + '" y="' + (mt + ph + 16) + '" text-anchor="middle">' + v + '</text>'); });
+  s.push('<line class="axis" x1="' + ml + '" y1="' + (mt + ph) + '" x2="' + (ml + pw) + '" y2="' + (mt + ph) + '"/><line class="axis" x1="' + ml + '" y1="' + mt + '" x2="' + ml + '" y2="' + (mt + ph) + '"/>');
+  s.push('<text x="' + (ml + pw / 2) + '" y="' + (H - 6) + '" text-anchor="middle">passes run</text>');
+  var SET = [[10, 0.35], [14, 0.55], [18, 0.78], [20, 1]], leg = $('plegend'), notes = [];
+  SET.forEach(function(pr){
+    var N = 1 << pr[0], half = N / 2, hist = new Float64Array(XMAX + 2), mx = 0, sum = 0;
+    for (var i = 0; i < half; i++){ var p = steps[i]; hist[Math.min(p, XMAX + 1)]++; if (p > mx) mx = p; sum += p; }
+    var cum = 0, pts = [];
+    for (var d = 0; d <= Math.min(mx, XMAX); d++){ cum += hist[d]; pts.push(X(d).toFixed(1) + ',' + Y(cum / half).toFixed(1)); }
+    s.push('<polyline class="curve" style="opacity:' + pr[1] + '" points="' + pts.join(' ') + '"/>');
+    var mean = sum / half, cm = 0; for (var d2 = 0; d2 <= Math.floor(mean); d2++) cm += hist[d2];
+    s.push('<circle class="dot" style="opacity:' + pr[1] + '" cx="' + X(mean).toFixed(1) + '" cy="' + Y(cm / half).toFixed(1) + '" r="3.5"/>');
+    s.push('<text class="lab" x="' + (X(Math.min(mx, XMAX)) - 4).toFixed(1) + '" y="' + (Y(1) - 5).toFixed(1) + '" text-anchor="end">2^' + pr[0] + '</text>');
+    var sp = el('span'); var sw = el('i'); sw.style.background = 'var(--ray)'; sw.style.opacity = pr[1]; sw.style.borderColor = 'transparent'; sp.appendChild(sw); sp.appendChild(document.createTextNode('below 2^' + pr[0] + ': mean ' + mean.toFixed(1) + ', last ' + mx)); leg.appendChild(sp);
+  });
+  $('pchart').innerHTML = s.join('');
+  // table: pass counts below 2^20 against the proved bound
+  var tb = $('ptab'), hist20 = new Int32Array(12); for (var i = 0; i < HALF; i++) if (steps[i] < 12) hist20[steps[i]]++;
+  function binom(n, k){ var r = 1; for (var j = 1; j <= k; j++) r = r * (n - k + j) / j; return Math.round(r); }
+  var hr = el('tr'); ['pass d', 'crossed out below 2²⁰', 'bound C(20 + 2d, d)', 'share'].forEach(function(h){ hr.appendChild(el('th', '', h)); }); tb.appendChild(hr);
+  for (var d = 1; d <= 7; d++){ var tr = el('tr'); [d, fmt(hist20[d]), fmt(binom(20 + 2 * d, d)), (100 * hist20[d] / HALF).toFixed(3) + ' %'].forEach(function(v){ tr.appendChild(el('td', '', String(v))); }); tb.appendChild(tr); }
+})();
+
+/* ---------- 4. the shadow ---------- */
+var KMAX = 400, HS = [], SH = null;
+for (var h = 0; h <= 80; h += 1) HS.push(h);
+function survivalRow(h, K){
+  var len = Math.ceil(h + K * LOG2_3) + 4, w = new Float64Array(len), out = new Float64Array(K), lo = 0;
+  w[0] = 1;
+  for (var j = 1; j <= K; j++){
+    var cap = Math.floor(h + j * LOG2_3 + 1e-12), nw = new Float64Array(len), acc = 0, sum = 0;
+    for (var X = lo + 1; X <= cap; X++){ acc = 0.5 * (w[X - 1] + acc); nw[X] = acc; sum += acc; }
+    w = nw; lo++; out[j - 1] = sum;
+  }
+  return out;
+}
+function drawShadow(){
+  if (!SH) return;
+  var k = parseInt($('sk').value, 10); $('skv').textContent = k;
+  var W = 1000, H = 360, ml = 52, mr = 70, mt = 14, mb = 42, pw = W - ml - mr, ph = H - mt - mb, HM = 80;
+  var X = function(h){ return ml + h / HM * pw; }, Y = function(v){ return mt + (1 - v) * ph; };
+  var s = [];
+  [0, 0.25, 0.5, 0.75, 1].forEach(function(v){ s.push('<line class="grid" x1="' + ml + '" y1="' + Y(v).toFixed(1) + '" x2="' + (ml + pw) + '" y2="' + Y(v).toFixed(1) + '"/><text x="' + (ml - 6) + '" y="' + (Y(v) + 4).toFixed(1) + '" text-anchor="end">' + Math.round(v * 100) + '%</text>'); });
+  for (var t = 0; t <= HM; t += 10) s.push('<line class="grid" x1="' + X(t).toFixed(1) + '" y1="' + mt + '" x2="' + X(t).toFixed(1) + '" y2="' + (mt + ph) + '"/><text x="' + X(t).toFixed(1) + '" y="' + (mt + ph + 16) + '" text-anchor="middle">' + t + '</text>');
+  s.push('<line class="axis" x1="' + ml + '" y1="' + (mt + ph) + '" x2="' + (ml + pw) + '" y2="' + (mt + ph) + '"/><line class="axis" x1="' + ml + '" y1="' + mt + '" x2="' + ml + '" y2="' + (mt + ph) + '"/>');
+  s.push('<text x="' + (ml + pw / 2) + '" y="' + (H - 6) + '" text-anchor="middle">height above 2^71, in bits (h = log₂(n / 2^71))</text>');
+  function curve(kk, cls){ var pts = HS.map(function(h, i){ return X(h).toFixed(1) + ',' + Y(1 - SH[i][kk - 1]).toFixed(1); }); s.push('<polyline class="' + cls + '" points="' + pts.join(' ') + '"/>'); }
+  [1, 10, 50, 200, 400].forEach(function(kk){
+    curve(kk, 'ref');
+    // label at the right end, or where the curve crosses 50 %
+    var i50 = -1; for (var i = 0; i < HS.length; i++) if (1 - SH[i][kk - 1] < 0.5){ i50 = i; break; }
+    var lx = i50 >= 0 ? X(HS[i50]) + 4 : X(HM) + 4, ly = i50 >= 0 ? Y(0.5) - 4 : Y(1 - SH[HS.length - 1][kk - 1]) + 4;
+    s.push('<text class="lab" x="' + lx.toFixed(1) + '" y="' + ly.toFixed(1) + '">k=' + kk + '</text>');
+  });
+  curve(k, 'sel');
+  $('schart').innerHTML = s.join('');
+  var at = [0, 1, 5, 10, 20, 40, 60].map(function(h){ return 'h = ' + h + ': ' + (100 * (1 - SH[h][k - 1])).toFixed(2) + ' %'; });
+  $('sstat').innerHTML = '<b>crossed out within ' + k + ' odd step' + (k === 1 ? '' : 's') + ':</b> ' + at.join(' · ');
+}
+$('sk').addEventListener('input', drawShadow);
+setTimeout(function(){
+  var t0 = performance.now();
+  SH = HS.map(function(h){ return survivalRow(h, KMAX); });
+  $('sstatus').textContent = 'exact over halving patterns · ' + (performance.now() - t0).toFixed(0) + ' ms';
+  drawShadow();
+}, 30);
+
+/* ---------- 5. rational loop finder ---------- */
+function bgcd(a, b){ if (a < 0n) a = -a; if (b < 0n) b = -b; while (b){ var t = a % b; a = b; b = t; } return a; }
+function modinv(a, m){ a = ((a % m) + m) % m; var t = 0, nt = 1, r = m, nr = a; while (nr){ var q = Math.floor(r / nr), tmp = t - q * nt; t = nt; nt = tmp; tmp = r - q * nr; r = nr; nr = tmp; } return r === 1 ? ((t % m) + m) % m : null; }
+function loopConst(w){ var L = w.length, c = 0n, X = 0n; for (var i = 0; i < L; i++){ c += (3n ** BigInt(L - 1 - i)) * (2n ** X); X += BigInt(w[i]); } return c; }
+function fracStr(c, d){ if (d < 0n){ c = -c; d = -d; } var g = bgcd(c, d); c /= g; d /= g; return d === 1n ? (c < 0n ? MINUS + (-c).toString() : c.toString()) : (c < 0n ? MINUS + (-c).toString() : c.toString()) + '/' + d.toString(); }
+function* comps(B){ if (B === 0){ yield []; return; } for (var f = 1; f <= B; f++){ for (var rest of comps(B - f)) yield [f].concat(rest); } }
+function findLoop(){
+  var m = parseInt($('fm').value, 10), r = parseInt($('fr').value, 10), out = $('fout');
+  if (!(r >= 0)){ out.textContent = 'Enter a class between 0 and ' + (m - 1) + '.'; return; }
+  r = r % m;
+  if (r % 2 === 0){ out.textContent = r + ' is even: loop members are odd, so pick an odd class.'; return; }
+  if (m % 3 === 0 && r % 3 === 0){ out.textContent = r + ' (mod ' + m + ') is a multiple of 3. No loop, of whole numbers or fractions, ever passes through it: that is rule T0, the one remainder rule that works.'; return; }
+  var t0 = performance.now();
+  for (var B = 1; B <= 14; B++){
+    for (var w of comps(B)){
+      var L = w.length, d = (2n ** BigInt(B)) - (3n ** BigInt(L)), dm = Number(((d % BigInt(m)) + BigInt(m)) % BigInt(m)), inv = modinv(dm, m);
+      for (var i = 0; i < L; i++){
+        var rot = w.slice(i).concat(w.slice(0, i)), c = loopConst(rot), cm = Number(((c % BigInt(m)) + BigInt(m)) % BigInt(m));
+        if ((cm * inv) % m === r){
+          var mem = []; for (var j = 0; j < L; j++){ var rr = rot.slice(j).concat(rot.slice(0, j)); mem.push(fracStr(loopConst(rr), d)); }
+          out.textContent = 'class ' + r + ' (mod ' + m + '): the loop with halving pattern (' + rot.join(', ') + ') passes through it.\n' +
+            'members: ' + mem.join(' → ') + ' → ' + mem[0] + '\n' +
+            'first member ' + mem[0] + ' = ' + fracStr(c, d) + ' ≡ ' + r + ' (mod ' + m + ') ✓  (found among patterns with ' + B + ' halving' + (B === 1 ? '' : 's') + ', ' + (performance.now() - t0).toFixed(0) + ' ms)\n' +
+            (mem.every(function(x){ return x.indexOf('/') < 0; }) ? 'A loop of whole numbers — negative ones, which remainders cannot tell from positive.' : 'A loop of fractions with odd denominator ' + fracStr(d < 0n ? -d : d, 1n).replace(MINUS, '') + ' (before reduction) — remainders cannot tell it from a loop of whole numbers.');
+          return;
+        }
+      }
+    }
+  }
+  out.textContent = 'No loop found with at most 14 halvings.';
+}
+$('fgo').addEventListener('click', findLoop); $('fr').addEventListener('keydown', function(e){ if (e.key === 'Enter') findLoop(); }); $('fm').addEventListener('change', findLoop);
+
+buildGrid(); findLoop();
+})();
+</script>

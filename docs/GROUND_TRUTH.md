@@ -765,6 +765,24 @@ pairs `{2d−1, 4d+1}` persist at every depth tried (128 below `d = 200 000`
 at depth 8).  Literature: the drop sequence is not in the OEIS, `2^x − 3` is
 A036563; nothing is claimed new.  Witnesses: `test_drop.py` (26).
 
+### The loop sieve (`docs/LOOP_SIEVE.md`)
+
+A user-led pass (2026-09-30, `web/loopsieve.html`, `collatz_maxodd/loopsieve.py`)
+on the rule "if `3n+1 = 2^i`, then `n` falls into the known loop and is in no
+other loop" (`n = (4^k − 1)/3`, OEIS A002450), and on other ways to cross
+numbers out of loops.  PROVED: the closure (a loop contains each member's next
+odd number) makes pass `d` exactly the numbers reaching 1 in `d` odd steps —
+the backward tree of 1, already on the main page — and at most
+`C(⌊log₂N⌋ + 2d, d)` of them lie below `N` (from `2^X ≤ 4^d n`), so a fixed
+number of passes removes a vanishing share.  Above `2^71` (Barina, CITED) a
+number is out once its orbit dips below `2^71`; the share still standing after
+`k` odd steps is an exact sum over halving words, decaying at the rate
+`λ/3 = 0.9465`, the tail constant.  Every class mod `2^a 3^b` except the
+multiples of 3 contains a rational-loop member (Lagarias 1990), so no
+remainder-only rule crosses out more than T0 (filter test C).  COMPUTED: below
+`2^20` the last number standing is 837 799 at pass 195; 93.8 % of numbers
+enter the known loop through 5.  Witnesses: `test_loopsieve.py` (18).
+
 ### Verification status
 
 | result | Python | Lean |
@@ -786,6 +804,7 @@ A036563; nothing is claimed new.  Witnesses: `test_drop.py` (26).
 | ledger identity `E = 4O + 2Lq`; SAT box = `find_cycles` on every tested box, 3-adic gates as circuits; multiplicative ledger and the squeeze's `(L, B)` at `2^40 … 2^100` (docs/LEDGER.md) | ✓ (`test_ledger.py`, `test_satcycles.py`, `test_multiplicative.py`) | ✗ — not formalized (one-line identity; the CNF is computation) |
 | landing form: bijection, leaf rule mod 9, saturation, automaton = `Φ_k`, `S_k(q) = q·S_k(1)` (docs/LANDING.md) | ✓ (`test_landing.py`, 24) | ✗ — not formalized (Lemma U and T0 are; the rest is bookkeeping) |
 | drop function: parity/sign, height classes, fibers = divisors of `3d+1` of the form `2^x − 3`, unbounded multiplicity, telescoping, zero-sum sets vs chains, the gates at both ends on zero-sum sets (docs/DROP.md) | ✓ (`test_drop.py`, 26) | ✗ — not formalized (two-line identities and computation) |
+| loop sieve: power-of-2 rule and closure, counting bound `C(log₂N + 2d, d)`, doorways, shadow of `2^71` (exact word model, rate `λ/3`), rational loops through every open class (docs/LOOP_SIEVE.md) | ✓ (`test_loopsieve.py`, 18) | ✗ — not formalized (T0 and the closure are one-liners; the rest is computation) |
 | over-dispersion, tail rate, box dimension | ✓ | ✗ — infeasible in-kernel, open, unresolved limit |
 
 Lean total: **341 declarations**, all certifying `[propext, Quot.sound]` or

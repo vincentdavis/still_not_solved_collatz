@@ -109,7 +109,7 @@ a:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:
     <div class="tile"><div class="n">&gt; 1.375 × 10<sup>11</sup></div><div class="l">odd members in any second cycle</div><div class="s">Hercher 2023, Cor. 29, via Barina</div></div>
     <div class="tile"><div class="n">≥ 92</div><div class="l">circuits in any second cycle; m ≤ 91 is impossible</div><div class="s">Hercher 2023; m = 92 still stands</div></div>
     <div class="tile"><div class="n">2 127</div><div class="l">real cycles of the 3n+q family used as the test bed</div><div class="s">every q ≤ 999, maxima ≤ 20 000</div></div>
-    <div class="tile"><div class="n">426 · 341</div><div class="l">Python tests · Lean declarations, no Mathlib, no sorry</div><div class="s">this repository</div></div>
+    <div class="tile"><div class="n">444 · 341</div><div class="l">Python tests · Lean declarations, no Mathlib, no sorry</div><div class="s">this repository</div></div>
   </div>
 
   <!-- ===== pages ===== -->
@@ -164,6 +164,12 @@ a:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:
       <p><b>Establishes.</b> <span class="tag p">proved</span> every even integer is a drop and no odd one; a negative drop has exactly one source, <code>2|d| − 1</code>, zero has only 1, and a positive <code>d</code> has one source per divisor of <code>3d+1</code> of the form <code>2<sup>x</sup> − 3</code>, so the number of sources is unbounded; zero-sum sets exist for every size (<code>{3, 7, …, 4k−5, (2k−1)²}</code>), a zero-sum chain is exactly a cycle, and there is no 2-chain. <span class="tag c">computed</span> 83 zero-sum pairs below 400, 383 triples below 120, 511 quadruples below 60, none a chain; with the gates a cycle's two ends must pass, the 2 109 pairs below 10 000 fall to 18 at depth 4 and 7 at depth 6, still none a chain; the drop 628 has four sources and 958 208 six.</p>
       <p><b>Does not.</b> The sum constrains only the multiset of drops; the chain condition is the cycle equation again, and the page adds no bound. Nothing here is new: the statements reorganise the inverse map <code>(2<sup>x</sup>s − 1)/3</code> by the drop instead of by the target.</p>
     </div>
+    <div class="card">
+      <h3><a href="https://claude.ai/artifact/QUjPuwQXxX1Csi9n5XSqxB">Loop Sieve</a><span class="kind">web/loopsieve.html</span></h3>
+      <p><b>Shows.</b> A sieve of Eratosthenes for loops. It starts from the rule "if <code>3n+1</code> is a power of 2, <code>n</code> falls into the known loop" (<code>5, 21, 85, 341, …</code>), then crosses out, pass by pass, every number whose next odd number is already crossed out. A grid of the odd numbers below 2 000 has a pass slider and each number's path to 1. The page also has a chart of how far the verified region <code>2<sup>71</sup></code> reaches upward, and a finder that produces a loop of fractions through any residue class you pick.</p>
+      <p><b>Establishes.</b> <span class="tag p">proved</span> pass <code>d</code> crosses out exactly the numbers reaching 1 in <code>d</code> odd steps, at most <code>C(log₂N + 2d, d)</code> of them below <code>N</code>, so any fixed number of passes removes a vanishing share. The numbers left above <code>2<sup>71</sup></code> decay like <code>(λ/3)<sup>k</sup></code>, the project's tail constant. Every residue class mod <code>2<sup>a</sup>3<sup>b</sup></code> except the multiples of 3 holds a member of a rational loop, so no rule that uses only remainders can cross out more than T0. <span class="tag c">computed</span> below 2<sup>20</sup> the last number standing is 837 799, at pass 195; 93.8 % of numbers enter the known loop through 5.</p>
+      <p><b>Does not.</b> Running the passes to the end is checking that every number reaches 1, which is the conjecture. The main page says so of the backward tree of 1. The upward reach is a density statement, and a finite loop is never excluded by "almost all".</p>
+    </div>
   </div>
 
   <!-- ===== ledger of the project ===== -->
@@ -192,7 +198,7 @@ a:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:
       <li><b>Terras's conjecture.</b> Whether the true stopping time equals the coefficient stopping time.</li>
     </ul></div>
   </div>
-  <p class="note"><b>Why the sieve cannot finish, in one paragraph.</b> The equivalence theorem says that "the sieve kills every <code>M</code> at some finite depth" is the conjecture itself, restated. The number −1 sits in a residue class that survives the backward sieve at every depth, and the sieve's statistics are the same for q = 1 and q = 5, where a real cycle exists. So every reformulation walked through on these pages, balance, pairs, SAT, the multiplicative squeeze, circuits, landings, drops, returned known results reorganized. That map is the honest product of the tour: the elementary structure is fully picked over, and any genuinely new statement has to come from the 3-adic counts under a size bound, which is where Conjecture B lives.</p>
+  <p class="note"><b>Why the sieve cannot finish, in one paragraph.</b> The equivalence theorem says that "the sieve kills every <code>M</code> at some finite depth" is the conjecture itself, restated. The number −1 sits in a residue class that survives the backward sieve at every depth, and the sieve's statistics are the same for q = 1 and q = 5, where a real cycle exists. So every reformulation walked through on these pages, balance, pairs, SAT, the multiplicative squeeze, circuits, landings, drops, the loop sieve, returned known results reorganized. That map is the honest product of the tour: the elementary structure is fully picked over, and any genuinely new statement has to come from the 3-adic counts under a size bound, which is where Conjecture B lives.</p>
 
   <!-- ===== documents ===== -->
   <h2>The documents</h2>
@@ -209,13 +215,14 @@ a:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:
     <li><code>docs/LEDGER.md</code> — the balance identity, the pairs, the gates, the SAT encoding with the 3-adic gates as circuits, the multiplicative squeeze and the circuit ladder, each with its verdict.</li>
     <li><code>docs/LANDING.md</code> — the landing form, every claim refereed twice: the bijection, the chain, the exact exclusion result, the residue automaton, the literature identity.</li>
     <li><code>docs/DROP.md</code> — the drop function <code>f(n) = n − S(n)</code>: its fibers through the divisors of <code>3d+1</code> of the form <code>2<sup>x</sup> − 3</code>, the telescoping ledger, zero-sum sets against chains.</li>
+    <li><code>docs/LOOP_SIEVE.md</code> — the loop sieve: the power-of-2 rule and its closure (the backward tree of 1) with a counting bound, the doorways into the known loop, the reach of the verified region above <code>2<sup>71</sup></code>, and why no remainder rule beyond the multiples of 3 exists.</li>
   </ul>
 
   <!-- ===== repository ===== -->
   <h2>The repository</h2>
   <div class="repo">
     <div><b>Source</b><a href="https://github.com/vincentdavis/still_not_solved_collatz">github.com/vincentdavis/still_not_solved_collatz</a>, public. Three tracks share one specification, <code>docs/GROUND_TRUTH.md</code>.</div>
-    <div><b>Python</b>the package <code>collatz_maxodd</code>, standard library only, run with <code>uv</code>; 426 tests check every claim against the census, real integers, and exact big-integer brute force (25 of them need <code>python-sat</code>).</div>
+    <div><b>Python</b>the package <code>collatz_maxodd</code>, standard library only, run with <code>uv</code>; 444 tests check every claim against the census, real integers, and exact big-integer brute force (25 of them need <code>python-sat</code>).</div>
     <div><b>Lean 4</b>341 declarations, no Mathlib, audited by <code>#print axioms</code> at build time: each certifies <code>[propext, Quot.sound]</code>, <code>[propext]</code> or nothing; a five-step gate rejects <code>sorry</code>, <code>axiom</code>, <code>native_decide</code> and unsafe code, and was shown to fail on four injected defects.</div>
     <div><b>Web</b>the main page is generated from a template and a 140 KB data file; the six standalone pages are single files with everything inline, published as private artifacts and linked above.</div>
   </div>

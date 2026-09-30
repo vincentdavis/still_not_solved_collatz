@@ -16,6 +16,7 @@ Modules
 ``backtree``   the backward tree from a hypothetical ``M``, with the exact T6 test
 ``cycleeq``    the cycle equation, ``2^B/3^L``, ``log2 3`` convergents, length bounds
 ``drop``       the drop ``f_q(n) = n - S_q(n)``: fibers via divisors of ``3d+q`` of the form ``2^x - 3``
+``loopsieve``  crossing out numbers that cannot sit in a second 3n+1 loop: passes, shadow of 2^71, rational loops
 """
 
 from __future__ import annotations
