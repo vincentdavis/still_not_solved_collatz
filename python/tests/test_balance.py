@@ -20,16 +20,24 @@ from collatz_maxodd.balance import (
     christoffel,
     corner_level,
     cycle_numerator,
+    displacement,
     flatten,
     level_sum_mod_d,
+    mass_criterion,
     move_word,
     norm_exact,
     norm_test,
+    normalize,
     odd_part,
     one_swaps,
     parseval_log_bound,
     parseval_mass,
+    profile_element,
     rhin_log_d,
+    run_element,
+    run_is_valid,
+    run_log_norm_bound,
+    run_word,
     spread_threshold,
     swap_element,
     theta0,
@@ -461,7 +469,167 @@ def test_theorem2_analytic_ranges() -> None:
 
 
 # ---------------------------------------------------------------------------
-# section 5: reach of the norm test, by swap distance from balance
+# section 5: one run of levels (Theorem 3)
+# ---------------------------------------------------------------------------
+
+
+def test_profile_formula_on_random_words() -> None:
+    """Lemma 10 on words with arbitrary positive letters.  The normalized rotation has a
+    non-negative profile, and its profile element equals (theta - 1) theta^(L-1) A(w), both
+    modulo d and at the real embedding; so d | c(w) iff the element vanishes modulo d."""
+    rng = random.Random(3)
+    n = 0
+    for L, B in coprime_pairs(30, 3):
+        d = 2**B - 3**L
+        t, th = theta0(L, B), 2 ** (1 / L)
+        for _ in range(40):
+            cuts = sorted(rng.sample(range(1, B), L - 1))
+            w = tuple(hi - lo for lo, hi in zip([0, *cuts], [*cuts, B]))
+            v = normalize(w)
+            m = displacement(v)
+            assert min(m) >= 0 and m[0] == 0 and _canon(v) == _canon(w)
+            q = profile_element(m)
+            assert max(q) < L
+            X, a_mod, a_real = 0, 0, 0.0
+            for i, x in enumerate(v):
+                D = i * B - L * X
+                a_mod = (a_mod + pow(t, -D, d)) % d
+                a_real += th ** (-D)
+                X += x
+            q_mod = sum(c * pow(t, j, d) for j, c in q.items()) % d
+            assert q_mod == (t - 1) * pow(t, L - 1, d) * a_mod % d
+            assert abs(sum(c * th**j for j, c in q.items()) - (th - 1) * th ** (L - 1) * a_real) < 1e-9 * max(1.0, a_real)
+            assert (cycle_numerator(v) % d == 0) == (q_mod == 0)
+            n += 1
+    assert n == 4600
+
+
+def test_mass_criterion_is_sound_on_all_small_words() -> None:
+    """Corollary 11 on every word with positive letters and L <= 10: it fires on 1 375 of the
+    85 358 words and never on one with d | c(w)."""
+    tot = fired = 0
+    for L, B in coprime_pairs(10, 3):
+        d = 2**B - 3**L
+        for cuts in combinations(range(1, B), L - 1):
+            w = tuple(hi - lo for lo, hi in zip((0, *cuts), (*cuts, B)))
+            tot += 1
+            if mass_criterion(w):
+                fired += 1
+                assert cycle_numerator(w) % d != 0
+    assert (tot, fired) == (85358, 1375)
+
+
+def test_run_validity_and_element() -> None:
+    """Lemma 12 and the element of Theorem 3, on every interval of levels with L <= 40: the
+    raised run is a word iff D1 >= a or D2 = L - 1; its letters are 1, 2, 3 (1, 2 for runs of 12
+    corners); its profile is the indicator of the run; its element is 1 - theta^g + theta^f or
+    theta^f; and it is not a loop."""
+    n = valid = threes = 0
+    for L, B in coprime_pairs(40, 3):
+        b, d = B - L, 2**B - 3**L
+        for D1 in range(1, L):
+            for D2 in range(D1, L):
+                w = run_word(L, B, D1, D2)
+                n += 1
+                assert (w is not None) == run_is_valid(L, B, D1, D2)
+                if w is None:
+                    continue
+                valid += 1
+                threes += max(w) == 3
+                assert max(w) <= (2 if D1 >= b else 3)
+                assert displacement(w) == [int(D1 <= D <= D2) for D in range(L)]
+                assert profile_element(displacement(w)) == run_element(L, D1, D2)
+                assert cycle_numerator(w) % d != 0
+    assert (n, valid, threes) == (79323, 55855, 46522)
+
+
+def test_run_duality_and_counts() -> None:
+    """Raising the runs inside [a, L-2] gives b(b-1)/2 distinct cyclic words.  Lowering the runs
+    inside [1, b-1] gives the same words.  Exactly a(a-1)/2 of them consist of 1s and 2s: the
+    runs of 12 corners."""
+    for L, B in coprime_pairs(30, 6):
+        b = B - L
+        a = L - b
+        up = {_canon(run_word(L, B, D1, D2)) for D1 in range(a, L - 1) for D2 in range(D1, L - 1)}
+        assert len(up) == b * (b - 1) // 2
+        w0, Binv = christoffel(L, B), pow(B, -1, L)
+        down = set()
+        for D1 in range(1, b):
+            for D2 in range(D1, b):
+                v = list(w0)
+                for D in range(D1, D2 + 1):
+                    p = D * Binv % L
+                    v[p - 1] -= 1
+                    v[p] += 1
+                assert min(v) >= 1
+                down.add(_canon(tuple(v)))
+        assert down == up
+        twelve = {_canon(run_word(L, B, D1, D2)) for D1 in range(b, L - 1) for D2 in range(D1, L - 1)}
+        assert twelve == {c for c in up if max(c) <= 2} and len(twelve) == a * (a - 1) // 2
+
+
+def test_run_theorem() -> None:
+    """Theorem 3.  (a) B >= B0 + 1: mass <= 1 + 2 4^beta and (1 + 2 4^beta)/4^(1+beta) < 11/18,
+    with (11/18)^(L/2) <= 1/2 for L >= 3.  (b) B = B0, L >= 18: mass < 13/4 + (9/4) 4^(1/18) <
+    2.56^2, so Ellison's bound applies.  The exact d beats the Parseval bound on all 20 166
+    coprime pairs with 18 <= L <= 400.  (c) L <= 17: every run word checked directly."""
+    b0 = LOG2_3 - 1
+    assert 4 ** (-1 - b0) + 0.5 < 11 / 18 + 1e-12 and (11 / 18) ** 1.5 <= 0.5 < 11 / 18
+    assert 13 / 4 + 9 / 4 * 4 ** (1 / 18) < 5.6802 < ELLISON_BASE**2
+    n, margin = 0, math.inf
+    for L, B in coprime_pairs(400, 18):
+        b = B - L
+        if B > math.floor(L * LOG2_3) + 1:
+            assert run_log_norm_bound(L, B) <= 0.5 * L * math.log(11 / 18) + B * math.log(2) < (B - 1) * math.log(2)
+        else:
+            assert 1 + 4 ** ((b - 1) / L) + 4 ** (b / L) < 13 / 4 + 9 / 4 * 4 ** (1 / 18)
+        margin = min(margin, math.log(2**B - 3**L) - run_log_norm_bound(L, B))
+        n += 1
+    assert n == 20166 and margin > 3.2
+    small = 0
+    for L, B in coprime_pairs(17, 3):
+        d = 2**B - 3**L
+        for D1 in range(1, L):
+            for D2 in range(D1, L):
+                if run_is_valid(L, B, D1, D2):
+                    assert cycle_numerator(run_word(L, B, D1, D2)) % d != 0
+                    small += 1
+    assert small == 2218
+
+
+def test_run_exact_norms() -> None:
+    """Exact norms (Bareiss) of all run elements 1 - theta^g + theta^f with L <= 22: odd, below
+    the Parseval bound, and below d except at the two smallest slopes."""
+    n, over = 0, set()
+    for L, B in coprime_pairs(22, 3):
+        a, d = 2 * L - B, 2**B - 3**L
+        for D1 in range(a, L - 1):
+            for D2 in range(D1, L - 1):
+                q = run_element(L, D1, D2)
+                N = abs(norm_exact(q, L))
+                assert N % 2 == 1 and math.log(N) <= 0.5 * L * math.log(parseval_mass(q, L)) + 1e-9
+                assert math.log(N) <= run_log_norm_bound(L, B) + 1e-9
+                if N >= d:
+                    over.add((L, B))
+                n += 1
+    assert n == 4589 and over == {(3, 5), (5, 8)}
+
+
+def test_run_words_reach_far_from_balance() -> None:
+    """Runs of 12 corners are up to a // 2 swaps from balance: at swap distance n there are
+    2a + 1 - 4n of them (breadth-first search over actual swaps)."""
+    for L, B in ((18, 29), (23, 37)):
+        b = B - L
+        a = L - b
+        dist = _classes_within(L, B, a // 2)
+        prof: dict[int, int] = {}
+        for c in {_canon(run_word(L, B, D1, D2)) for D1 in range(b, L - 1) for D2 in range(D1, L - 1)}:
+            prof[dist[c]] = prof.get(dist[c], 0) + 1
+        assert prof == {k: 2 * a + 1 - 4 * k for k in range(1, a // 2 + 1)}
+
+
+# ---------------------------------------------------------------------------
+# section 6: reach of the norm test, by swap distance from balance
 # ---------------------------------------------------------------------------
 
 

@@ -802,11 +802,16 @@ step each, leaving a five-term element; Parseval, after multiplying the mixed fa
 `B = ⌊L log₂3⌋ + 1` once `L ≥ 4 000`.  COMPUTED: the remaining 3 622 slopes (3 602 by the bound against the exact
 `d`, 20 by a direct `O(L)` check modulo `d`); exact norms of all 3 034 one-swap elements with
 `L ≤ 45` and all 1 722 two-swap elements with `L ≤ 22`.  The size argument fails at three
-swaps: at `(233, 370)` one three-swap element has an odd norm `11.33 d` (pinned).  Not found in
+swaps: at `(233, 370)` one three-swap element has an odd norm `11.33 d` (pinned).
+**Theorem 3** (runs): for any word, `(θ − 1)θ^(L−1) Σ θ^(−D_i)` has as coefficients the
+differences of `2^(displacement)` between neighbouring levels (level = `pB mod L`), so
+raising every corner of one run of consecutive levels gives `1 − θ^g + θ^f` whatever the
+run's length; Parseval and Ellison's bound then show it is not a loop (`L ≤ 17` checked:
+2 218 words).  These words lie up to `0.2 L` swaps from balance, or contain a 3.  Not found in
 Knight or the related work checked; a wider literature search is pending.  Independent
 referee passes found no error in Theorem 1 or Theorem 2; the second corrected the citation
 of Rhin's bound and enumerated the 8 942 349 896 two-swap words of the finite range.
-Witnesses: `test_balance.py` (23).
+Witnesses: `test_balance.py` (30).
 
 ### Verification status
 
@@ -830,7 +835,7 @@ Witnesses: `test_balance.py` (23).
 | landing form: bijection, leaf rule mod 9, saturation, automaton = `Φ_k`, `S_k(q) = q·S_k(1)` (docs/LANDING.md) | ✓ (`test_landing.py`, 24) | ✗ — not formalized (Lemma U and T0 are; the rest is bookkeeping) |
 | drop function: parity/sign, height classes, fibers = divisors of `3d+1` of the form `2^x − 3`, unbounded multiplicity, telescoping, zero-sum sets vs chains, the gates at both ends on zero-sum sets (docs/DROP.md) | ✓ (`test_drop.py`, 26) | ✗ — not formalized (two-line identities and computation) |
 | loop sieve: power-of-2 rule and closure, counting bound `C(log₂N + 2d, d)`, doorways, shadow of `2^71` (exact word model, rate `λ/3`), rational loops through every open class (docs/LOOP_SIEVE.md) | ✓ (`test_loopsieve.py`, 18) | ✗ — not formalized (T0 and the closure are one-liners; the rest is computation) |
-| near balance: `Z[θ]/(θ^B − 3) ≅ Z/d`, θ-identity, norm test, Knight's case (second proof, lowest terms), spread ≥ 1.8614, one- and two-swap theorems (docs/BALANCE.md) | ✓ (`test_balance.py`, 23) | ✗ — not formalized (needs norms in number fields; the finite checks are computation) |
+| near balance: `Z[θ]/(θ^B − 3) ≅ Z/d`, θ-identity, norm test, Knight's case (second proof, lowest terms), spread ≥ 1.8614, one- and two-swap theorems, run theorem (docs/BALANCE.md) | ✓ (`test_balance.py`, 30) | ✗ — not formalized (needs norms in number fields; the finite checks are computation) |
 | over-dispersion, tail rate, box dimension | ✓ | ✗ — infeasible in-kernel, open, unresolved limit |
 
 Lean total: **341 declarations**, all certifying `[propext, Quot.sound]` or

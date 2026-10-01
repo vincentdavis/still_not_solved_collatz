@@ -12,11 +12,12 @@ balanced loop the *high cycle*.  Halbeisen and Hungerbühler (*Acta Arith.* 78 (
 227–239) showed it has the largest smallest member among all loops with the same counts, and
 Knight showed it is never integral.  Section 2 gives a second proof of Knight's theorem.
 Lemmas 1 and 2 are standard facts — an index computation and a substitution — arranged for
-this purpose; Corollary 4, Theorems 1 and 2 and the table of section 5 were not found in the
-sources checked (section 7).  Independent referee passes re-derived every step of Theorems 1
+this purpose; Corollary 4, Theorems 1, 2 and 3 and the table of section 6 were not found in
+the sources checked (section 8).  Independent referee passes re-derived every step of Theorems 1
 and 2.  Neither found an error in a theorem.  The second found that the citation of Rhin's
 bound was justified by a false inequality; the bound actually used is Rhin's own statement,
-and the citation is now exact.  All their corrections are folded in.
+and the citation is now exact.  All their corrections are folded in.  Theorem 3 (section 5)
+has not been refereed yet.
 
 **A correction to the conversation.**  Before this write-up, the one-swap estimate was quoted
 with an 8 % margin per member and Smyth's constant.  That estimate used the element
@@ -171,7 +172,7 @@ Each `D ∈ [1, L−1]` occurs once, so there are `2(L − b) − 1` internal sw
 nothing new: the `e = 0` swap gives another rotation of the balanced word (`γ_0 = θ` is a
 unit), and the `e = 1` and `k = 2` swaps give the same cyclic word (`γ_1 = η_2`).  So there
 are `2(L − b) − 3` distinct unbalanced cyclic words at distance 1 — the distance-1 column of
-section 5.  The counts 159, 2 059 and 3 034 below are of internal swaps.
+section 6.  The counts 159, 2 059 and 3 034 below are of internal swaps.
 
 **Theorem 1.** Let `L ≥ 2`, `gcd(L, B) = 1`, `log₂3 < B/L < 2`.  No one-swap word of slope
 `B/L` is the halving word of a positive integer loop of `3n+1`.
@@ -414,8 +415,144 @@ coprime pairs.  COMPUTED (`test_theorem2_finite_range`):
   raising those at levels 141 and 187 gives a word of 1s and 2s whose element
   `1 − θ + θ^96 − θ^141 + θ^142 − θ^187 + θ^188` has an odd norm of about `11.33 d`.  The word
   is not a loop, because `d` does not divide that norm, but no bound on its size can show it.
+  Section 5 shows what to count instead of swaps.
 
-## 5. How far the norm test reaches (COMPUTED)
+## 5. One run of levels (PROVED, given the CITED bound of Ellison and a COMPUTED check for `L ≤ 17`)
+
+The number of swaps is not what the norm test measures.  Section 4 ended with a three-swap
+word whose norm exceeds `d`.  This section shows the other side: some words many swaps from
+balance are as easy as one swap.  They are the words whose moved corners form a *run* of
+consecutive levels.  Corners, levels, raising and lowering are as in section 4.
+
+**Profiles.**  Let `w'` be any word of length `L` and sum `B` with positive letters, and
+`X'_p` its staircase.  Its *profile* against the lower Christoffel word is
+`m_p = X'_p − X_p`, the displacement of corner `p`; `m_0 = 0`.  Write `m(D)` for the
+displacement of the corner of level `D`, and `u_j = 2^(m(L−1−j))` for `0 ≤ j ≤ L − 1`.
+
+**Lemma 10 (profile formula).**
+
+    (θ − 1) θ^(L−1) A(w') = (2u_(L−1) − u_0) + Σ_{j=1}^{L−1} (u_(j−1) − u_j) θ^j.
+
+*Proof.* `D'_p = pB − L X'_p = D_p − L m_p`, so `A(w') = Σ_p θ^(−D'_p) = Σ_D 2^(m(D)) θ^(−D)`
+and `θ^(L−1) A(w') = Σ_j u_j θ^j`.  Multiply by `θ − 1` and use `θ^L = 2`.  ∎
+
+The coefficient of `θ^j` is the difference between the weights `2^m` of the neighbouring
+levels `L − j` and `L − 1 − j`.  The constant term compares level `L − 1` with level 0 one
+full turn lower.  The balanced word has `u ≡ 1` and gives 1.  When every `m_p ≥ 0`, call the
+right side `q_(w')`.  It lies in `O` and its exponents are `0, …, L − 1`.  Since `θ` and
+`θ − 1` are units modulo `I`, Lemma 2 gives: `d | c(w')` if and only if `q_(w') ∈ I`.
+Lemma 6 and the two-raise case of Lemma 8 are the profiles with one or two isolated levels
+raised.
+
+Every cyclic word has a rotation with `m_p ≥ 0` for all `p`.  Rotating by `r` turns `m_p`
+into `m_(p+r) − m_r + ε`, with `ε = X_(p+r) − X_r − X_p ∈ {0, 1}`.  So it is enough to start
+the word at a corner of least displacement.
+
+**Corollary 11 (mass criterion).**  Let every `m_p ≥ 0` and
+
+    M(w') = (2u_(L−1) − u_0)² + Σ_{j=1}^{L−1} (u_(j−1) − u_j)² 4^(j/L).
+
+If `M(w')^(L/2) < d`, then `w'` is not the halving word of a positive integer loop.
+
+*Proof.* `q_(w') ≠ 0`, because `A(w') > 0` at the real embedding.  A loop would put `q_(w')`
+in `I`, so `d ≤ |N(q_(w'))|`.  And `|N(q_(w'))| ≤ M(w')^(L/2)` by the Parseval and AM–GM
+bound of Theorem 1, whose only requirement is that the exponents be distinct and below
+`L`.  ∎
+
+`M` counts the places where neighbouring levels are moved differently, each with a weight
+`4^(j/L)` between 1 and 4.  COMPUTED (`test_mass_criterion_is_sound_on_all_small_words`): on
+all 85 358 words with `L ≤ 10` the criterion applies to 1 375, and never to a word with
+`d | c(w)`.
+
+**Runs.**  A *run* is a set of corners whose levels are consecutive: `D₁, D₁ + 1, …, D₂`,
+with `1 ≤ D₁ ≤ D₂ ≤ L − 1`.  *Raising the run* means raising each of its corners by one
+step: `m = 1` on the run and `m = 0` elsewhere.
+
+**Lemma 12 (which runs give words).**  Raising the run `[D₁, D₂]` gives a word with positive
+letters if and only if `D₁ ≥ a` or `D₂ = L − 1`.  Its letters are then 1, 2 or 3.  If
+`D₁ ≥ b`, the word is the balanced word with the `12` pairs of the run swapped to `21`, a
+word of 1s and 2s.
+
+*Proof.* The new letter is `x'_p = x_p + m_(p+1) − m_p ≤ 3`.  It is 0 exactly when
+`x_p = 1`, `m_p = 1` and `m_(p+1) = 0`.  By Lemma 5, `x_p = 1` if and only if `D_p < a`, and
+then `D_(p+1) = D_p + b`.  So the word is valid if and only if every level `D < a` of the run
+has `D + b` in the run.  If `D₁ ≥ a` there is no such level.  If `D₁ < a`, the level
+`D = min(D₂, a − 1)` forces `D₂ ≥ a`, and then `D = a − 1` forces `D₂ ≥ a − 1 + b = L − 1`.
+Conversely `[D₁, L − 1]` satisfies the condition.  If `D₁ ≥ b`, every corner of the run is a
+`12` corner.  The corner after a `12` corner begins with a 2, so no two `12` corners are
+adjacent, and the raises are swaps of disjoint pairs.  ∎
+
+**Theorem 3 (one run).**  Let `L ≥ 2`, `gcd(L, B) = 1`, `log₂3 < B/L < 2`.  Raise one run of
+levels of the lower Christoffel word by one step.  If the result is a word with positive
+letters, then neither it nor any of its rotations is the halving word of a positive integer
+loop of `3n+1`.
+
+*Proof.* Integrality does not depend on the rotation.  Put `g = L − 1 − D₂` and
+`f = L − D₁`, so `0 ≤ g < f ≤ L − 1`.  In Lemma 10, `u_j = 2` for `g ≤ j ≤ f − 1` and
+`u_j = 1` otherwise, and `u_(L−1) = 1` because level 0 is not in the run.  So
+
+    q = θ^f              if g = 0,
+    q = 1 − θ^g + θ^f     if g ≥ 1.
+
+If `g = 0`, `q` is a unit modulo `I`.  So `q ∉ I`, because `d > 1` by the proof of Theorem 0.
+The word is then a rotation of the balanced word.
+
+Let `g ≥ 1`.  By Lemma 12, `D₁ ≥ a`, so `1 ≤ g < f ≤ b`.  As `q > 0` at the real embedding,
+`N(q) ≠ 0`, and a loop would give `d ≤ |N(q)|`.  Parseval gives
+`|N(q)| ≤ (1 + 4^(g/L) + 4^(f/L))^(L/2) ≤ (1 + 4^((b−1)/L) + 4^(b/L))^(L/2)`.  Write
+`β = b/L` and `B₀ = ⌊L log₂3⌋ + 1`.
+
+*(a) `B ≥ B₀ + 1`.*  Then `d > 2^(B−1)`.  The mass is at most `1 + 2·4^β`, and
+`(1 + 2·4^β)/4^(1+β) = 4^(−1−β) + 1/2 < 1/9 + 1/2 = 11/18`, because `β > log₂3 − 1`.  So
+`|N(q)| < (11/18)^(L/2) 2^B ≤ 2^(B−1) < d`, since `(11/18)^(L/2) ≤ 1/2` for `L ≥ 3`.
+
+*(b) `B = B₀` and `L ≥ 18`.*  Here `b < L(log₂3 − 1) + 1`, so `4^(b/L) < (9/4)·4^(1/L)` and
+`4^((b−1)/L) < 9/4`.  The mass is below `13/4 + (9/4)·4^(1/18) < 5.681 < 6.5536 = 2.56²`.  So
+`|N(q)| < 2.56^L < d` by Ellison's bound (section 3).
+
+*(c) `B = B₀` and `L ≤ 17`.*  COMPUTED (`test_run_theorem`): all 2 218 run words with
+`L ≤ 17`, for every `B`, were checked directly.  None has `d | c(w)`.  ∎
+
+**Remarks.**
+* What it covers.  COMPUTED for every coprime pair with `6 ≤ L ≤ 30`
+  (`test_run_duality_and_counts`): the runs inside `[a, L − 2]` give `b(b − 1)/2` distinct
+  cyclic words.
+  * Exactly `a(a − 1)/2` of them consist of 1s and 2s.  They are the runs of `12` corners:
+    swap to `21` every `12` pair whose level lies in the run.
+  * The other words contain a 3.  No number of swaps reaches them.
+  * Theorem 1 is contained in it.  A `12 → 21` swap is a run of length one.  A `21 → 12`
+    swap at level `D` is, by the remark on lowering below, the run `[L − 1 − D, L − 2]`, with
+    `g = 1` and `f = D + 1`: the element `η_(D+1)`.
+* Distance.  The runs of `12` corners lie up to `⌊a/2⌋ ≈ 0.2 L` swaps from balance.  COMPUTED
+  at `(18, 29)` and `(23, 37)` (`test_run_words_reach_far_from_balance`): exactly
+  `2a + 1 − 4n` of them are at swap distance `n`, for `1 ≤ n ≤ ⌊a/2⌋`.
+* Lowering gives nothing new.  A word is determined by the set `R = {D'_p}` of its
+  generalized levels `D'_p = pB − L X'_p`, one in each residue class modulo `L`; rotating the
+  word by `r` replaces `R` by `R − D'_r`.  Raising `[E₁, E₂]`, with `a ≤ E₁ ≤ E₂ ≤ L − 2`,
+  gives `R = [E₁ − L, E₂ − L] ∪ [0, E₁ − 1] ∪ [E₂ + 1, L − 1]`.  Lowering `[D₁, D₂]`, with
+  `1 ≤ D₁ ≤ D₂ ≤ b − 1`, gives `[0, D₁ − 1] ∪ [D₂ + 1, L − 1] ∪ [D₁ + L, D₂ + L]`.  This is
+  the first set moved by `L − E₁` when `D₁ = E₂ − E₁ + 1` and `D₂ = L − 1 − E₁`.  That move
+  is the rotation that starts the raised word at its corner of level `E₁`, where
+  `D' = E₁ − L`.  So the two families contain the same cyclic words.
+* Why runs.  By Lemma 10 the coefficients of `q` are the differences of `u` along the
+  levels.  A run of any length has two jumps and three terms.  `k` isolated corners have
+  `2k` jumps and `2k + 1` terms.  That is why the size argument reaches runs of `0.2 L` swaps
+  but not every word at three swaps.
+* Two runs.  Raising two separate runs gives five terms,
+  `1 − θ^(g₁) + θ^(f₁) − θ^(g₂) + θ^(f₂)`.  If both runs consist of `12` corners the mass is
+  below `1 + 4·16/9 = 73/9 < 9`, the two-raise bound of Lemma 9, so the proof of Theorem 2
+  should carry over, with Rhin's bound and a finite check.  This is not done here.  Three
+  runs can exceed 9.
+* COMPUTED, in the suite.
+  * Lemma 10 and the normalization hold on 4 600 random words with `L ≤ 30`.
+  * Lemma 12 and the element of the proof hold on all 79 323 intervals of levels with
+    `L ≤ 40`; 55 855 give words, 46 522 of these contain a 3, and none is a loop.
+  * The exact `d` exceeds the Parseval bound on all 20 166 coprime pairs with
+    `18 ≤ L ≤ 400`, by at least 3.2 in logarithm.
+  * The exact norms of all 4 589 run elements with `L ≤ 22` are odd, below their Parseval
+    bounds, and below `d` except at `(3, 5)` and `(5, 8)` (`test_run_exact_norms`).
+
+## 6. How far the norm test reaches (COMPUTED)
 
 Corollary 3 applies to every word.  Among the primitive cyclic words made of 1s and 2s with
 the balanced counts, grouped by how many adjacent swaps separate them from the balanced word,
@@ -431,16 +568,17 @@ two rows):
 
 Every two-swap word passes in all four cases.  The share then falls with distance, and words
 far from balance have large norms, as random words do.  So the method rules out
-patterns close to perfect balance — proved at distance 1 (Theorem 1) and distance 2
-(Theorem 2) — and not the whole space, which matches the heuristic picture where integrality
-for a generic word is the whole problem.  The norm of a typical word grows with its
+patterns close to perfect balance — proved at distance 1 (Theorem 1), at distance 2
+(Theorem 2) and along one run of levels at any distance (Theorem 3) — and not the whole
+space, which matches the heuristic picture where integrality for a generic word is the whole
+problem.  The norm of a typical word grows with its
 distance: in samples of 4 000 moves of `k` corners at `(610, 967)`, the share with norm below
 `d` is 99.8 % for `k = 4`, 63.5 % for `k = 6` and 0.1 % for `k = 10` (not pinned).  Everything here assumes `gcd(L, B) = 1`; when `gcd(L, B) > 1` no loop's word is
 balanced, the most balanced primitive words are one swap from a power of a Christoffel word,
-and Lemma 1 and Theorems 1 and 2 do not cover them.  At distance 3 the size argument
+and Lemma 1 and Theorems 1, 2 and 3 do not cover them.  At distance 3 the size argument
 fails for some words (section 4, last remark).
 
-## 6. Strategy filter (`docs/FILTER.md`)
+## 7. Strategy filter (`docs/FILTER.md`)
 
 | test | verdict |
 |---|---|
@@ -450,21 +588,22 @@ fails for some words (section 4, last remark).
 | D, density | passes: the statement is exact |
 | E, uniformity | passes: it uses `2 − 1 = 1` (the unit `θ − 1`) and a bound for `2^B − 3^L` |
 
-Like Steiner's theorem (one circuit) and Simons–de Weger's (few circuits), Theorems 1 and 2
-exclude families of loop shapes, but at the opposite end: theirs are the most unbalanced
-loops, these the loops within two swaps of perfect balance, for coprime `(L, B)`.
+Like Steiner's theorem (one circuit) and Simons–de Weger's (few circuits), Theorems 1, 2
+and 3 exclude families of loop shapes, but at the opposite end: theirs are the most
+unbalanced loops, these the loops within two swaps of perfect balance or one run of levels
+away from it, for coprime `(L, B)`.
 
-## 7. Literature and novelty
+## 8. Literature and novelty
 
 Knight (2023/2026) settles balanced loops; Halbeisen–Hungerbühler (1997) give their extremal
 property; Fernández and Ibáñez (arXiv 2607.24844, 2026) study Christoffel words as extremal
-structures.  None of these uses norms in `Q(2^(1/L))` or treats words one or two swaps from
-balance; Lemmas 1 and 2 are standard (an index computation and a substitution).  Corollary 4,
-Theorems 1 and 2 and the table of section 5 were not found in these sources.  A wider
-literature search is needed before calling Theorems 1 and 2 new mathematics; they are new to
-this repository.
+structures.  None of these uses norms in `Q(2^(1/L))` or treats words one or two swaps, or
+one run of levels, from balance; Lemmas 1 and 2 are standard (an index computation and a substitution).  Corollary 4,
+Theorems 1, 2 and 3 and the table of section 6 were not found in these sources.  A wider
+literature search is needed before calling Theorems 1, 2 and 3 new mathematics; they are new
+to this repository.
 
-## 8. Verification
+## 9. Verification
 
 | claim | test |
 |---|---|
@@ -480,7 +619,12 @@ this repository.
 | Lemma 9 (mass bounds), against exact norms | `test_two_swap_mass_bounds`, `test_two_swap_parseval_against_exact_norms` |
 | Theorem 2: finite range, direct check, analytic ranges and Rhin step | `test_theorem2_finite_range`, `test_two_swap_direct_agrees_with_brute_force`, `test_theorem2_analytic_ranges` |
 | the size argument stops at two swaps | `test_three_swap_norm_can_exceed_d` |
-| section 5 | `test_reach_profiles` |
+| Lemma 10 (profile formula) and the normalization | `test_profile_formula_on_random_words` |
+| Corollary 11 (mass criterion) | `test_mass_criterion_is_sound_on_all_small_words` |
+| Lemma 12 and the element of a run | `test_run_validity_and_element` |
+| Theorem 3: constants, exact `d`, `L ≤ 17` directly, exact norms | `test_run_theorem`, `test_run_exact_norms` |
+| runs: lowering, counts, swap distance | `test_run_duality_and_counts`, `test_run_words_reach_far_from_balance` |
+| section 6 | `test_reach_profiles` |
 | filter test A | `test_q13_has_balanced_and_one_swap_loops` |
 
-Run: `cd python && uv run pytest tests/test_balance.py` (23 tests).
+Run: `cd python && uv run pytest tests/test_balance.py` (30 tests).

@@ -28,6 +28,11 @@ Classical Collatz, ``q = 1``.  A loop with ``L`` odd members and ``B`` halvings 
   ``B log 2 - L log 3 >= B^(-13.3)``, at the smallest ``B`` once ``L >= 4000``.  The finitely
   many remaining slopes are checked exactly (``two_swap_direct``).  Size alone cannot go on
   to three swaps: some three-swap elements have norms larger than ``d``.
+* **Runs.**  For any word, ``(theta - 1) theta^(L-1) A(w)`` has coefficients equal to the
+  differences of ``2^(displacement)`` between neighbouring levels (``profile_element``).  So
+  raising a whole run of consecutive levels by one step costs three terms,
+  ``1 - theta^g + theta^f``, whatever its length: the one-swap proof applies and no such word
+  is a loop (``run_word``, ``run_element``).
 """
 
 from __future__ import annotations
@@ -65,6 +70,14 @@ __all__ = [
     "level_sum_mod_d",
     "rhin_log_d",
     "RHIN_FROM",
+    "displacement",
+    "normalize",
+    "profile_element",
+    "mass_criterion",
+    "run_is_valid",
+    "run_word",
+    "run_element",
+    "run_log_norm_bound",
 ]
 
 LOG2_3 = math.log2(3)
@@ -419,3 +432,93 @@ def rhin_log_d(L: int, B: int) -> float:
     and Terracol (arXiv 2502.00948, Proposition 6.3): ``|u0 + u1 log 2 + u2 log 3| >= H^(-13.3)``
     for integers with ``H = max(|u1|, |u2|) >= 2``."""
     return L * math.log(3) - 13.3 * math.log(B)
+
+
+# ----------------------------------------------------------------------------- runs
+
+
+def displacement(w: tuple[int, ...] | list[int]) -> list[int]:
+    """Profile of a word against the lower Christoffel word of the same length and sum, indexed
+    by level: ``m[D] = X'_p - X_p`` for the corner ``p`` with ``pB mod L = D``.  ``m[0] = 0``."""
+    L, B = len(w), sum(w)
+    if gcd(L, B) != 1:
+        raise ValueError("need gcd(L, B) = 1")
+    m = [0] * L
+    X = 0
+    for p, x in enumerate(w):
+        m[(p * B) % L] = X - (p * B) // L
+        X += x
+    return m
+
+
+def normalize(w: tuple[int, ...] | list[int]) -> tuple[int, ...]:
+    """The rotation of ``w`` that starts at a corner of least displacement.  Its profile is
+    non-negative: rotating by ``r`` turns ``m_p`` into ``m_(p+r) - m_r + [D_p + D_r >= L]``."""
+    w = tuple(w)
+    L, B = len(w), sum(w)
+    best, r, X = 0, 0, 0
+    for p, x in enumerate(w):
+        if X - (p * B) // L < best:
+            best, r = X - (p * B) // L, p
+        X += x
+    return w[r:] + w[:r]
+
+
+def profile_element(m: list[int]) -> dict[int, int]:
+    """Lemma 10: ``(theta - 1) theta^(L-1) A(w) = (2 u_(L-1) - u_0) + sum_(j>=1) (u_(j-1) - u_j) theta^j``
+    with ``u_j = 2^(m[L-1-j])``, for a profile ``m`` indexed by level with every ``m[D] >= 0``.
+    The exponents are ``0, ..., L-1``; ``d | c(w)`` iff this element lies in ``(theta^B - 3)``."""
+    L = len(m)
+    if min(m) < 0:
+        raise ValueError("displacements must be non-negative; rotate the word with normalize()")
+    u = [2 ** m[L - 1 - j] for j in range(L)]
+    q = {0: 2 * u[L - 1] - u[0]}
+    for j in range(1, L):
+        q[j] = u[j - 1] - u[j]
+    return {j: c for j, c in q.items() if c}
+
+
+def mass_criterion(w: tuple[int, ...] | list[int]) -> bool:
+    """Corollary 11: True when Parseval alone proves that ``w`` is not a loop of ``3n+1``
+    (coprime ``L, B``, ``2^B > 3^L``): the mass ``M`` of the profile element of the normalized
+    rotation satisfies ``M^(L/2) < d``."""
+    L, B = len(w), sum(w)
+    d = 2**B - 3**L
+    q = profile_element(displacement(normalize(w)))
+    return 0.5 * L * math.log(parseval_mass(q, L)) < math.log(d)
+
+
+def run_is_valid(L: int, B: int, D1: int, D2: int) -> bool:
+    """Lemma 12: raising the corners of levels ``D1..D2`` (``1 <= D1 <= D2 <= L-1``) keeps every
+    letter positive iff ``D1 >= 2L - B`` (all corners followed by a 2) or ``D2 = L - 1``."""
+    if not 1 <= D1 <= D2 <= L - 1:
+        raise ValueError("need 1 <= D1 <= D2 <= L - 1")
+    return D1 >= 2 * L - B or D2 == L - 1
+
+
+def run_word(L: int, B: int, D1: int, D2: int) -> tuple[int, ...] | None:
+    """Raise by one step every corner of the lower Christoffel word whose level lies in
+    ``[D1, D2]`` (``x_(p-1) += 1``, ``x_p -= 1`` for each); ``None`` if a letter drops to 0."""
+    if not 1 <= D1 <= D2 <= L - 1:
+        raise ValueError("need 1 <= D1 <= D2 <= L - 1")
+    v = list(christoffel(L, B))
+    Binv = pow(B, -1, L)
+    for D in range(D1, D2 + 1):
+        p = D * Binv % L
+        v[p - 1] += 1
+        v[p] -= 1
+    return tuple(v) if min(v) >= 1 else None
+
+
+def run_element(L: int, D1: int, D2: int) -> dict[int, int]:
+    """Element of the run ``[D1, D2]``: ``1 - theta^g + theta^f`` with ``g = L - 1 - D2`` and
+    ``f = L - D1``, or the unit ``theta^f`` when ``g = 0`` (a rotation of the balanced word)."""
+    g, f = L - 1 - D2, L - D1
+    return {f: 1} if g == 0 else {0: 1, g: -1, f: 1}
+
+
+def run_log_norm_bound(L: int, B: int) -> float:
+    """``(L/2) log(1 + 4^((b-1)/L) + 4^(b/L))``: Parseval bound for ``log |N|`` of every run
+    element with ``g >= 1`` and ``D1 >= 2L - B`` (then ``1 <= g < f <= b``)."""
+    b = B - L
+    return 0.5 * L * math.log(1 + 4 ** ((b - 1) / L) + 4 ** (b / L))

@@ -136,7 +136,7 @@ verified convergence bound `X₀` (Barina), and archimedean/valuation bounds on
 | loop sieve: cross out what reaches 1 (the tree of 1) | ✓ | ✓ | ✓ | ✓ | ✗² | sound and complete per number; its union *is* the verification — cannot finish (docs/LOOP_SIEVE.md) |
 | loop sieve: the shadow of the verified bound | ✓ | ✓ | ✓ | ✗ | — | density measurement; never excludes a finite cycle |
 | remainder-only membership rules beyond T0 | — | — | ✗ | — | — | impossible: rational loops meet every class prime to 3 (docs/LOOP_SIEVE.md L5) |
-| norm test near balance, in `Q(2^(1/L))` | ✓ | ✓ | ✓ | ✓ | ✓ | passes all five: rules out the loop shapes within two swaps of perfect balance (docs/BALANCE.md); like the circuit results, a family of shapes, not every loop |
+| norm test near balance, in `Q(2^(1/L))` | ✓ | ✓ | ✓ | ✓ | ✓ | passes all five: rules out the loop shapes within two swaps of perfect balance, and those one run of levels away (docs/BALANCE.md); like the circuit results, a family of shapes, not every loop |
 
 ¹ also covered by the in-repo impossibility theorem: the sieve has no finite
 transfer matrix (state grows like `2^{1.76j}` — `deathdepth.py`).
