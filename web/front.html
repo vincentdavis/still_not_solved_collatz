@@ -109,7 +109,7 @@ a:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:
     <div class="tile"><div class="n">&gt; 1.375 × 10<sup>11</sup></div><div class="l">odd members in any second cycle</div><div class="s">Hercher 2023, Cor. 29, via Barina</div></div>
     <div class="tile"><div class="n">≥ 92</div><div class="l">circuits in any second cycle; m ≤ 91 is impossible</div><div class="s">Hercher 2023; m = 92 still stands</div></div>
     <div class="tile"><div class="n">2 127</div><div class="l">real cycles of the 3n+q family used as the test bed</div><div class="s">every q ≤ 999, maxima ≤ 20 000</div></div>
-    <div class="tile"><div class="n">444 · 341</div><div class="l">Python tests · Lean declarations, no Mathlib, no sorry</div><div class="s">this repository</div></div>
+    <div class="tile"><div class="n">458 · 341</div><div class="l">Python tests · Lean declarations, no Mathlib, no sorry</div><div class="s">this repository</div></div>
   </div>
 
   <!-- ===== pages ===== -->
@@ -170,6 +170,12 @@ a:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:
       <p><b>Establishes.</b> <span class="tag p">proved</span> pass <code>d</code> crosses out exactly the numbers reaching 1 in <code>d</code> odd steps, at most <code>C(log₂N + 2d, d)</code> of them below <code>N</code>, so any fixed number of passes removes a vanishing share. The numbers left above <code>2<sup>71</sup></code> decay like <code>(λ/3)<sup>k</sup></code>, the project's tail constant. Every residue class mod <code>2<sup>a</sup>3<sup>b</sup></code> except the multiples of 3 holds a member of a rational loop, so no rule that uses only remainders can cross out more than T0. <span class="tag c">computed</span> below 2<sup>20</sup> the last number standing is 837 799, at pass 195; 93.8 % of numbers enter the known loop through 5.</p>
       <p><b>Does not.</b> Running the passes to the end is checking that every number reaches 1, which is the conjecture. The main page says so of the backward tree of 1. The upward reach is a density statement, and a finite loop is never excluded by "almost all".</p>
     </div>
+    <div class="card">
+      <h3><a href="https://claude.ai/artifact/RpMHoW9mxf5B7T2MmK6tSB">Near-Balanced Loops</a><span class="kind">web/balance.html</span></h3>
+      <p><b>Shows.</b> A loop's halving pattern drawn as a staircase against the straight line from <code>(0, 0)</code> to <code>(L, B)</code>. An explorer swaps neighbouring letters of the balanced pattern and computes, exactly in the browser, the norm that decides whether a loop could close. A chart compares those norms with <code>2<sup>B</sup> − 3<sup>L</sup></code> across lengths.</p>
+      <p><b>Establishes.</b> <span class="tag p">proved</span> With <code>θ = 2<sup>1/L</sup></code> and <code>L</code>, <code>B</code> coprime, dividing by <code>2<sup>B</sup> − 3<sup>L</sup></code> is dividing by <code>θ<sup>B</sup> − 3</code>, so a loop forces <code>2<sup>B</sup> − 3<sup>L</sup></code> to divide a norm. For the balanced pattern that norm is a power of 2, because <code>2 − 1 = 1</code>: a second proof of Knight's theorem, with the fraction in lowest terms. For coprime counts, no loop is one neighbour swap away from balance, by Parseval against Ellison's lower bound. Every loop other than <code>1 → 4 → 2 → 1</code> has its largest member at least 1.86 times its smallest. <span class="tag t">cited</span> Knight 2026 for the balanced case; Ellison 1971 for <code>2<sup>B</sup> − 3<sup>L</sup> &gt; 2.56<sup>L</sup></code>. <span class="tag c">computed</span> The same test rules out every two-swap pattern at the four lengths tried.</p>
+      <p><b>Does not.</b> Patterns far from balance have large norms, so the method rules out a neighbourhood of balance, not every loop. The one-swap theorem is not in Knight's paper or the related work found so far; a wider literature search is still needed before calling it new.</p>
+    </div>
   </div>
 
   <!-- ===== ledger of the project ===== -->
@@ -181,6 +187,7 @@ a:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:
       <li><b>q-transfer.</b> The magnitude-free sieve is identical for every q (kernel-checked to depth 4).</li>
       <li><b>Both ends.</b> The minimum mirrors the maximum; at least 41.5 % single halvings in a nontrivial 3n+1 cycle.</li>
       <li><b>Theorem A.</b> The jump-1 half of the sign law for the word counts N<sub>k</sub> (new, refereed).</li>
+      <li><b>Near balance.</b> No loop is one neighbour swap away from a balanced halving pattern, and every loop spreads by a factor of at least 1.86 (on paper, with Knight's theorem and Ellison's bound).</li>
       <li><b>On paper.</b> D2, D3 (mod 108, 324); the tail-rate bracket [0.7364, 0.9465]; the ledger identities; the length bound with Baker's input as an explicit hypothesis.</li>
     </ul></div>
     <div class="col"><h3><span class="tag c">computed</span> exact, reproducible by pytest</h3><ul>
@@ -198,7 +205,7 @@ a:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:
       <li><b>Terras's conjecture.</b> Whether the true stopping time equals the coefficient stopping time.</li>
     </ul></div>
   </div>
-  <p class="note"><b>Why the sieve cannot finish, in one paragraph.</b> The equivalence theorem says that "the sieve kills every <code>M</code> at some finite depth" is the conjecture itself, restated. The number −1 sits in a residue class that survives the backward sieve at every depth, and the sieve's statistics are the same for q = 1 and q = 5, where a real cycle exists. So every reformulation walked through on these pages, balance, pairs, SAT, the multiplicative squeeze, circuits, landings, drops, the loop sieve, returned known results reorganized. That map is the honest product of the tour: the elementary structure is fully picked over, and any genuinely new statement has to come from the 3-adic counts under a size bound, which is where Conjecture B lives.</p>
+  <p class="note"><b>Why the sieve cannot finish, in one paragraph.</b> The equivalence theorem says that "the sieve kills every <code>M</code> at some finite depth" is the conjecture itself, restated. The number −1 sits in a residue class that survives the backward sieve at every depth, and the sieve's statistics are the same for q = 1 and q = 5, where a real cycle exists. So the reformulations walked through on these pages, balance, pairs, SAT, the multiplicative squeeze, circuits, landings, drops, the loop sieve, returned known results reorganized. The one exception used integrality itself: the norm test in <code>Q(2<sup>1/L</sup>)</code> rules out every loop one swap away from perfect balance. That map is the honest product of the tour: the residue structure is fully picked over, and new statements come from tools that see whole numbers and size, the 3-adic counts under a size bound where Conjecture B lives, and norms of algebraic integers.</p>
 
   <!-- ===== documents ===== -->
   <h2>The documents</h2>
@@ -215,6 +222,7 @@ a:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:
     <li><code>docs/LEDGER.md</code> — the balance identity, the pairs, the gates, the SAT encoding with the 3-adic gates as circuits, the multiplicative squeeze and the circuit ladder, each with its verdict.</li>
     <li><code>docs/LANDING.md</code> — the landing form, every claim refereed twice: the bijection, the chain, the exact exclusion result, the residue automaton, the literature identity.</li>
     <li><code>docs/DROP.md</code> — the drop function <code>f(n) = n − S(n)</code>: its fibers through the divisors of <code>3d+1</code> of the form <code>2<sup>x</sup> − 3</code>, the telescoping ledger, zero-sum sets against chains.</li>
+    <li><code>docs/BALANCE.md</code> — loops near perfect balance: the loop equation in <code>Q(2<sup>1/L</sup>)</code>, Knight's balanced case by a second route, the one-swap theorem with its proof, the spread corollary, and how far the norm test reaches.</li>
     <li><code>docs/LOOP_SIEVE.md</code> — the loop sieve: the power-of-2 rule and its closure (the backward tree of 1) with a counting bound, the doorways into the known loop, the reach of the verified region above <code>2<sup>71</sup></code>, and why no remainder rule beyond the multiples of 3 exists.</li>
   </ul>
 
@@ -222,7 +230,7 @@ a:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:
   <h2>The repository</h2>
   <div class="repo">
     <div><b>Source</b><a href="https://github.com/vincentdavis/still_not_solved_collatz">github.com/vincentdavis/still_not_solved_collatz</a>, public. Three tracks share one specification, <code>docs/GROUND_TRUTH.md</code>.</div>
-    <div><b>Python</b>the package <code>collatz_maxodd</code>, standard library only, run with <code>uv</code>; 444 tests check every claim against the census, real integers, and exact big-integer brute force (25 of them need <code>python-sat</code>).</div>
+    <div><b>Python</b>the package <code>collatz_maxodd</code>, standard library only, run with <code>uv</code>; 458 tests check every claim against the census, real integers, and exact big-integer brute force (25 of them need <code>python-sat</code>).</div>
     <div><b>Lean 4</b>341 declarations, no Mathlib, audited by <code>#print axioms</code> at build time: each certifies <code>[propext, Quot.sound]</code>, <code>[propext]</code> or nothing; a five-step gate rejects <code>sorry</code>, <code>axiom</code>, <code>native_decide</code> and unsafe code, and was shown to fail on four injected defects.</div>
     <div><b>Web</b>the main page is generated from a template and a 140 KB data file; the six standalone pages are single files with everything inline, published as private artifacts and linked above.</div>
   </div>

@@ -783,6 +783,22 @@ remainder-only rule crosses out more than T0 (filter test C).  COMPUTED: below
 `2^20` the last number standing is 837 799 at pass 195; 93.8 % of numbers
 enter the known loop through 5.  Witnesses: `test_loopsieve.py` (18).
 
+### Loops near perfect balance (`docs/BALANCE.md`)
+
+A user-requested pass (2026-10-01, `web/balance.html`, `collatz_maxodd/balance.py`).
+With `θ = 2^(1/L)` and `gcd(L, B) = 1`, `Z[θ]/(θ^B − 3) ≅ Z/d` and
+`c(w) ≡ θ^(B(L−1)) Σ θ^(−D_i)` modulo `θ^B − 3`, so a loop forces `d` to divide the norm of
+`P_w(θ)` — the norm test.  PROVED: for the balanced (Christoffel) word that element is a unit
+times a power of `θ`, a second proof of Knight's theorem (CITED: *Collatz high cycles do not
+exist*, Discrete Math. 349 (2026) 114812) with `c/d` in lowest terms; every positive loop other
+than `{1}` has `M ≥ 1.8614·m`; and **Theorem 1**: no positive loop's halving word is one
+adjacent swap away from a Christoffel word of coprime slope (Parseval gives `|N| < (41/9)^(L/2)`, Ellison via
+Knight's Lemma 3.3 gives `d > 2.56^L` for `L ≥ 18`, and `L ≤ 17` is checked directly).
+COMPUTED: exact norms of all 3 034 one-swap elements with `L ≤ 45`; the norm test rules out
+every two-swap word of 1s and 2s at `L = 13, 18, 21, 23`.  Not found in Knight or the related
+work checked; a wider literature search is pending.  An independent referee pass found no
+mathematical error.  Witnesses: `test_balance.py` (14).
+
 ### Verification status
 
 | result | Python | Lean |
@@ -805,6 +821,7 @@ enter the known loop through 5.  Witnesses: `test_loopsieve.py` (18).
 | landing form: bijection, leaf rule mod 9, saturation, automaton = `Φ_k`, `S_k(q) = q·S_k(1)` (docs/LANDING.md) | ✓ (`test_landing.py`, 24) | ✗ — not formalized (Lemma U and T0 are; the rest is bookkeeping) |
 | drop function: parity/sign, height classes, fibers = divisors of `3d+1` of the form `2^x − 3`, unbounded multiplicity, telescoping, zero-sum sets vs chains, the gates at both ends on zero-sum sets (docs/DROP.md) | ✓ (`test_drop.py`, 26) | ✗ — not formalized (two-line identities and computation) |
 | loop sieve: power-of-2 rule and closure, counting bound `C(log₂N + 2d, d)`, doorways, shadow of `2^71` (exact word model, rate `λ/3`), rational loops through every open class (docs/LOOP_SIEVE.md) | ✓ (`test_loopsieve.py`, 18) | ✗ — not formalized (T0 and the closure are one-liners; the rest is computation) |
+| near balance: `Z[θ]/(θ^B − 3) ≅ Z/d`, θ-identity, norm test, Knight's case (second proof, lowest terms), spread ≥ 1.8614, one-swap theorem (docs/BALANCE.md) | ✓ (`test_balance.py`, 14) | ✗ — not formalized (needs norms in number fields; the finite checks are computation) |
 | over-dispersion, tail rate, box dimension | ✓ | ✗ — infeasible in-kernel, open, unresolved limit |
 
 Lean total: **341 declarations**, all certifying `[propext, Quot.sound]` or
