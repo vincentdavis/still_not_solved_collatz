@@ -12,9 +12,9 @@ balanced loop the *high cycle*.  Halbeisen and Hungerbühler (*Acta Arith.* 78 (
 227–239) showed it has the largest smallest member among all loops with the same counts, and
 Knight showed it is never integral.  Section 2 gives a second proof of Knight's theorem.
 Lemmas 1 and 2 are standard facts — an index computation and a substitution — arranged for
-this purpose; Corollary 4, Theorem 1 and the table of section 4 were not found in the sources
-checked (section 6).  An independent referee pass re-derived every step and found no
-mathematical error; its corrections to the presentation are folded in.
+this purpose; Corollary 4, Theorems 1 and 2 and the table of section 5 were not found in the
+sources checked (section 7).  An independent referee pass re-derived every step of Theorem 1
+and found no mathematical error; its corrections to the presentation are folded in.
 
 **A correction to the conversation.**  Before this write-up, the one-swap estimate was quoted
 with an 8 % margin per member and Smyth's constant.  That estimate used the element
@@ -169,7 +169,7 @@ Each `D ∈ [1, L−1]` occurs once, so there are `2(L − b) − 1` internal sw
 nothing new: the `e = 0` swap gives another rotation of the balanced word (`γ_0 = θ` is a
 unit), and the `e = 1` and `k = 2` swaps give the same cyclic word (`γ_1 = η_2`).  So there
 are `2(L − b) − 3` distinct unbalanced cyclic words at distance 1 — the distance-1 column of
-section 4.  The counts 159, 2 059 and 3 034 below are of internal swaps.
+section 5.  The counts 159, 2 059 and 3 034 below are of internal swaps.
 
 **Theorem 1.** Let `L ≥ 2`, `gcd(L, B) = 1`, `log₂3 < B/L < 2`.  No one-swap word of slope
 `B/L` is the halving word of a positive integer loop of `3n+1`.
@@ -215,7 +215,169 @@ one-swap words were checked directly: `d ∤ c(w')` (`test_small_lengths_directl
   60 150 617 one-swap words with `3 ≤ L ≤ 1200` are non-integral, without Parseval or
   Ellison (not pinned in the suite).
 
-## 4. How far the norm test reaches (COMPUTED)
+## 4. Two swaps from balance (PROVED, given the CITED bound of Rhin and a COMPUTED finite check)
+
+**Corners.**  Draw the lower Christoffel word as a staircase.  Corner `p` (`0 ≤ p < L`) sits
+between the letters `x_(p−1)` and `x_p`, cyclically (corner 0 between `x_(L−1)` and `x_0`), at
+height `X_p`.  Its *level* `D_p = pB mod L` says how far it lies below the line, in steps of
+`1/L`; every level `0, …, L−1` occurs once.  Put `a := L − b` (the number of 1s) and
+`s := 2b − L` (the number of adjacent pairs `22`).  By Lemma 5, corner `p` is a `21` corner
+when `D_p < a`, a `22` corner when `a ≤ D_p < b`, and a `12` corner when `D_p ≥ b`.  There is
+no `11` corner: the 1s are isolated, as `b > L/2`.
+
+*Raising* corner `p` means `x_(p−1) += 1`, `x_p −= 1`.  It adds 1 to `X_p` and nothing else, so
+`D_p` becomes `D_p − L`.  *Lowering* does the opposite.  Exchanging the adjacent letters
+`x_(p−1) x_p` is exactly a raise (`12 → 21`) or a lowering (`21 → 12`) of corner `p`.  Two
+swaps therefore either undo each other or move two distinct corners by one step each.  Moving
+one corner twice the same way would create a letter 0 or 3.  Swaps commute with rotations, so
+up to rotation the words two swaps from balance are the words obtained from the lower
+Christoffel word by moving two distinct corners `p₁ ≠ p₂` by one step each, with every letter
+still 1 or 2.  In the picture: the loop's staircase meets the balanced one at every corner
+but two, and those two are one step off.
+
+**Lemma 7 (which corners move).**  A raised corner is a `12` corner and a lowered corner is a
+`21` corner, with two exceptions for cyclically adjacent corners `p, p+1`.  Two adjacent
+raises need `x_(p−1) = 1` and `x_(p+1) = 2`, so `x_p = 2`: a `12` corner followed by a `22`
+corner.  Two adjacent lowerings need `x_(p−1) = 2` and `x_(p+1) = 1`: a `22` corner followed
+by a `21` corner.  A raise next to a lowering never gives a word of 1s and 2s.
+
+*Proof.* Moves at non-adjacent corners change disjoint pairs of letters, and each needs its
+own pattern.  At adjacent corners the letters `x_(p−1), x_p, x_(p+1)` change by `(+1, 0, −1)`
+for two raises, by `(−1, 0, +1)` for two lowerings, and by `(+1, −2, +1)` or `(−1, +2, −1)` for
+a mixed pair, which would need a letter 3 or 0.  In the first two cases `x_p = 2`, since the
+word has no `11`.  ∎
+
+When `x_p = 2`, `D_(p+1) = D_p − a`.  So adjacent raises have `D_p ∈ [max(b, 2a), L − 1]` and
+`D_(p+1) = D_p − a`, and adjacent lowerings have `D_p ∈ [a, min(b, 2a) − 1]` and
+`D_(p+1) = D_p − a`.
+
+**Lemma 8 (the element).**  Put `e = L − 1 − D` for a raised corner and `k = D + 1` for a
+lowered one.  Then `d | c(w)` if and only if `q ∈ I`, where:
+
+* **two raises**, `e₁ < e₂`: `q = 1 − θ^(e₁) + θ^(e₁+1) − θ^(e₂) + θ^(e₂+1)`;
+* **two lowerings**, `k₁ > k₂`, `g = k₁ − k₂`: `q = θ^(k₁) − θ + 1 − θ^(g+1) + θ^g`;
+* **a raise and a lowering**, `t = k + e`: `q = 1 − θ + θ^k − θ^t + θ^(t+1)`.
+
+The ranges are `0 ≤ e ≤ a − 1` and `1 ≤ k ≤ a` for non-adjacent corners.  Adjacent raises
+have `0 ≤ e₁ ≤ min(a, s) − 1` and `e₂ = e₁ + a`.  Adjacent lowerings have
+`a + 1 ≤ k₁ ≤ min(b, 2a)` and `g = a`.  Every exponent is below `L`.
+
+*Proof.* As in Lemma 6, `A(w) = Σ_corners θ^(−D)`.  A raise turns `θ^(−D)` into
+`θ^(−D+L) = 2θ^(−D)`, adding `θ^(−D)`.  A lowering subtracts `θ^(−D)/2`.  Since
+`(θ − 1)θ^(L−1)` times the balanced sum is `θ^L − 1 = 1`,
+
+    (θ − 1) θ^(L−1) A(w) = 1 + Σ_raises (θ − 1) θ^e − Σ_lowerings (θ − 1) θ^(−k).
+
+Multiplying by `θ^K`, with `K` the largest `k` (or 0), clears the negative powers and gives
+`q`.  The factors `θ`, `θ − 1` and 2 are units modulo `I` (Lemma 1).  By Lemma 2,
+`c(w) ≡ θ^(B(L−1)) A(w)`.  If corner 0 moves by `σ = ±1`, then `x_0` changes by `−σ`, every
+`X_i` with `i ≥ 1` shifts by `−σ`, and `A(w)` equals `2^(−σ)` times the sum over corners
+above.  This factor is again a unit.  So `d | c(w)` if and only if `q ∈ I`.  The ranges come
+from Lemma 7.  ∎
+
+**Lemma 9 (norm bound).**  Let `W(m) = θ^(2m) = 4^(m/L)` and suppose `s ≥ 2`, which holds
+for `L ≥ 6`.  Every two-swap element satisfies `|N(q)| ≤ F^(L/2) / (1 − 2^(1−L))`, where `F`
+is the largest of these six bounds:
+
+| family | bound on the Parseval mass |
+|---|---|
+| two raises | `1 + 4W(a)` |
+| two adjacent raises, `m = min(a, s)` | `1 + 2W(m) + 2W(m + a)` |
+| two lowerings | `1 + W(1) + 3W(a)` |
+| two adjacent lowerings | `1 + W(1) + W(min(b, 2a)) + W(a+1) + W(a)` |
+| raise and lowering, `e = 0` or `k = 1` | `max(1 + W(1) + W(a+1), 1 + W(a) + W(a+1))` |
+| raise and lowering, `e ≥ 1`, `k ≥ 2`, after multiplying by `1 + θ/2` | `(1 + W(1)/4 + W(2)/4) + W(a)(1 + W(1)/4) + W(2a−1)(1 + W(1)/4 + W(2)/4)` |
+
+*Proof.* Use the Parseval and AM–GM bound from Theorem 1: for a real polynomial `g` with
+distinct exponents in `[0, L)`, `Π_j |g(ζ^j θ)| ≤ (Σ c_m² W(m))^(L/2)`.  Two points make
+it apply.
+
+* *Coinciding exponents.*  In the two-raise and two-lowering families, no exponent carries
+  more than two listed terms, and two terms that share an exponent have opposite signs.  For
+  two raises, `e₁ = 0` cancels the 1 and `e₂ = e₁ + 1` cancels `θ^(e₁+1)` against `θ^(e₂)`.
+  For two lowerings, `k₂ = 1` cancels `θ^(k₁)` against `θ^(g+1)`, and `g = 1` cancels `θ`.
+  Merging two terms of opposite signs lowers the mass.  So the mass is at most the sum over
+  the listed terms, and each bound follows from the largest allowed exponents.
+* *Flattening.*  For a raise and a lowering the plain mass reaches
+  `2 + 16/9 + 2(16/9)² ≈ 10.1`.  Multiply by `h = 1 + θ/2`.  Evaluating `x^L − 2` at
+  `x = −2` gives `N(h) = Π_j (1 + ζ^j θ/2) = 1 − (−1)^L 2^(1−L)`.  Then
+  `qh = (1 − θ/2 − θ²/2) + θ^k (1 + θ/2) + θ^t (−1 + θ/2 + θ²/2)`, with exponents up to
+  `t + 2 ≤ 2a + 1 < L`, which uses `s ≥ 2`.  For `e ≥ 1` and `k ≥ 2` the only coinciding
+  exponents are at `k = 2` (on `θ²`: `−1/2` and `+1`) and at `t = k + 1` (on `θ^(k+1)`: `+1/2`
+  and `−1`), both of opposite signs, with `t ≤ 2a − 1`.  So `|N(q)| = |N(qh)|/|N(h)|` obeys the
+  last row.  When `e = 0`, `q = θ^(k+1) − θ + 1`; when `k = 1`, `q = θ^(e+2) − θ^(e+1) + 1`.  Both
+  have three distinct exponents, at most `a + 1`, which gives the fifth row.  ∎
+
+At `B = ⌊L log₂3⌋ + 1`, as `L → ∞`, `W(a) → 16/9`, `W(s) → 4^(2 log₂3 − 3) ≈ 1.2656` and
+`W(b) → 9/4`.  The six bounds tend to 8.111, 8.031, 7.333, 7.806, 4.556 and 8.463, all below
+`9 = lim (3^L)^(2/L)`.  The flattened raise-and-lowering family is the largest.
+
+**Theorem 2.** Let `L ≥ 2`, `gcd(L, B) = 1`, `log₂3 < B/L < 2`.  No word two swaps from a
+balanced word of slope `B/L` is the halving word of a positive integer loop of `3n+1`.
+
+*Proof.* By Lemma 8 a loop puts `q` in `I`, so `d` divides `N(q)`.  Here `N(q) ≠ 0`, because
+`q` is a nonzero polynomial in `θ` of degree below `L` and `x^L − 2` is irreducible.  So
+`d ≤ |N(q)|`, and it suffices to show `|N(q)| < d`.  Write `β = b/L` and
+`B₀ = ⌊L log₂3⌋ + 1`.
+
+*(a) `B ≥ B₀ + 1` and `L ≥ 100`.*  Then `2^(B−1) > 3^L`, so `d > 2^(B−1)`.  Each bound of
+Lemma 9 is at most `4^(2/L) G(β)`, with
+
+* `G = 1 + 4^(2−β)` for two raises;
+* `G = 1 + 2·4^μ + 2·4^(μ+1−β)`, `μ = min(1 − β, 2β − 1)`, for two adjacent raises;
+* `G = 2 + 3·4^(1−β)` for two lowerings;
+* `G = 2 + 4^(min(β, 2−2β)) + 2·4^(1−β)` for two adjacent lowerings;
+* `G = 2 + 2·4^(1−β)` and `G = 1.5 + 1.25·4^(1−β) + 1.5·4^(2−2β)` for the two kinds of raise
+  and lowering.
+
+On `log₂3 − 1 < β < 1` every ratio `G/4^(1+β)` decreases, except for two adjacent raises,
+whose ratio increases up to `β = 2/3` and then decreases (maximum 0.9142).  The overall
+supremum is the raise-and-lowering value as `β → log₂3 − 1`: `8.46296/9 = 0.94033`.  So
+`|N(q)| ≤ 4 G^(L/2)/(1 − 2^(1−L)) < 2^(B−1)` as soon as
+`0.94033 < 4^(−3/L)(1 − 2^(1−L))^(2/L)`.  The right side is 0.95926 at `L = 100` and
+increases with `L`.
+
+*(b) `B = B₀` and `L ≥ 4 000`.*  Here `β < log₂3 − 1 + 1/L`, so every `G` is at most
+8.46296; the next largest is below 8.04.  So `|N(q)| ≤ 4·8.46296^(L/2)/(1 − 2^(1−L))`.
+CITED (Rhin 1987, in the form of Simons–de Weger 2005, Lemma 12):
+`Λ = B log 2 − L log 3 > exp(−13.3(0.46057 + log L))`.  We use the weaker form `Λ > B^(−13.3)`,
+which also follows, since `e^0.46057 L < B`.  Then `d = 3^L(e^Λ − 1) > 3^L B^(−13.3)`.  The
+needed inequality `(L/2) log(9/8.46296) > log(4/(1 − 2^(1−L))) + 13.3 log B` holds at
+`L = 4 000` with slack 3.8.  Its slack grows once `L > 2·13.3/log(9/8.46296) = 432.4`.
+
+*(c) The finite rest* is `L < 100` with any `B`, and `B = B₀` with `100 ≤ L < 4 000`: 3 622
+coprime pairs.  COMPUTED (`test_theorem2_finite_range`):
+
+* For 3 602 pairs, the exact `d` exceeds the bound of Lemma 9, by at least 0.079 in
+  logarithm.
+* The other 20 pairs are settled by a direct check: (3, 5), (4, 7), (5, 8), (8, 13), (11, 18),
+  (13, 21), (14, 23), (17, 27), (18, 29), (22, 35), (27, 43), (29, 46), (32, 51), (39, 62),
+  (41, 65), (46, 73), (63, 100), (70, 111), (94, 149), (147, 233).
+* The direct check takes every pair of levels and every pair of signs.  It computes `A(w)`
+  modulo `d` from `θ₀` with `O(L)` work, looking up the needed `θ₀^(−D)` in a table.  Its only
+  zeros (6 for `L ≤ 30`) need a letter 0 or 3.  ∎
+
+**Remarks.**
+* Together with Theorems 0 and 1: no positive loop of `3n+1` has a halving word within two
+  swaps of a balanced word of coprime slope.  Equivalently, no loop staircase misses the
+  balanced corners in only one or two places, each by one step.
+* The deep input is again a lower bound for `2^B − 3^L` at `B = B₀`.  Ellison's
+  `d > 2.56^L` would need mass below `6.5536` and is too weak here.  Rhin's bound costs the
+  finite check up to `L = 4 000`.
+* COMPUTED, in the suite:
+  * Lemma 8's two congruences hold on all 2 438 two-swap words with `L ≤ 24`.
+  * The masses of all 93 417 two-swap words with `6 ≤ L ≤ 60` are within the bounds of
+    Lemma 9.
+  * The exact norms of all 1 722 two-swap elements with `6 ≤ L ≤ 22` lie below their
+    Parseval bounds, with odd part at most `0.216 d`, at `(17, 27)`.
+  * The direct check agrees with `d | c(w)` word by word for `L ≤ 30`.
+  * Outside the suite, the mass check also passed on 4 743 175 words with `L ≤ 160`.
+* Three swaps.  Three corner moves give seven-term elements.  At `L = 89` their Parseval
+  masses reach 15.9, or 12.8 after the same flattening, above 9.  So this route stops at two
+  swaps.  Going further needs a sharper estimate of the norm than the quadratic mean over
+  conjugates, or a different idea.
+
+## 5. How far the norm test reaches (COMPUTED)
 
 Corollary 3 applies to every word.  Among the primitive cyclic words made of 1s and 2s with
 the balanced counts, grouped by how many adjacent swaps separate them from the balanced word,
@@ -231,18 +393,14 @@ two rows):
 
 Every two-swap word passes in all four cases.  The share then falls with distance, and words
 far from balance have large norms, as random words do.  So the method rules out
-patterns close to perfect balance — proved at distance 1 (Theorem 1), computed at distance 2
-for these four pairs only (the suite pins `(13, 21)` and part of `(18, 29)`) — and not the whole
-space, which matches the heuristic picture where integrality for a generic word is the whole
-problem.  Everything here assumes `gcd(L, B) = 1`; when `gcd(L, B) > 1` no loop's word is
+patterns close to perfect balance — proved at distance 1 (Theorem 1) and distance 2
+(Theorem 2) — and not the whole space, which matches the heuristic picture where integrality
+for a generic word is the whole problem.  Everything here assumes `gcd(L, B) = 1`; when `gcd(L, B) > 1` no loop's word is
 balanced, the most balanced primitive words are one swap from a power of a Christoffel word,
-and Lemma 1 and Theorem 1 do not cover them.  The natural next theorem is two
-swaps.  Most two-swap elements have Parseval mass `Σ c_m² θ^(2m)` below 9, which Rhin's bound
-(`d ≥ 3^L e^(−13.3(0.46057 + log L))`) turns into a proof for large `L`; a few do not — 1 of
-18 at `L = 13`, 1 of 75 at `L = 21`, 45 of 2 323 at `L = 89`, with mass up to 9.86 — and need
-a sharper estimate than Parseval.
+and Lemma 1 and Theorems 1 and 2 do not cover them.  At distance 3 the Parseval route
+fails (section 4, last remark).
 
-## 5. Strategy filter (`docs/FILTER.md`)
+## 6. Strategy filter (`docs/FILTER.md`)
 
 | test | verdict |
 |---|---|
@@ -252,20 +410,21 @@ a sharper estimate than Parseval.
 | D, density | passes: the statement is exact |
 | E, uniformity | passes: it uses `2 − 1 = 1` (the unit `θ − 1`) and a bound for `2^B − 3^L` |
 
-Like Steiner's theorem (one circuit) and Simons–de Weger's (few circuits), Theorem 1 excludes
-a family of loop shapes, but at the opposite end: theirs are the most unbalanced loops,
-these the loops next to perfect balance, for coprime `(L, B)`.
+Like Steiner's theorem (one circuit) and Simons–de Weger's (few circuits), Theorems 1 and 2
+exclude families of loop shapes, but at the opposite end: theirs are the most unbalanced
+loops, these the loops within two swaps of perfect balance, for coprime `(L, B)`.
 
-## 6. Literature and novelty
+## 7. Literature and novelty
 
 Knight (2023/2026) settles balanced loops; Halbeisen–Hungerbühler (1997) give their extremal
 property; Fernández and Ibáñez (arXiv 2607.24844, 2026) study Christoffel words as extremal
-structures.  None of these uses norms in `Q(2^(1/L))` or treats one-swap words; Lemmas 1 and 2 are
-standard (an index computation and a substitution).  Corollary 4, Theorem 1 and the table of
-section 4 were not found in these sources.  A wider literature search is needed before calling
-Theorem 1 new mathematics; it is new to this repository.
+structures.  None of these uses norms in `Q(2^(1/L))` or treats words one or two swaps from
+balance; Lemmas 1 and 2 are standard (an index computation and a substitution).  Corollary 4,
+Theorems 1 and 2 and the table of section 5 were not found in these sources.  A wider
+literature search is needed before calling Theorems 1 and 2 new mathematics; they are new to
+this repository.
 
-## 7. Verification
+## 8. Verification
 
 | claim | test |
 |---|---|
@@ -276,7 +435,11 @@ Theorem 1 new mathematics; it is new to this repository.
 | Corollary 4 threshold; census harness | `test_spread_threshold`, `test_small_spread_forces_balance_on_the_census` |
 | Lemmas 5–6 | `test_swap_kinds_ranges_and_reduction` |
 | Theorem 1: Parseval bound, small `L`, cited inequality, exact norms | `test_parseval_bound`, `test_small_lengths_directly`, `test_ellison_inequality_exactly_and_the_margin`, `test_exact_norm_test_on_all_one_swap_words` |
-| section 4 | `test_reach_profiles` |
+| Lemma 7 (corner kinds, exponent ranges) | `test_two_swap_corner_types`, `test_two_swap_words_are_the_distance_two_classes` |
+| Lemma 8 (both congruences) | `test_two_swap_congruences` |
+| Lemma 9 (mass bounds), against exact norms | `test_two_swap_mass_bounds`, `test_two_swap_parseval_against_exact_norms` |
+| Theorem 2: finite range, direct check, analytic ranges and Rhin step | `test_theorem2_finite_range`, `test_two_swap_direct_agrees_with_brute_force`, `test_theorem2_analytic_ranges` |
+| section 5 | `test_reach_profiles` |
 | filter test A | `test_q13_has_balanced_and_one_swap_loops` |
 
-Run: `cd python && uv run pytest tests/test_balance.py` (14 tests).
+Run: `cd python && uv run pytest tests/test_balance.py` (22 tests).

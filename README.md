@@ -178,7 +178,7 @@ docs/STRUCTURE.md       what the maximum tells you: L <= |R(O)|, the slow ascent
 python/                 collatz_maxodd — cycle search, sieves, backward tree,
                         cycle equation, death-depth tail, 3n+q census, certification from
                         either end, 3-adic witness, cycle structure, the SAT box,
-                        the ledgers and the landing form; 458 tests
+                        the ledgers and the landing form; 466 tests
 lean/                   Collatz — Mathlib-free Lean 4 development, 0 sorry,
                         0 axioms beyond propext/Quot.sound, 341 audited decls
 web/                    data.json (140 KB) + DATA.md — precomputed visualization
@@ -208,7 +208,7 @@ each page what it shows, what it establishes, and what it does not settle.
 | [Landing Form](https://claude.ai/artifact/3SGVtUyiuHJmw1Ms5HxrpP) | `web/landing.html` | every odd step as a landing `(s, x)`; exactly what exclusion reaches |
 | [Drop Function](https://claude.ai/artifact/4ZAdqTQfk4D9br1KtGKcRk) | `web/drop.html` | `f(n) = n − S(n)`: which numbers are drops and how many odd numbers share each; the drop ledger; zero-sum combinations against chains |
 | [Loop Sieve](https://claude.ai/artifact/QUjPuwQXxX1Csi9n5XSqxB) | `web/loopsieve.html` | crossing out numbers that cannot sit in a second loop: the power-of-2 rule and its passes, the shadow of `2^71`, why remainders cannot do more |
-| [Near-Balanced Loops](https://claude.ai/artifact/RpMHoW9mxf5B7T2MmK6tSB) | `web/balance.html` | the cycle equation in `Q(2^(1/L))`: Knight's balanced case by a second route, and no loop one swap away from balance |
+| [Near-Balanced Loops](https://claude.ai/artifact/RpMHoW9mxf5B7T2MmK6tSB) | `web/balance.html` | the cycle equation in `Q(2^(1/L))`: Knight's balanced case by a second route, and no loop one or two swaps away from balance |
 
 ## Running the Python side
 
@@ -219,7 +219,7 @@ standard library; `pytest` is the only dev dependency.
 $ cd python
 $ uv run pytest
 ...
-458 passed in 32.95s
+466 passed in 37.10s
 
 $ uv run python -m collatz_maxodd                  # full report
 $ uv run python -m collatz_maxodd --q-max 499 --bound 20000 --depth 10

@@ -794,10 +794,16 @@ exist*, Discrete Math. 349 (2026) 114812) with `c/d` in lowest terms; every posi
 than `{1}` has `M ≥ 1.8614·m`; and **Theorem 1**: no positive loop's halving word is one
 adjacent swap away from a Christoffel word of coprime slope (Parseval gives `|N| < (41/9)^(L/2)`, Ellison via
 Knight's Lemma 3.3 gives `d > 2.56^L` for `L ≥ 18`, and `L ≤ 17` is checked directly).
-COMPUTED: exact norms of all 3 034 one-swap elements with `L ≤ 45`; the norm test rules out
-every two-swap word of 1s and 2s at `L = 13, 18, 21, 23`.  Not found in Knight or the related
-work checked; a wider literature search is pending.  An independent referee pass found no
-mathematical error.  Witnesses: `test_balance.py` (14).
+**Theorem 2**: none is two swaps away.  Two swaps move two corners of the staircase by one
+step each, leaving a five-term element; Parseval, after multiplying the mixed family by
+`1 + θ/2`, gives `|N| < 8.47^(L/2)`, below `d` for `B ≥ ⌊L log₂3⌋ + 2` once `L ≥ 100`, and, with
+Rhin's bound (CITED, as in Simons–de Weger 2005, Lemma 12), at `B = ⌊L log₂3⌋ + 1` once
+`L ≥ 4 000`.  COMPUTED: the remaining 3 622 slopes (3 602 by the bound against the exact
+`d`, 20 by a direct `O(L)` check modulo `d`); exact norms of all 3 034 one-swap elements with
+`L ≤ 45` and all 1 722 two-swap elements with `L ≤ 22`.  The Parseval route fails at three
+swaps.  Not found in Knight or the related work checked; a wider literature search is
+pending.  An independent referee pass found no mathematical error in Theorem 1.  Witnesses:
+`test_balance.py` (22).
 
 ### Verification status
 
@@ -821,7 +827,7 @@ mathematical error.  Witnesses: `test_balance.py` (14).
 | landing form: bijection, leaf rule mod 9, saturation, automaton = `Φ_k`, `S_k(q) = q·S_k(1)` (docs/LANDING.md) | ✓ (`test_landing.py`, 24) | ✗ — not formalized (Lemma U and T0 are; the rest is bookkeeping) |
 | drop function: parity/sign, height classes, fibers = divisors of `3d+1` of the form `2^x − 3`, unbounded multiplicity, telescoping, zero-sum sets vs chains, the gates at both ends on zero-sum sets (docs/DROP.md) | ✓ (`test_drop.py`, 26) | ✗ — not formalized (two-line identities and computation) |
 | loop sieve: power-of-2 rule and closure, counting bound `C(log₂N + 2d, d)`, doorways, shadow of `2^71` (exact word model, rate `λ/3`), rational loops through every open class (docs/LOOP_SIEVE.md) | ✓ (`test_loopsieve.py`, 18) | ✗ — not formalized (T0 and the closure are one-liners; the rest is computation) |
-| near balance: `Z[θ]/(θ^B − 3) ≅ Z/d`, θ-identity, norm test, Knight's case (second proof, lowest terms), spread ≥ 1.8614, one-swap theorem (docs/BALANCE.md) | ✓ (`test_balance.py`, 14) | ✗ — not formalized (needs norms in number fields; the finite checks are computation) |
+| near balance: `Z[θ]/(θ^B − 3) ≅ Z/d`, θ-identity, norm test, Knight's case (second proof, lowest terms), spread ≥ 1.8614, one- and two-swap theorems (docs/BALANCE.md) | ✓ (`test_balance.py`, 22) | ✗ — not formalized (needs norms in number fields; the finite checks are computation) |
 | over-dispersion, tail rate, box dimension | ✓ | ✗ — infeasible in-kernel, open, unresolved limit |
 
 Lean total: **341 declarations**, all certifying `[propext, Quot.sound]` or
