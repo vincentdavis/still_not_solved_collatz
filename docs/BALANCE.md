@@ -13,8 +13,10 @@ balanced loop the *high cycle*.  Halbeisen and Hungerbühler (*Acta Arith.* 78 (
 Knight showed it is never integral.  Section 2 gives a second proof of Knight's theorem.
 Lemmas 1 and 2 are standard facts — an index computation and a substitution — arranged for
 this purpose; Corollary 4, Theorems 1 and 2 and the table of section 5 were not found in the
-sources checked (section 7).  An independent referee pass re-derived every step of Theorem 1
-and found no mathematical error; its corrections to the presentation are folded in.
+sources checked (section 7).  Independent referee passes re-derived every step of Theorems 1
+and 2.  Neither found an error in a theorem.  The second found that the citation of Rhin's
+bound was justified by a false inequality; the bound actually used is Rhin's own statement,
+and the citation is now exact.  All their corrections are folded in.
 
 **A correction to the conversation.**  Before this write-up, the one-swap estimate was quoted
 with an 8 % margin per member and Smyth's constant.  That estimate used the element
@@ -199,9 +201,9 @@ one-swap words were checked directly: `d ∤ c(w')` (`test_small_lengths_directl
 **Remarks.**
 * The only deep input is the lower bound for `2^B − 3^L`, and only for `B = ⌊L log₂3⌋ + 1`:
   for larger `B`, `d > 3^L` already.  Ellison's statement is confirmed through a second
-  source, Rozier and Terracol (arXiv 2502.00948, appendix B).  Rhin's bound (Simons–de Weger
-  2005, Lemma 12) would also do, but only together with a finite check: it gives
-  `d > (41/9)^(L/2)` from `L > 252` on.  Numerically the smallest `d` exceeds `2.56^L` for every
+  source, Rozier and Terracol (arXiv 2502.00948, appendix B).  Rhin's bound
+  `B log 2 − L log 3 ≥ B^(−13.3)` (section 4) would also do, but only together with a finite
+  check: it gives `d > (41/9)^(L/2)` from `L > 230` on.  Numerically the smallest `d` exceeds `2.56^L` for every
   `18 ≤ L ≤ 6 000` and fails at `L = 17`, so the direct check for `L ≤ 17` is genuinely needed
   on this route.
 * The theorem is about `q = 1`.  For `3n+13`, where `2^8 − 3^5 = 13`, both the balanced loop
@@ -222,18 +224,23 @@ between the letters `x_(p−1)` and `x_p`, cyclically (corner 0 between `x_(L−
 height `X_p`.  Its *level* `D_p = pB mod L` says how far it lies below the line, in steps of
 `1/L`; every level `0, …, L−1` occurs once.  Put `a := L − b` (the number of 1s) and
 `s := 2b − L` (the number of adjacent pairs `22`).  By Lemma 5, corner `p` is a `21` corner
-when `D_p < a`, a `22` corner when `a ≤ D_p < b`, and a `12` corner when `D_p ≥ b`.  There is
-no `11` corner: the 1s are isolated, as `b > L/2`.
+when `D_p < a`, a `22` corner when `a ≤ D_p < b`, and a `12` corner when `D_p ≥ b`.  Lemma 5 is
+stated for `p ≥ 1`; corner 0 has `D_0 = 0` and is the pair `x_(L−1) x_0 = 21`, which fits.
+There is no `11` corner: the 1s are isolated, as `b > L/2`.
 
-*Raising* corner `p` means `x_(p−1) += 1`, `x_p −= 1`.  It adds 1 to `X_p` and nothing else, so
-`D_p` becomes `D_p − L`.  *Lowering* does the opposite.  Exchanging the adjacent letters
-`x_(p−1) x_p` is exactly a raise (`12 → 21`) or a lowering (`21 → 12`) of corner `p`.  Two
-swaps therefore either undo each other or move two distinct corners by one step each.  Moving
-one corner twice the same way would create a letter 0 or 3.  Swaps commute with rotations, so
-up to rotation the words two swaps from balance are the words obtained from the lower
-Christoffel word by moving two distinct corners `p₁ ≠ p₂` by one step each, with every letter
-still 1 or 2.  In the picture: the loop's staircase meets the balanced one at every corner
-but two, and those two are one step off.
+*Raising* corner `p` means `x_(p−1) += 1`, `x_p −= 1`.  For `p ≥ 1` it adds 1 to `X_p` and
+changes no other `X_i`, so `D_p` becomes `D_p − L`.  For `p = 0` it is the same cyclic move
+written in shifted coordinates; the proof of Lemma 8 treats it.  *Lowering* does the
+opposite.  Exchanging the adjacent letters `x_(p−1) x_p` is exactly a raise (`12 → 21`) or a
+lowering (`21 → 12`) of corner `p`.  Two swaps therefore either undo each other, which gives
+back a balanced word (Theorem 0), or move two distinct corners by one step each.  Moving one
+corner twice the same way would create a letter 0 or 3.  Swaps commute with rotations.  So
+up to rotation every word two swaps from balance is obtained from the lower Christoffel word
+by moving two distinct corners `p₁ ≠ p₂` by one step each, with every letter still 1 or 2.
+The theorem needs only this inclusion.  The converse also holds: adjacent raises are reached
+by swapping at `p` and then at `p+1`, adjacent lowerings at `p+1` and then at `p`
+(`test_two_swap_words_are_the_distance_two_classes`).  In the picture: the loop's staircase
+meets the balanced one at every corner but two, and those two are one step off.
 
 **Lemma 7 (which corners move).**  A raised corner is a `12` corner and a lowered corner is a
 `21` corner, with two exceptions for cyclically adjacent corners `p, p+1`.  Two adjacent
@@ -315,9 +322,11 @@ At `B = ⌊L log₂3⌋ + 1`, as `L → ∞`, `W(a) → 16/9`, `W(s) → 4^(2 lo
 **Theorem 2.** Let `L ≥ 2`, `gcd(L, B) = 1`, `log₂3 < B/L < 2`.  No word two swaps from a
 balanced word of slope `B/L` is the halving word of a positive integer loop of `3n+1`.
 
-*Proof.* By Lemma 8 a loop puts `q` in `I`, so `d` divides `N(q)`.  Here `N(q) ≠ 0`, because
-`q` is a nonzero polynomial in `θ` of degree below `L` and `x^L − 2` is irreducible.  So
-`d ≤ |N(q)|`, and it suffices to show `|N(q)| < d`.  Write `β = b/L` and
+*Proof.* If the two swaps undo each other the word is balanced, and Theorem 0 applies.
+Otherwise two distinct corners move, and by Lemma 8 a loop puts `q` in `I`, so `d` divides
+`N(q)`.  Here `q ≠ 0`: by the proof of Lemma 8 it equals `θ^K (θ − 1) θ^(L−1)` times the sum
+`Σ_corners θ^(−D)`, whose terms are positive real numbers for `θ = 2^(1/L)`.  So `N(q) ≠ 0`,
+hence `d ≤ |N(q)|`, and it suffices to show `|N(q)| < d`.  Write `β = b/L` and
 `B₀ = ⌊L log₂3⌋ + 1`.
 
 *(a) `B ≥ B₀ + 1` and `L ≥ 100`.*  Then `2^(B−1) > 3^L`, so `d > 2^(B−1)`.  Each bound of
@@ -338,12 +347,26 @@ supremum is the raise-and-lowering value as `β → log₂3 − 1`: `8.46296/9 =
 increases with `L`.
 
 *(b) `B = B₀` and `L ≥ 4 000`.*  Here `β < log₂3 − 1 + 1/L`, so every `G` is at most
-8.46296; the next largest is below 8.04.  So `|N(q)| ≤ 4·8.46296^(L/2)/(1 − 2^(1−L))`.
-CITED (Rhin 1987, in the form of Simons–de Weger 2005, Lemma 12):
-`Λ = B log 2 − L log 3 > exp(−13.3(0.46057 + log L))`.  We use the weaker form `Λ > B^(−13.3)`,
-which also follows, since `e^0.46057 L < B`.  Then `d = 3^L(e^Λ − 1) > 3^L B^(−13.3)`.  The
-needed inequality `(L/2) log(9/8.46296) > log(4/(1 − 2^(1−L))) + 13.3 log B` holds at
-`L = 4 000` with slack 3.8.  Its slack grows once `L > 2·13.3/log(9/8.46296) = 432.4`.
+8.46296; the next largest, for two raises, is below 8.12.  So
+`|N(q)| ≤ 4·8.46296^(L/2)/(1 − 2^(1−L))`.
+
+CITED (Rhin 1987, as stated by Rozier and Terracol, arXiv 2502.00948, Proposition 6.3): if
+`u₀, u₁, u₂` are integers with `H = max(|u₁|, |u₂|) ≥ 2`, then
+`|u₀ + u₁ log 2 + u₂ log 3| ≥ H^(−13.3)`.  With `(u₀, u₁, u₂) = (0, B, −L)` this gives
+`Λ = B log 2 − L log 3 ≥ B^(−13.3)`, so `d = 3^L(e^Λ − 1) > 3^L B^(−13.3)`.
+
+It remains to check `(L/2) log(9/8.46296) > log(4/(1 − 2^(1−L))) + 13.3 log B`.  Since
+`B < L log₂3 + 1`, it is enough that
+
+    σ(L) := (L/2) log(9/8.46296) − log(4/(1 − 2^(1−L))) − 13.3 log(L log₂3 + 1) > 0.
+
+Now `σ(4 000) > 5.2`, and `σ` increases for `L > 2·13.3/log(9/8.46296) = 432.4`, because
+its derivative exceeds `(1/2) log(9/8.46296) − 13.3/L`.  (With `log B` itself the inequality
+fails at `L = 3 808` and holds for every `L` from 3 809 to `10^5`.)
+
+A form often quoted for loops, `Λ > exp(−13.3(0.46057 + log L))` (Simons–de Weger 2005,
+Lemma 12), is not used here.  It is slightly stronger than Rhin's statement for most `L`,
+because `e^0.46057 = 1.584977` exceeds `log₂3 = 1.584963`.
 
 *(c) The finite rest* is `L < 100` with any `B`, and `B = B₀` with `100 ≤ L < 4 000`: 3 622
 coprime pairs.  COMPUTED (`test_theorem2_finite_range`):
@@ -364,18 +387,33 @@ coprime pairs.  COMPUTED (`test_theorem2_finite_range`):
 * The deep input is again a lower bound for `2^B − 3^L` at `B = B₀`.  Ellison's
   `d > 2.56^L` would need mass below `6.5536` and is too weak here.  Rhin's bound costs the
   finite check up to `L = 4 000`.
-* COMPUTED, in the suite:
-  * Lemma 8's two congruences hold on all 2 438 two-swap words with `L ≤ 24`.
-  * The masses of all 93 417 two-swap words with `6 ≤ L ≤ 60` are within the bounds of
-    Lemma 9.
-  * The exact norms of all 1 722 two-swap elements with `6 ≤ L ≤ 22` lie below their
+* COMPUTED, in the suite.  The counts are of two-corner moves `(p₁, s₁, p₂, s₂)`; several
+  moves can give the same cyclic word.
+  * Lemma 8's two congruences hold on all 2 438 moves with `L ≤ 24`.
+  * The masses of all 93 417 moves with `6 ≤ L ≤ 60` are within the bounds of Lemma 9.
+  * The exact norms of the elements of all 1 722 moves with `6 ≤ L ≤ 22` lie below their
     Parseval bounds, with odd part at most `0.216 d`, at `(17, 27)`.
   * The direct check agrees with `d | c(w)` word by word for `L ≤ 30`.
-  * Outside the suite, the mass check also passed on 4 743 175 words with `L ≤ 160`.
-* Three swaps.  Three corner moves give seven-term elements.  At `L = 89` their Parseval
-  masses reach 15.9, or 12.8 after the same flattening, above 9.  So this route stops at two
-  swaps.  Going further needs a sharper estimate of the norm than the quadratic mean over
-  conjugates, or a different idea.
+  * For every coprime pair with `L ≤ 40`, the moves give exactly the cyclic words at swap
+    distance 2, found by a breadth-first search over actual swaps.
+* COMPUTED, outside the suite.
+  * The mass check also passed on 4 743 175 moves with `L ≤ 160`.
+  * The direct check alone, with no norm bound, found no loop for `B₀` and `B₀ + 1` at every
+    `L < 4 000` and for every `B` at `L < 200`: 9 668 coprime pairs.
+  * The referee pass enumerated the whole finite range without Lemma 9 or `θ`: all 3 622
+    pairs, 8 942 349 896 words obtained by two successive swaps, no loop.  It also found
+    72 431 cyclic words at swap distance 2 for `3 ≤ L ≤ 60`, none a loop, and recomputed the
+    1 722 exact norms by resultants, plus 8 233 more for `23 ≤ L ≤ 34`, the largest odd part
+    being `0.426 d` at `(29, 46)`.
+* Three swaps.  Three corner moves give seven-term elements.  At `(L, B) = (89, 142)` their
+  Parseval masses reach 15.9, or 12.8 after the same flattening, over the 58 206 of 58 212
+  moves whose flattened exponents stay below `L`; the other 6 wrap around and reach 20.2 and
+  14.9.  These maxima are above 9, so the Parseval route stops at two swaps.  A sharper estimate of
+  the norm cannot settle every three-swap word either.  COMPUTED
+  (`test_three_swap_norm_can_exceed_d`): at `(233, 370)`, lowering the corner at level 95 and
+  raising those at levels 141 and 187 gives a word of 1s and 2s whose element
+  `1 − θ + θ^96 − θ^141 + θ^142 − θ^187 + θ^188` has an odd norm of about `11.33 d`.  The word
+  is not a loop, because `d` does not divide that norm, but no bound on its size can show it.
 
 ## 5. How far the norm test reaches (COMPUTED)
 
@@ -395,10 +433,12 @@ Every two-swap word passes in all four cases.  The share then falls with distanc
 far from balance have large norms, as random words do.  So the method rules out
 patterns close to perfect balance — proved at distance 1 (Theorem 1) and distance 2
 (Theorem 2) — and not the whole space, which matches the heuristic picture where integrality
-for a generic word is the whole problem.  Everything here assumes `gcd(L, B) = 1`; when `gcd(L, B) > 1` no loop's word is
+for a generic word is the whole problem.  The norm of a typical word grows with its
+distance: in samples of 4 000 moves of `k` corners at `(610, 967)`, the share with norm below
+`d` is 99.8 % for `k = 4`, 63.5 % for `k = 6` and 0.1 % for `k = 10` (not pinned).  Everything here assumes `gcd(L, B) = 1`; when `gcd(L, B) > 1` no loop's word is
 balanced, the most balanced primitive words are one swap from a power of a Christoffel word,
-and Lemma 1 and Theorems 1 and 2 do not cover them.  At distance 3 the Parseval route
-fails (section 4, last remark).
+and Lemma 1 and Theorems 1 and 2 do not cover them.  At distance 3 the size argument
+fails for some words (section 4, last remark).
 
 ## 6. Strategy filter (`docs/FILTER.md`)
 
@@ -439,7 +479,8 @@ this repository.
 | Lemma 8 (both congruences) | `test_two_swap_congruences` |
 | Lemma 9 (mass bounds), against exact norms | `test_two_swap_mass_bounds`, `test_two_swap_parseval_against_exact_norms` |
 | Theorem 2: finite range, direct check, analytic ranges and Rhin step | `test_theorem2_finite_range`, `test_two_swap_direct_agrees_with_brute_force`, `test_theorem2_analytic_ranges` |
+| the size argument stops at two swaps | `test_three_swap_norm_can_exceed_d` |
 | section 5 | `test_reach_profiles` |
 | filter test A | `test_q13_has_balanced_and_one_swap_loops` |
 
-Run: `cd python && uv run pytest tests/test_balance.py` (22 tests).
+Run: `cd python && uv run pytest tests/test_balance.py` (23 tests).

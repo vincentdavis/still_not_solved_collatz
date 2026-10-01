@@ -21,11 +21,13 @@ Classical Collatz, ``q = 1``.  A loop with ``L`` odd members and ``B`` halvings 
   ``d`` cannot divide the norm: no such loop.
 * **Two swaps from balance.**  Two swaps move two distinct corners of the staircase by one
   step each.  Up to units the loop condition becomes ``q in (theta^B - 3)`` for a five-term
-  ``q`` (families raise-raise, lower-lower, raise-lower); Parseval, after multiplying the
-  raise-lower family by ``1 + theta/2``, gives ``|N(q)| < 8.47^(L/2)``, which is below ``d``
-  for every ``B >= floor(L log2 3) + 2`` (``L >= 100``) and, by Rhin's bound, for every ``B``
-  once ``L >= 4000``.  The finitely many remaining slopes are checked exactly
-  (``two_swap_direct``).
+  ``q`` (families raise-raise, lower-lower, raise-lower).  Parseval, after multiplying the
+  raise-lower family by ``1 + theta/2``, gives ``|N(q)| <= 4 G^(L/2) / (1 - 2^(1-L))`` with
+  ``G <= 0.9404 * 4^(B/L)``, and ``G <= 8.463`` at ``B = floor(L log2 3) + 1``.  That is below
+  ``d`` for every larger ``B`` once ``L >= 100`` and, by Rhin's bound
+  ``B log 2 - L log 3 >= B^(-13.3)``, at the smallest ``B`` once ``L >= 4000``.  The finitely
+  many remaining slopes are checked exactly (``two_swap_direct``).  Size alone cannot go on
+  to three swaps: some three-swap elements have norms larger than ``d``.
 """
 
 from __future__ import annotations
@@ -412,7 +414,8 @@ RHIN_FROM = 4000
 
 
 def rhin_log_d(L: int, B: int) -> float:
-    """Lower bound for ``log(2^B - 3^L)`` when ``2^B > 3^L``: ``d > 3^L Lambda`` with
-    ``Lambda = B log 2 - L log 3 > max(B, e^0.46057 L)^(-13.3)`` (Rhin 1987, in the form of
-    Simons-de Weger 2005, Lemma 12; the ``B`` form is the weaker of the two)."""
-    return L * math.log(3) - 13.3 * max(math.log(B), 0.46057 + math.log(L))
+    """Lower bound for ``log(2^B - 3^L)`` when ``2^B > 3^L`` and ``B >= 2``: ``d > 3^L Lambda``
+    with ``Lambda = B log 2 - L log 3 >= B^(-13.3)``.  This is Rhin (1987) as stated by Rozier
+    and Terracol (arXiv 2502.00948, Proposition 6.3): ``|u0 + u1 log 2 + u2 log 3| >= H^(-13.3)``
+    for integers with ``H = max(|u1|, |u2|) >= 2``."""
+    return L * math.log(3) - 13.3 * math.log(B)

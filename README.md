@@ -178,7 +178,7 @@ docs/STRUCTURE.md       what the maximum tells you: L <= |R(O)|, the slow ascent
 python/                 collatz_maxodd — cycle search, sieves, backward tree,
                         cycle equation, death-depth tail, 3n+q census, certification from
                         either end, 3-adic witness, cycle structure, the SAT box,
-                        the ledgers and the landing form; 466 tests
+                        the ledgers and the landing form; 467 tests
 lean/                   Collatz — Mathlib-free Lean 4 development, 0 sorry,
                         0 axioms beyond propext/Quot.sound, 341 audited decls
 web/                    data.json (140 KB) + DATA.md — precomputed visualization
@@ -219,7 +219,7 @@ standard library; `pytest` is the only dev dependency.
 $ cd python
 $ uv run pytest
 ...
-466 passed in 37.10s
+467 passed in 37.65s
 
 $ uv run python -m collatz_maxodd                  # full report
 $ uv run python -m collatz_maxodd --q-max 499 --bound 20000 --depth 10

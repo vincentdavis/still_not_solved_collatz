@@ -251,15 +251,41 @@ def test_two_swap_congruences() -> None:
     assert n == 2438
 
 
+def _classes_within(L: int, B: int, depth: int) -> dict[tuple[int, ...], int]:
+    """Cyclic classes within ``depth`` actual swaps of the balanced word, with their distance."""
+    start = _canon(christoffel(L, B))
+    dist = {start: 0}
+    frontier = [start]
+    for k in range(1, depth + 1):
+        nxt = []
+        for w in frontier:
+            for i in range(L):
+                j = (i + 1) % L
+                if w[i] != w[j]:
+                    v = list(w)
+                    v[i], v[j] = v[j], v[i]
+                    c = _canon(tuple(v))
+                    if c not in dist:
+                        dist[c] = k
+                        nxt.append(c)
+        frontier = nxt
+    return dist
+
+
 def test_two_swap_words_are_the_distance_two_classes() -> None:
-    """Moving two corners of the lower Christoffel word reaches every cyclic word two swaps from
-    balance, and nothing farther."""
-    for L, B, n2 in ((13, 21, 18), (18, 29, 51)):
-        start = _canon(christoffel(L, B))
-        near = {start} | {_canon(w) for *_, w in one_swaps(L, B)}
-        got = {_canon(w) for *_, w in two_swaps(L, B)} - near
-        prof = reach_profile(L, B)
-        assert len(got) == prof[2][0] == n2
+    """Moving two corners of the lower Christoffel word gives exactly the cyclic words at swap
+    distance 2 (plus some at distance 0 or 1), for every coprime pair with L <= 40.  The
+    distances come from a breadth-first search over actual cyclic swaps."""
+    n2 = 0
+    for L, B in coprime_pairs(40, 3):
+        dist = _classes_within(L, B, 2)
+        got = {_canon(w) for *_, w in two_swaps(L, B)}
+        two = {c for c, k in dist.items() if k == 2}
+        assert got <= set(dist) and got - {c for c, k in dist.items() if k < 2} == two
+        if (L, B) in ((13, 21), (18, 29)):
+            assert len(two) == {13: 18, 18: 51}[L]
+        n2 += len(two)
+    assert n2 == 12289
 
 
 def test_two_swap_corner_types() -> None:
@@ -289,8 +315,8 @@ def test_two_swap_corner_types() -> None:
 
 
 def test_two_swap_mass_bounds() -> None:
-    """Lemma 9 on every two-swap word with 6 <= L <= 60: the Parseval mass of q (of flatten(q)
-    for raise-lower moves with k >= 2, e >= 1) is at most the family bound."""
+    """Lemma 9 on every two-corner move with 6 <= L <= 60: the Parseval mass of q (of
+    flatten(q) for raise-lower moves with k >= 2, e >= 1) is at most the family bound."""
     n = 0
     for L, B in coprime_pairs(60, 6):
         mb = two_swap_mass_bounds(L, B)
@@ -305,7 +331,7 @@ def test_two_swap_mass_bounds() -> None:
 
 
 def test_two_swap_parseval_against_exact_norms() -> None:
-    """Exact norms (Bareiss) of every two-swap element with 6 <= L <= 22: below the Parseval
+    """Exact norms (Bareiss) of the element of every two-corner move with 6 <= L <= 22: below the Parseval
     bound, odd when the constant term is odd, and below d -- at most 0.216 d, at (17, 27) --
     so the norm test alone settles them."""
     n, worst = 0, 0.0
@@ -335,6 +361,27 @@ def test_two_swap_direct_agrees_with_brute_force() -> None:
         assert two_swap_loops(L, B) == []
         extra += len(sols)
     assert extra == 6
+
+
+def test_three_swap_norm_can_exceed_d() -> None:
+    """Why the size argument stops at two swaps.  At (233, 370), lowering the corner at level 95
+    and raising those at levels 141 and 187 gives a word of 1s and 2s whose element
+    1 - theta + theta^96 - theta^141 + theta^142 - theta^187 + theta^188 has an odd norm of
+    about 11.33 d.  The word is not a loop: d does not divide the norm."""
+    L, B = 233, 370
+    d = 2**B - 3**L
+    k, e1, e2 = 96, 91, 45
+    moves = [(k - 1, -1), (L - 1 - e1, 1), (L - 1 - e2, 1)]
+    w = move_word(L, B, moves)
+    assert w is not None and set(w) == {1, 2} and sum(w) == B
+    q = {0: 1, 1: -1, k: 1, k + e2: -1, k + e2 + 1: 1, k + e1: -1, k + e1 + 1: 1}
+    _, Z, A = level_sum_mod_d(L, B)
+    t, half = theta0(L, B), (d + 1) // 2
+    S = (A + sum(Z[D] if sg == 1 else -Z[D] * half for D, sg in moves)) % d
+    assert sum(c * pow(t, m, d) for m, c in q.items()) % d == pow(t, k + L - 1, d) * (t - 1) * S % d
+    assert cycle_numerator(w) % d == pow(t, B * (L - 1), d) * S % d != 0
+    N = abs(norm_exact(q, L))
+    assert N % 2 == 1 and N // d == 11 and N % d != 0
 
 
 SETTLED_DIRECTLY = [
@@ -368,7 +415,7 @@ def test_theorem2_analytic_ranges() -> None:
     """Theorem 2, infinite part.  (a) B >= floor(L log2 3) + 2: with beta = b/L, every family
     bound is at most 4^(2/L) G(beta) with G(beta) / 4^(1+beta) <= 0.94034, below
     4^(-3/L) (1 - 2^(1-L))^(2/L) for L >= 100, so |N(q)| < 2^(B-1) < d.  (b) B = floor(L log2 3)
-    + 1, L >= 4000: Rhin's bound in its weaker form beats 4 (8.46296)^(L/2) / (1 - 2^(1-L))."""
+    + 1, L >= 4000: Rhin's bound Lambda >= B^(-13.3) beats 4 (8.46296)^(L/2) / (1 - 2^(1-L))."""
     b0 = LOG2_3 - 1
 
     def G(be: float) -> dict[str, float]:
@@ -392,14 +439,21 @@ def test_theorem2_analytic_ranges() -> None:
     # (b) at B = Bmin the largest G is the raise-lower one, 8.46296 at beta0, decreasing in beta
     Gmax = G(b0)["RLflat"]
     assert abs(Gmax - 8.462963) < 1e-6 and max(G(b0 + 1 / 4000).values()) <= Gmax
+    assert 8.11 < sorted(G(b0).values())[-2] < 8.12  # the runner-up is the two-raise family
 
-    def slack(L: int) -> float:
-        B = math.floor(L * LOG2_3) + 1
-        return L * math.log(3) - 13.3 * math.log(B) - (0.5 * L * math.log(Gmax) + math.log(4 / (1 - 2.0 ** (1 - L))))
+    def sigma(L: int) -> float:  # slack with log B replaced by its smooth majorant log(L log2 3 + 1)
+        return 0.5 * L * math.log(9 / Gmax) - math.log(4 / (1 - 2.0 ** (1 - L))) - 13.3 * math.log(L * LOG2_3 + 1)
 
-    assert slack(RHIN_FROM) > 3.8 and slack(3800) < 0
-    # slack' = (1/2) log(9/Gmax) - 13.3/B' > 0 once L > 2*13.3/log(9/Gmax) = 432.4
-    assert 2 * 13.3 / math.log(9 / Gmax) < 433
+    def slack(L: int) -> float:  # the same with log B itself
+        return 0.5 * L * math.log(9 / Gmax) - math.log(4 / (1 - 2.0 ** (1 - L))) - 13.3 * math.log(math.floor(L * LOG2_3) + 1)
+
+    assert 5.2 < sigma(RHIN_FROM) < slack(RHIN_FROM) < 5.3
+    assert slack(3808) < 0 < slack(3809) and all(slack(L) > 0 for L in range(3809, 20000))
+    # sigma' > (1/2) log(9/Gmax) - 13.3/L > 0 once L > 2*13.3/log(9/Gmax) = 432.4
+    assert 432 < 2 * 13.3 / math.log(9 / Gmax) < 433
+    assert all(sigma(L + 1) > sigma(L) for L in range(433, 6000))
+    # the form exp(-13.3(0.46057 + log L)) is not implied by Rhin's H^(-13.3): 0.46057 is rounded up
+    assert math.exp(0.46057) > LOG2_3
     for L in range(RHIN_FROM, RHIN_FROM + 2000):
         B = math.floor(L * LOG2_3) + 1
         if gcd(L, B) == 1:
