@@ -17,6 +17,7 @@ from collatz_maxodd.balance import (
     LOG2_3,
     PARSEVAL_RATE,
     RHIN_FROM,
+    admissible_rotations,
     christoffel,
     corner_level,
     cycle_numerator,
@@ -476,9 +477,10 @@ def test_theorem2_analytic_ranges() -> None:
 def test_profile_formula_on_random_words() -> None:
     """Lemma 10 on words with arbitrary positive letters.  The normalized rotation has a
     non-negative profile, and its profile element equals (theta - 1) theta^(L-1) A(w), both
-    modulo d and at the real embedding; so d | c(w) iff the element vanishes modulo d."""
+    modulo d and at the real embedding.  It is a unit times c(w) modulo d, so the two have the
+    same gcd with d (non-trivial on 303 of the 4 600 words)."""
     rng = random.Random(3)
-    n = 0
+    n = shared = 0
     for L, B in coprime_pairs(30, 3):
         d = 2**B - 3**L
         t, th = theta0(L, B), 2 ** (1 / L)
@@ -499,32 +501,53 @@ def test_profile_formula_on_random_words() -> None:
             q_mod = sum(c * pow(t, j, d) for j, c in q.items()) % d
             assert q_mod == (t - 1) * pow(t, L - 1, d) * a_mod % d
             assert abs(sum(c * th**j for j, c in q.items()) - (th - 1) * th ** (L - 1) * a_real) < 1e-9 * max(1.0, a_real)
-            assert (cycle_numerator(v) % d == 0) == (q_mod == 0)
+            assert gcd(q_mod, d) == gcd(cycle_numerator(v), d)
+            shared += gcd(q_mod, d) > 1
             n += 1
-    assert n == 4600
+    assert (n, shared) == (4600, 303)
 
 
-def test_mass_criterion_is_sound_on_all_small_words() -> None:
-    """Corollary 11 on every word with positive letters and L <= 10: it fires on 1 375 of the
-    85 358 words and never on one with d | c(w)."""
-    tot = fired = 0
+def test_mass_criterion_on_all_small_words() -> None:
+    """Corollary 11 on every word with positive letters and L <= 10 (85 358 words, 8 947 cyclic
+    classes).  None has d | c(w), so soundness is tested through its mechanism instead:
+    h = gcd(c(w), d) divides N(q) and is at most M^(L/2), for every rotation with a
+    non-negative profile (5 917 words have h > 1).  Those rotations are exactly the ones
+    ``admissible_rotations`` lists.  The criterion gives one verdict per cyclic class and
+    settles 562 classes (5 047 words)."""
+    tot = shared = fired = 0
+    verdicts: dict[tuple[int, int, tuple[int, ...]], set[bool]] = {}
     for L, B in coprime_pairs(10, 3):
         d = 2**B - 3**L
         for cuts in combinations(range(1, B), L - 1):
             w = tuple(hi - lo for lo, hi in zip((0, *cuts), (*cuts, B)))
             tot += 1
-            if mass_criterion(w):
-                fired += 1
-                assert cycle_numerator(w) % d != 0
-    assert (tot, fired) == (85358, 1375)
+            c = cycle_numerator(w)
+            assert c % d != 0
+            adm = admissible_rotations(w)
+            assert normalize(w) in adm
+            assert adm == [v for v in (w[r:] + w[:r] for r in range(L)) if min(displacement(v)) >= 0]
+            h = gcd(c, d)
+            if h > 1:
+                shared += 1
+                assert norm_exact(profile_element(displacement(normalize(w))), L) % h == 0
+                for v in adm:
+                    assert math.log(h) <= 0.5 * L * math.log(parseval_mass(profile_element(displacement(v)), L)) + 1e-9
+            verdict = mass_criterion(w)
+            fired += verdict
+            verdicts.setdefault((L, B, _canon(w)), set()).add(verdict)
+    assert (tot, shared, fired) == (85358, 5917, 5047)
+    assert all(len(v) == 1 for v in verdicts.values())
+    assert (len(verdicts), sum(1 for v in verdicts.values() if v == {True})) == (8947, 562)
 
 
 def test_run_validity_and_element() -> None:
     """Lemma 12 and the element of Theorem 3, on every interval of levels with L <= 40: the
     raised run is a word iff D1 >= a or D2 = L - 1; its letters are 1, 2, 3 (1, 2 for runs of 12
     corners); its profile is the indicator of the run; its element is 1 - theta^g + theta^f or
-    theta^f; and it is not a loop."""
-    n = valid = threes = 0
+    theta^f; and it is not a loop.  Below the top level a 3 appears iff D1 <= b - 1.  Of the
+    55 855 valid runs, 5 245 reach the top level (rotations of the balanced word), 4 088 are
+    runs of 12 corners and 46 522 contain a 3."""
+    n = valid = top = twelve = threes = 0
     for L, B in coprime_pairs(40, 3):
         b, d = B - L, 2**B - 3**L
         for D1 in range(1, L):
@@ -535,34 +558,43 @@ def test_run_validity_and_element() -> None:
                 if w is None:
                     continue
                 valid += 1
-                threes += max(w) == 3
-                assert max(w) <= (2 if D1 >= b else 3)
+                assert max(w) <= 3
                 assert displacement(w) == [int(D1 <= D <= D2) for D in range(L)]
                 assert profile_element(displacement(w)) == run_element(L, D1, D2)
                 assert cycle_numerator(w) % d != 0
-    assert (n, valid, threes) == (79323, 55855, 46522)
+                if D2 == L - 1:
+                    top += 1
+                    assert _canon(w) == _canon(christoffel(L, B))
+                else:
+                    assert (max(w) == 3) == (D1 <= b - 1)
+                    twelve += D1 >= b
+                    threes += D1 <= b - 1
+    assert (n, valid, top, twelve, threes) == (79323, 55855, 5245, 4088, 46522)
 
 
 def test_run_duality_and_counts() -> None:
-    """Raising the runs inside [a, L-2] gives b(b-1)/2 distinct cyclic words.  Lowering the runs
-    inside [1, b-1] gives the same words.  Exactly a(a-1)/2 of them consist of 1s and 2s: the
-    runs of 12 corners."""
-    for L, B in coprime_pairs(30, 6):
+    """Raising the runs inside [a, L-2] gives b(b-1)/2 distinct cyclic words.  A lowered run
+    [D1, D2] is a word iff D2 <= b - 1, and it is the cyclic word of the raised run
+    [L-1-D2, L-2-D2+D1].  Exactly a(a-1)/2 of the words consist of 1s and 2s: the runs of 12
+    corners."""
+    for L, B in coprime_pairs(40, 3):
         b = B - L
         a = L - b
         up = {_canon(run_word(L, B, D1, D2)) for D1 in range(a, L - 1) for D2 in range(D1, L - 1)}
         assert len(up) == b * (b - 1) // 2
         w0, Binv = christoffel(L, B), pow(B, -1, L)
         down = set()
-        for D1 in range(1, b):
-            for D2 in range(D1, b):
+        for D1 in range(1, L):
+            for D2 in range(D1, L):
                 v = list(w0)
                 for D in range(D1, D2 + 1):
                     p = D * Binv % L
                     v[p - 1] -= 1
                     v[p] += 1
-                assert min(v) >= 1
-                down.add(_canon(tuple(v)))
+                assert (min(v) >= 1) == (D2 <= b - 1)
+                if D2 <= b - 1:
+                    assert _canon(tuple(v)) == _canon(run_word(L, B, L - 1 - D2, L - 2 - D2 + D1))
+                    down.add(_canon(tuple(v)))
         assert down == up
         twelve = {_canon(run_word(L, B, D1, D2)) for D1 in range(b, L - 1) for D2 in range(D1, L - 1)}
         assert twelve == {c for c in up if max(c) <= 2} and len(twelve) == a * (a - 1) // 2
@@ -586,15 +618,43 @@ def test_run_theorem() -> None:
         margin = min(margin, math.log(2**B - 3**L) - run_log_norm_bound(L, B))
         n += 1
     assert n == 20166 and margin > 3.2
-    small = 0
+    small = below = 0
+    needed = []
     for L, B in coprime_pairs(17, 3):
         d = 2**B - 3**L
+        if math.log(d) <= run_log_norm_bound(L, B):
+            needed.append((L, B))
         for D1 in range(1, L):
             for D2 in range(D1, L):
                 if run_is_valid(L, B, D1, D2):
                     assert cycle_numerator(run_word(L, B, D1, D2)) % d != 0
                     small += 1
-    assert small == 2218
+                    below += D2 <= L - 2
+    assert (small, below) == (2218, 1791)
+    assert needed == [(3, 5), (5, 8)]  # elsewhere the exact d already beats the Parseval bound
+    # a second route for part (b): Rhin's bound instead of Ellison's, from L = 342 on
+
+    def rhin_gap(L: int) -> float:
+        return L * math.log(3) - 13.3 * math.log(L * LOG2_3 + 1) - 0.5 * L * math.log(13 / 4 + 9 / 4 * 4 ** (1 / L))
+
+    assert rhin_gap(341) < 0 < rhin_gap(342) and all(rhin_gap(L + 1) > rhin_gap(L) for L in range(100, 5000))
+
+
+def test_positive_letters_are_needed() -> None:
+    """The hypothesis of Theorem 3 is not decorative.  At (5, 8) the run [1, 2] is not a word:
+    raising it gives (1, 3, 0, 3, 1), and its numerator 455 = 35 * 13 is divisible by d = 13.
+    It is the only zero of 1 - theta0^g + theta0^f with 1 <= g < f <= L - 1 for L <= 60."""
+    assert run_word(5, 8, 1, 2) is None and not run_is_valid(5, 8, 1, 2)
+    assert cycle_numerator((1, 3, 0, 3, 1)) == 455 and 2**8 - 3**5 == 13
+    zeros = []
+    for L, B in coprime_pairs(60, 3):
+        d = 2**B - 3**L
+        t = theta0(L, B)
+        pw = [1] * L
+        for j in range(1, L):
+            pw[j] = pw[j - 1] * t % d
+        zeros += [(L, B, g, f) for g in range(1, L - 1) for f in range(g + 1, L) if (1 - pw[g] + pw[f]) % d == 0]
+    assert zeros == [(5, 8, 2, 4)]
 
 
 def test_run_exact_norms() -> None:
@@ -616,15 +676,19 @@ def test_run_exact_norms() -> None:
 
 
 def test_run_words_reach_far_from_balance() -> None:
-    """Runs of 12 corners are up to a // 2 swaps from balance: at swap distance n there are
-    2a + 1 - 4n of them (breadth-first search over actual swaps)."""
-    for L, B in ((18, 29), (23, 37)):
+    """A run of 12 corners with element 1 - theta^g + theta^f is exactly min(g, f - g) swaps from
+    balance, so there are 2a + 1 - 4n such words at distance n, for n up to a // 2
+    (breadth-first search over actual swaps at seven slopes)."""
+    for L, B in ((13, 21), (17, 28), (18, 29), (19, 31), (21, 34), (22, 35), (23, 37)):
         b = B - L
         a = L - b
         dist = _classes_within(L, B, a // 2)
         prof: dict[int, int] = {}
-        for c in {_canon(run_word(L, B, D1, D2)) for D1 in range(b, L - 1) for D2 in range(D1, L - 1)}:
-            prof[dist[c]] = prof.get(dist[c], 0) + 1
+        for D1 in range(b, L - 1):
+            for D2 in range(D1, L - 1):
+                g, f = L - 1 - D2, L - D1
+                assert dist[_canon(run_word(L, B, D1, D2))] == min(g, f - g)
+                prof[min(g, f - g)] = prof.get(min(g, f - g), 0) + 1
         assert prof == {k: 2 * a + 1 - 4 * k for k in range(1, a // 2 + 1)}
 
 

@@ -72,6 +72,7 @@ __all__ = [
     "RHIN_FROM",
     "displacement",
     "normalize",
+    "admissible_rotations",
     "profile_element",
     "mass_criterion",
     "run_is_valid",
@@ -452,8 +453,9 @@ def displacement(w: tuple[int, ...] | list[int]) -> list[int]:
 
 
 def normalize(w: tuple[int, ...] | list[int]) -> tuple[int, ...]:
-    """The rotation of ``w`` that starts at a corner of least displacement.  Its profile is
-    non-negative: rotating by ``r`` turns ``m_p`` into ``m_(p+r) - m_r + [D_p + D_r >= L]``."""
+    """The rotation of ``w`` that starts at its first corner of least displacement.  Its profile
+    is non-negative: rotating by ``r`` turns ``m_p`` into ``m_(p+r) - m_r + [D_p + D_r >= L]``.
+    Other rotations can have a non-negative profile too; see ``admissible_rotations``."""
     w = tuple(w)
     L, B = len(w), sum(w)
     best, r, X = 0, 0, 0
@@ -462,6 +464,20 @@ def normalize(w: tuple[int, ...] | list[int]) -> tuple[int, ...]:
             best, r = X - (p * B) // L, p
         X += x
     return w[r:] + w[:r]
+
+
+def admissible_rotations(w: tuple[int, ...] | list[int]) -> list[tuple[int, ...]]:
+    """All rotations of ``w`` whose profile is non-negative.  With ``D'_p = pB - L X'_p`` the
+    generalized levels of ``w``, they are the rotations starting at a corner ``r`` with
+    ``D'_r > max D' - L``.  Lemma 10 gives one element for each; their masses differ."""
+    w = tuple(w)
+    L, B = len(w), sum(w)
+    D, X = [], 0
+    for p, x in enumerate(w):
+        D.append(p * B - L * X)
+        X += x
+    top = max(D)
+    return [w[r:] + w[:r] for r in range(L) if D[r] > top - L]
 
 
 def profile_element(m: list[int]) -> dict[int, int]:
@@ -480,12 +496,13 @@ def profile_element(m: list[int]) -> dict[int, int]:
 
 def mass_criterion(w: tuple[int, ...] | list[int]) -> bool:
     """Corollary 11: True when Parseval alone proves that ``w`` is not a loop of ``3n+1``
-    (coprime ``L, B``, ``2^B > 3^L``): the mass ``M`` of the profile element of the normalized
-    rotation satisfies ``M^(L/2) < d``."""
+    (coprime ``L, B``, ``2^B > 3^L``): some rotation with a non-negative profile has a profile
+    element of mass ``M`` with ``M^(L/2) < d``.  The verdict is the same for every rotation
+    of ``w``, because the smallest mass over the admissible rotations is used."""
     L, B = len(w), sum(w)
     d = 2**B - 3**L
-    q = profile_element(displacement(normalize(w)))
-    return 0.5 * L * math.log(parseval_mass(q, L)) < math.log(d)
+    M = min(parseval_mass(profile_element(displacement(v)), L) for v in admissible_rotations(w))
+    return 0.5 * L * math.log(M) < math.log(d)
 
 
 def run_is_valid(L: int, B: int, D1: int, D2: int) -> bool:
