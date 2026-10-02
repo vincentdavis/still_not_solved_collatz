@@ -816,16 +816,19 @@ Terras and Everett in Syracuse form), so `M − m ≥ 2^X`; and every member is 
 Belaga's bound).  So a repeated stretch has weight `X < σ − log₂(2^(B/L) − 3)`, which is below
 `σ + log₂(L/3) + 13.3 log₂ B` by Rhin.  A balanced word has only `j + 1` stretches of length
 `j`, so a word differing from it in `k` corners (one step each) is not a loop once
-`k + 1 < L/Ψ`, `Ψ = 2 + (4 + log₂(L/3) + 13.3 log₂(L log₂3 + 1))/log₂3`: every `L ≥ 340` for
-three corners, and up to 401 035 064 corners at Hercher's `L = 137 528 045 312`.  COMPUTED:
-three corners for every `L` (23 583 pairs with `30 ≤ L ≤ 339` by the exact size bound,
-1 087 329 words with `L ≤ 29` directly); the identity on 100 137 pairs of members of real
-`3n+q` loops.  Also: one corner move from a proper power `u^g` is never a loop
+`k + 1 < L/Ψ`, `Ψ = 2 + (4 + log₂(L/3) + 13.3 log₂(L log₂3 + 1))/log₂3`: up to 401 035 064
+corners at Hercher's `L = 137 528 045 312`, and 27 426 966 arbitrary swaps (a corner `t` steps
+up costs `t²` swaps).  Three corners are settled for every `L` without Rhin: Ellison's bound
+from `L = 77`, an exact integer test for `30 ≤ L ≤ 76`, and 1 087 329 corner moves with
+`L ≤ 29` checked directly (COMPUTED).  Also COMPUTED: the identity on 100 137 pairs of members
+of real `3n+q` loops.  The smallest `B` must be found exactly: at Hercher's `L`, `L log₂3` is
+`1.3·10^(−12)` below an integer and double precision is off by one.  Also: one corner move from a proper power `u^g` is never a loop
 (`c(u^g) = c(u)·Φ`).  Not found in
 Knight or the related work checked; a wider literature search is pending.  Independent
 referee passes found no error in Theorems 1, 2 or 3; the second corrected the citation of
 Rhin's bound and enumerated the 8 942 349 896 two-swap words of the finite range; the third
-checked 4 857 430 974 run words with `L ≤ 700`.  Witnesses: `test_balance.py` (40).
+checked 4 857 430 974 run words with `L ≤ 700`; a fourth found no error in Theorem 4.
+Witnesses: `test_balance.py` (41).
 
 ### Verification status
 
@@ -849,7 +852,7 @@ checked 4 857 430 974 run words with `L ≤ 700`.  Witnesses: `test_balance.py` 
 | landing form: bijection, leaf rule mod 9, saturation, automaton = `Φ_k`, `S_k(q) = q·S_k(1)` (docs/LANDING.md) | ✓ (`test_landing.py`, 24) | ✗ — not formalized (Lemma U and T0 are; the rest is bookkeeping) |
 | drop function: parity/sign, height classes, fibers = divisors of `3d+1` of the form `2^x − 3`, unbounded multiplicity, telescoping, zero-sum sets vs chains, the gates at both ends on zero-sum sets (docs/DROP.md) | ✓ (`test_drop.py`, 26) | ✗ — not formalized (two-line identities and computation) |
 | loop sieve: power-of-2 rule and closure, counting bound `C(log₂N + 2d, d)`, doorways, shadow of `2^71` (exact word model, rate `λ/3`), rational loops through every open class (docs/LOOP_SIEVE.md) | ✓ (`test_loopsieve.py`, 18) | ✗ — not formalized (T0 and the closure are one-liners; the rest is computation) |
-| near balance: `Z[θ]/(θ^B − 3) ≅ Z/d`, θ-identity, norm test, Knight's case (second proof, lowest terms), spread ≥ 1.8614, one- and two-swap theorems, run theorem, repeat theorem (docs/BALANCE.md) | ✓ (`test_balance.py`, 40) | ✗ — not formalized (needs norms in number fields; the finite checks are computation) |
+| near balance: `Z[θ]/(θ^B − 3) ≅ Z/d`, θ-identity, norm test, Knight's case (second proof, lowest terms), spread ≥ 1.8614, one- and two-swap theorems, run theorem, repeat theorem (docs/BALANCE.md) | ✓ (`test_balance.py`, 41) | ✗ — not formalized (needs norms in number fields; the finite checks are computation) |
 | over-dispersion, tail rate, box dimension | ✓ | ✗ — infeasible in-kernel, open, unresolved limit |
 
 Lean total: **341 declarations**, all certifying `[propext, Quot.sound]` or

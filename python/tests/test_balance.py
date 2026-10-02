@@ -52,7 +52,9 @@ from collatz_maxodd.balance import (
     run_word,
     size_exponent,
     size_exponent_bound,
+    smallest_B,
     spread_threshold,
+    swap_span,
     swap_element,
     theta0,
     two_swap_direct,
@@ -61,6 +63,7 @@ from collatz_maxodd.balance import (
     two_swap_loops,
     two_swap_mass_bounds,
     two_swaps,
+    window_suffices,
     word_element,
 )
 from collatz_maxodd.syracuse import syracuse_with_exponent
@@ -722,7 +725,8 @@ def _orbit(c) -> tuple[list[int], list[int]]:
 def test_repeat_identity_on_real_loops(census) -> None:
     """Lemma 13 on every 3n+q loop of the census with L >= 2 (the +q cancels in differences):
     if the halving words from p and from q agree for j letters of weight X, then
-    3^j (n_p - n_q) = 2^X (n_(p+j) - n_(q+j)), so 2^X | n_p - n_q and M - m >= 2^X."""
+    3^j (n_p - n_q) = 2^X (n_(p+j) - n_(q+j)).  Both differences are even, so
+    2^(X+1) | n_p - n_q and M - m >= max(2^(X+1), 2 * 3^j)."""
     loops = pairs = longest = 0
     for c in census:
         L = c.L
@@ -740,9 +744,10 @@ def test_repeat_identity_on_real_loops(census) -> None:
                     continue
                 pairs += 1
                 longest = max(longest, j)
-                assert ns[p] != ns[q] and (ns[p] - ns[q]) % 2**X == 0
+                assert ns[p] != ns[q] and (ns[p] - ns[q]) % 2 ** (X + 1) == 0
                 assert 3**j * (ns[p] - ns[q]) == 2**X * (ns[(p + j) % L] - ns[(q + j) % L])
-                assert max(ns) - min(ns) >= max(2**X, 3**j)
+                assert (ns[(p + j) % L] - ns[(q + j) % L]) % (2 * 3**j) == 0
+                assert max(ns) - min(ns) >= max(2 ** (X + 1), 2 * 3**j)
     assert (loops, pairs, longest) == (1681, 100137, 7)
 
 
@@ -791,10 +796,16 @@ def test_longest_repeat_and_spread() -> None:
             assert p < q and [w[(p + i) % L] for i in range(j)] == [w[(q + i) % L] for i in range(j)]
             assert X == sum(w[(p + i) % L] for i in range(j)) and repeat_at_length(w, j) is not None
         assert repeat_at_length(w, j + 1) is None or j + 1 >= L
-    for L, B in coprime_pairs(60, 3):
-        assert height_spread(christoffel(L, B)) == Fraction(L - 1, L)
-        assert size_exponent(L, B) < size_exponent_bound(L, B)
-        assert abs(size_exponent(L, B) + math.log2(2 ** (B / L) - 3)) < 1e-9
+    for L in range(3, 61):
+        for B in range(smallest_B(L), 2 * L):
+            assert height_spread(balanced_word(L, B)) == Fraction(L - gcd(L, B), L)
+            assert size_exponent(L, B) < size_exponent_bound(L, B)
+            assert abs(size_exponent(L, B) + math.log2(2 ** (B / L) - 3)) < 1e-9
+    # the smallest B needs exact arithmetic: at Hercher's length L log2 3 is 1.3e-12 below an integer
+    assert all(smallest_B(L) == math.floor(L * LOG2_3) + 1 == (3**L).bit_length() for L in range(1, 3000))
+    H = 137528045312
+    assert smallest_B(H) == 217976794617 and math.floor(H * LOG2_3) + 1 == 217976794618
+    assert 75.43 < size_exponent(H, smallest_B(H)) < 75.44 < 536 < size_exponent_bound(H, smallest_B(H))
 
 
 def test_balanced_words_are_full_of_repeats() -> None:
@@ -822,10 +833,11 @@ def test_balanced_words_are_full_of_repeats() -> None:
         for B in range(math.floor(L * LOG2_3) + 1, 2 * L):
             if gcd(L, B) == 1:
                 continue
-            w = balanced_word(L, B)
+            w, g = balanced_word(L, B), gcd(L, B)
             for j in range(1, L):
                 fs = {tuple(w[(p + i) % L] for i in range(j)) for p in range(L)}
-                assert len(fs) <= j + 1 and min(sum(f) for f in fs) >= (j * B) // L
+                assert len(fs) == min(j + 1, L // g)
+                assert {sum(f) for f in fs} <= {(j * B) // L, -((-j * B) // L)}
 
 
 def _move_corners(w0: tuple[int, ...], moves) -> tuple[int, ...] | None:
@@ -883,30 +895,74 @@ def test_repeat_theorem_numbers() -> None:
         for B in range(math.floor(L * LOG2_3) + 1, 2 * L, max(1, L // 7)):
             assert max_moved_corners(L, B, 3) + 1 >= math.ceil(moved_corner_reach(L, 3)) - 1
     H = 137528045312
-    BH = math.floor(H * LOG2_3) + 1
+    BH = smallest_B(H)
     assert moved_corner_window(H, BH, 3) == 341 and max_moved_corners(H, BH, 3) == 402128786
     assert math.floor(moved_corner_reach(H, 3)) == 401035065
+    # with the exact size exponent of the pair (H, BH), 75.43, the stretch needed has 50 letters
+    assert moved_corner_window(H, BH, 3, exact=True) == 50 and max_moved_corners(H, BH, 3, exact=True) == 2696628338
     lo, hi = 0, H
-    while lo < hi:  # arbitrary swaps: k swaps move at most k corners, with displacement span at most k + 1
+    while lo < hi:  # k arbitrary swaps move at most k corners, with displacement span at most isqrt(2k) + 1
         mid = (lo + hi + 1) // 2
-        lo, hi = (mid, hi) if mid + 1 < moved_corner_reach(H, mid + 1) else (lo, mid - 1)
-    assert lo == 466608
+        lo, hi = (mid, hi) if mid + 1 < moved_corner_reach(H, swap_span(mid)) else (lo, mid - 1)
+    assert lo == 27426966
+
+
+def test_swap_span() -> None:
+    """After k swaps of a balanced word of 1s and 2s the height spread is below isqrt(2k) + 1:
+    all 7 766 cyclic classes within 8 swaps of balance at seven slopes, two of them not coprime."""
+    n = 0
+    for L, B in ((13, 21), (17, 27), (18, 29), (19, 31), (16, 26), (20, 32), (12, 20)):
+        start = _canon(balanced_word(L, B))
+        dist = {start: 0}
+        frontier = [start]
+        for k in range(1, 9):
+            nxt = []
+            for w in frontier:
+                for i in range(L):
+                    j = (i + 1) % L
+                    if w[i] != w[j]:
+                        v = list(w)
+                        v[i], v[j] = v[j], v[i]
+                        c = _canon(tuple(v))
+                        if c not in dist:
+                            dist[c] = k
+                            nxt.append(c)
+            frontier = nxt
+        for w, k in dist.items():
+            assert height_spread(w) < swap_span(k)
+            n += 1
+    assert n == 7766
 
 
 def test_three_moved_corners_every_length() -> None:
     """Corollary 18: at most three corners of a balanced word moved one step each, positive
-    letters, any gcd, every L.  (i) L >= 340: the explicit form.  (ii) 30 <= L <= 339: the
-    window count with the exact size exponent settles all 23 583 pairs.  (iii) L <= 29: all
-    words checked directly, through the sum c_bal + sum of the moved terms, which is a unit
-    times c(w) modulo d."""
-    assert 4 < moved_corner_reach(340, 3) and not 4 < moved_corner_reach(339, 3)
+    letters, any gcd, every L.  (i) L >= 77: Ellison's bound gives tau < log2(2L/3) +
+    L log2(3/2.56) at the smallest B, and a window j with 4(j + 1) < L; above the smallest B,
+    tau < log2 L - 1.05.  (ii) 30 <= L <= 339 (only 30..76 is needed): an exact integer test
+    confirms the window on all 23 583 pairs.  (iii) L <= 29: all 1 087 329 corner moves
+    (1 087 266 distinct words, 698 of them non-primitive) checked directly, through the sum
+    c_bal + sum of the moved terms, which is a unit times c(w) modulo d."""
+    for L in range(18, 3001):
+        B0 = smallest_B(L)
+        tau_hat = math.log2(2 * L / 3) + L * math.log2(3 / ELLISON_BASE)
+        assert size_exponent(L, B0) < tau_hat  # 2^(B/L) - 3 >= 3d/(2L 3^L) and d > 2.56^L
+        j = math.ceil((4 + tau_hat) / LOG2_3)
+        assert 4 * (j + 1) < L or L <= 76  # holds from 77 on, and fails at 76
+        assert L != 76 or 4 * (j + 1) >= L
+        if L >= 77:
+            assert (j * B0) // L >= 3 + tau_hat
+            j1 = math.ceil((4 + math.log2(L) - 1.05) / LOG2_3)
+            assert 4 * (j1 + 1) < L and (j1 * (B0 + 1)) // L >= 3 + size_exponent(L, B0 + 1)
+    assert 4 < moved_corner_reach(340, 3) and not 4 < moved_corner_reach(339, 3)  # the Rhin form
     pairs = 0
     for L in range(30, 340):
-        for B in range(math.floor(L * LOG2_3) + 1, 2 * L):
-            assert max_moved_corners(L, B, 3, exact=True) >= 3
+        for B in range(smallest_B(L), 2 * L):
+            j = moved_corner_window(L, B, 3, exact=True)
+            assert 4 * (j + 1) < L and window_suffices(L, B, j, 3) and not window_suffices(L, B, j - 1, 3)
             pairs += 1
     assert pairs == 23583
     words = 0
+    distinct, nonprimitive = set(), {}
     for L in range(3, 30):
         for B in range(math.floor(L * LOG2_3) + 1, 2 * L):
             w0 = balanced_word(L, B)
@@ -926,11 +982,17 @@ def test_three_moved_corners_every_length() -> None:
                             continue
                         S = (c0 + sum(term[p] if sg == 1 else -term[p] * half for p, sg in zip(ps, sgs))) % d
                         assert S != 0
+                        distinct.add((B, w))
+                        for h in (2, 3, 5, 7):
+                            if L % h == 0 and w == w[: L // h] * h:
+                                nonprimitive[(k, h)] = nonprimitive.get((k, h), 0) + 1
                         if words % 997 == 0:  # the sum is a unit times c(w): spot-check the relation
                             u = 1 if ps[0] != 0 else (half if sgs[0] == 1 else 2)
                             assert cycle_numerator(w) % d == u * S % d
                         words += 1
-    assert words == 1087329
+    assert words == 1087329 and len(distinct) == 1087266
+    # a non-primitive word v^h here has k = h in {2, 3}: v is one corner move from a balanced word
+    assert nonprimitive == {(2, 2): 556, (3, 3): 142}
 
 
 def test_few_runs_have_few_stretches() -> None:

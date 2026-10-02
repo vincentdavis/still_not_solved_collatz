@@ -48,7 +48,7 @@ from __future__ import annotations
 
 import cmath
 import math
-from decimal import Decimal, getcontext
+from decimal import ROUND_FLOOR, Decimal, localcontext
 from fractions import Fraction
 from math import gcd
 
@@ -96,8 +96,11 @@ __all__ = [
     "height_spread",
     "repeat_at_length",
     "longest_repeat",
+    "smallest_B",
     "size_exponent",
     "size_exponent_bound",
+    "window_suffices",
+    "swap_span",
     "repeat_excludes",
     "moved_corner_window",
     "max_moved_corners",
@@ -598,7 +601,7 @@ def generalized_levels(w: tuple[int, ...] | list[int]) -> list[int]:
 
 def height_spread(w: tuple[int, ...] | list[int]) -> Fraction:
     """``sigma = (max D' - min D') / L``: the vertical extent, in halvings, of the staircase's
-    deviation from the straight line.  Balanced words have ``sigma = (L - 1)/L``."""
+    deviation from the straight line.  A balanced word has ``sigma = (L - g)/L``, ``g = gcd(L, B)``."""
     D = generalized_levels(w)
     return Fraction(max(D) - min(D), len(w))
 
@@ -640,31 +643,64 @@ def longest_repeat(w: tuple[int, ...] | list[int]) -> tuple[int, int, int, int]:
     return lo, sum((w + w)[p : p + lo]), p, q
 
 
+def smallest_B(L: int) -> int:
+    """``B0 = floor(L log2 3) + 1``, the least ``B`` with ``2^B > 3^L``, computed exactly.
+    Double precision is not enough: at ``L = 137 528 045 312``, ``L log2 3`` is within
+    ``1.3e-12`` of an integer and ``math.floor(L * LOG2_3) + 1`` is off by one."""
+    if L <= 20000:
+        return (3**L).bit_length()
+    with localcontext() as ctx:
+        ctx.prec = 90
+        x = Decimal(L) * (Decimal(3).ln() / Decimal(2).ln())
+        f = x.to_integral_value(rounding=ROUND_FLOOR)
+        if min(x - f, f + 1 - x) < Decimal("1e-40"):
+            raise ArithmeticError("L log2 3 is too close to an integer for 90 digits")
+        return int(f) + 1
+
+
 def size_exponent(L: int, B: int) -> float:
     """``tau = -log2(2^(B/L) - 3)``: by Lemma 14 every member of a loop is at most
-    ``2^(sigma + tau)`` and the smallest is at most ``2^tau``.  Computed with 60 digits, so it
-    is reliable for any ``L`` in reach."""
-    if 2**B <= 3**L:
-        raise ValueError("need 2^B > 3^L")
-    getcontext().prec = 60
-    two = Decimal(2)
-    v = (Decimal(B) / Decimal(L) * two.ln()).exp() - 3
-    return float(-v.ln() / two.ln())
+    ``2^(sigma + tau)`` and the smallest is at most ``2^tau``.  Computed with 90 digits through
+    ``2^(B/L) - 3 = 3 (exp(Lambda / L) - 1)``, ``Lambda = B log 2 - L log 3``, without forming
+    ``2^B`` or ``3^L``, so it works at any length."""
+    with localcontext() as ctx:
+        ctx.prec = 90
+        ln2 = Decimal(2).ln()
+        lam = Decimal(B) * ln2 - Decimal(L) * Decimal(3).ln()
+        if lam <= 0:
+            raise ValueError("need 2^B > 3^L")
+        v = 3 * ((lam / Decimal(L)).exp() - 1)
+        return float(-(v.ln() / ln2))
 
 
 def size_exponent_bound(L: int, B: int) -> float:
     """Upper bound for ``size_exponent`` that needs no computation with ``d``:
     ``2^(B/L) - 3 > 3 Lambda / L`` with ``Lambda = B log 2 - L log 3``.  For
-    ``B = floor(L log2 3) + 1`` Rhin's bound ``Lambda >= B^(-13.3)`` gives
+    ``B = smallest_B(L)`` Rhin's bound ``Lambda >= B^(-13.3)`` gives
     ``log2(L/3) + 13.3 log2 B``; for larger ``B``, ``Lambda > log 2`` gives ``log2(L / (3 log 2))``."""
-    if B == math.floor(L * LOG2_3) + 1:
+    if B == smallest_B(L):
         return math.log2(L / 3) + 13.3 * math.log2(B)
     return math.log2(L / (3 * math.log(2)))
 
 
+def window_suffices(L: int, B: int, j: int, s: int) -> bool:
+    """Exact integer test of ``floor(jB/L) >= s + tau``: with ``N = floor(jB/L) - s`` it reads
+    ``2^(-N) <= 2^(B/L) - 3``, that is ``(3 * 2^N + 1)^L <= 2^(B + NL)``.  For moderate ``L``."""
+    N = (j * B) // L - s
+    return N >= 0 and (3 * 2**N + 1) ** L <= 2 ** (B + N * L)
+
+
+def swap_span(k: int) -> int:
+    """Displacement span after ``k`` swaps of a balanced word of 1s and 2s: ``s <= isqrt(2k) + 1``.
+    Displacements are 1-Lipschitz along the word, so a corner ``t`` steps up costs at least
+    ``t^2`` swaps; ``u^2 + v^2 <= k`` gives ``u + v <= isqrt(2k)``."""
+    return math.isqrt(2 * k) + 1
+
+
 def repeat_excludes(w: tuple[int, ...] | list[int]) -> bool:
-    """Theorem 4 applied to ``w`` with the exact size exponent: True when ``w`` has a repeated
-    stretch of weight ``X >= sigma + tau``, which no loop of ``3n+1`` can have."""
+    """Theorem 4 applied to ``w`` with the exact size exponent: True when the stretch found by
+    ``longest_repeat`` has weight ``X >= sigma + tau``, which no loop of ``3n+1`` can have.
+    Sufficient, not necessary: a shorter repeated stretch can be heavier than the longest."""
     L, B = len(w), sum(w)
     _, X, _, _ = longest_repeat(w)
     return X >= float(height_spread(w)) + size_exponent(L, B)
