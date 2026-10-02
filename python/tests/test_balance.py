@@ -8,8 +8,9 @@ from __future__ import annotations
 
 import math
 import random
+from fractions import Fraction
 from collections import deque
-from itertools import combinations
+from itertools import combinations, product
 from math import gcd
 
 from collatz_maxodd.balance import (
@@ -18,14 +19,21 @@ from collatz_maxodd.balance import (
     PARSEVAL_RATE,
     RHIN_FROM,
     admissible_rotations,
+    balanced_word,
     christoffel,
     corner_level,
     cycle_numerator,
     displacement,
     flatten,
+    generalized_levels,
+    height_spread,
     level_sum_mod_d,
+    longest_repeat,
     mass_criterion,
+    max_moved_corners,
     move_word,
+    moved_corner_reach,
+    moved_corner_window,
     norm_exact,
     norm_test,
     normalize,
@@ -34,11 +42,16 @@ from collatz_maxodd.balance import (
     parseval_log_bound,
     parseval_mass,
     profile_element,
+    profile_word,
+    repeat_at_length,
+    repeat_excludes,
     rhin_log_d,
     run_element,
     run_is_valid,
     run_log_norm_bound,
     run_word,
+    size_exponent,
+    size_exponent_bound,
     spread_threshold,
     swap_element,
     theta0,
@@ -693,7 +706,287 @@ def test_run_words_reach_far_from_balance() -> None:
 
 
 # ---------------------------------------------------------------------------
-# section 6: reach of the norm test, by swap distance from balance
+# section 6: repeats (Theorem 4)
+# ---------------------------------------------------------------------------
+
+
+def _orbit(c) -> tuple[list[int], list[int]]:
+    """Members of a 3n+q loop in cycle order, and their halving counts."""
+    ns = [c.elements[0]]
+    while len(ns) < c.L:
+        ns.append(syracuse_with_exponent(ns[-1], c.q)[0])
+    assert syracuse_with_exponent(ns[-1], c.q)[0] == ns[0]
+    return ns, [syracuse_with_exponent(n, c.q)[1] for n in ns]
+
+
+def test_repeat_identity_on_real_loops(census) -> None:
+    """Lemma 13 on every 3n+q loop of the census with L >= 2 (the +q cancels in differences):
+    if the halving words from p and from q agree for j letters of weight X, then
+    3^j (n_p - n_q) = 2^X (n_(p+j) - n_(q+j)), so 2^X | n_p - n_q and M - m >= 2^X."""
+    loops = pairs = longest = 0
+    for c in census:
+        L = c.L
+        if L < 2:
+            continue
+        ns, w = _orbit(c)
+        loops += 1
+        for p in range(L):
+            for q in range(p + 1, L):
+                j = X = 0
+                while j < L - 1 and w[(p + j) % L] == w[(q + j) % L]:
+                    X += w[(p + j) % L]
+                    j += 1
+                if j == 0:
+                    continue
+                pairs += 1
+                longest = max(longest, j)
+                assert ns[p] != ns[q] and (ns[p] - ns[q]) % 2**X == 0
+                assert 3**j * (ns[p] - ns[q]) == 2**X * (ns[(p + j) % L] - ns[(q + j) % L])
+                assert max(ns) - min(ns) >= max(2**X, 3**j)
+    assert (loops, pairs, longest) == (1681, 100137, 7)
+
+
+def test_member_size_bounds_on_real_loops(census) -> None:
+    """Lemma 14 and Theorem 4 on every 3n+q loop with 2^B > 3^L (each bound carries a factor q):
+    2^((D'_p - max D')/L) <= n_p (2^(B/L) - 3)/q <= 2^((D'_p - min D')/L) for every member, so
+    m <= q/(2^(B/L) - 3) and M <= q 2^sigma/(2^(B/L) - 3); and the longest repeated stretch has
+    weight X < log2 q + sigma + tau."""
+    members = 0
+    gap = -math.inf
+    for c in census:
+        ns, w = _orbit(c)
+        L, B = c.L, sum(w)
+        if 2**B <= 3**L:
+            continue
+        D = generalized_levels(w)
+        base = 2 ** (B / L) - 3
+        for p, n in enumerate(ns):
+            v = math.log2(n * base / c.q)
+            assert (D[p] - max(D)) / L - 1e-9 <= v <= (D[p] - min(D)) / L + 1e-9
+            members += 1
+        assert (3 * min(ns) + c.q) ** L >= 2**B * min(ns) ** L  # m <= q/(2^(B/L) - 3), exactly
+        _, X, _, _ = longest_repeat(w)
+        if X:
+            gap = max(gap, X - (math.log2(c.q) + float(height_spread(w)) + size_exponent(L, B)))
+    assert members == 22405 and -2.7 < gap < -2.6
+
+
+def test_longest_repeat_and_spread() -> None:
+    """The helpers behind Theorem 4: longest_repeat agrees with a naive search, the balanced
+    word has spread (L-1)/L, and size_exponent is below its Rhin / log 2 bound."""
+    rng = random.Random(11)
+    for _ in range(300):
+        L = rng.randrange(3, 40)
+        w = tuple(rng.choice((1, 1, 2, 2, 3)) for _ in range(L))
+        best = 0
+        for p in range(L):
+            for q in range(p + 1, L):
+                j = 0
+                while j < L - 1 and w[(p + j) % L] == w[(q + j) % L]:
+                    j += 1
+                best = max(best, j)
+        j, X, p, q = longest_repeat(w)
+        assert j == best
+        if j:
+            assert p < q and [w[(p + i) % L] for i in range(j)] == [w[(q + i) % L] for i in range(j)]
+            assert X == sum(w[(p + i) % L] for i in range(j)) and repeat_at_length(w, j) is not None
+        assert repeat_at_length(w, j + 1) is None or j + 1 >= L
+    for L, B in coprime_pairs(60, 3):
+        assert height_spread(christoffel(L, B)) == Fraction(L - 1, L)
+        assert size_exponent(L, B) < size_exponent_bound(L, B)
+        assert abs(size_exponent(L, B) + math.log2(2 ** (B / L) - 3)) < 1e-9
+
+
+def test_balanced_words_are_full_of_repeats() -> None:
+    """Lemma 15: the stretch of j letters starting at a corner of the lower Christoffel word
+    depends only on the arc of its level among the cut points 0, -b, ..., -jb (mod L).  So there
+    are j + 1 stretches of length j, each of weight floor(jB/L) or ceil(jB/L).  A balanced word
+    with gcd > 1 has at most j + 1 as well."""
+    for L, B in coprime_pairs(70, 3):
+        w, b = christoffel(L, B), B - L
+        for j in range(1, L):
+            cuts = sorted({(-i * b) % L for i in range(j + 1)})
+            arc_of = {}
+            for D in range(L):
+                arc_of[D] = max([c for c in cuts if c <= D], default=cuts[-1])
+            by_arc: dict[int, set] = {}
+            weights = set()
+            for p in range(L):
+                f = tuple(w[(p + i) % L] for i in range(j))
+                by_arc.setdefault(arc_of[(p * B) % L], set()).add(f)
+                weights.add(sum(f))
+            assert len(cuts) == j + 1 and all(len(v) == 1 for v in by_arc.values())
+            assert len({next(iter(v)) for v in by_arc.values()}) == j + 1
+            assert weights <= {(j * B) // L, -((-j * B) // L)}
+    for L in range(4, 61):
+        for B in range(math.floor(L * LOG2_3) + 1, 2 * L):
+            if gcd(L, B) == 1:
+                continue
+            w = balanced_word(L, B)
+            for j in range(1, L):
+                fs = {tuple(w[(p + i) % L] for i in range(j)) for p in range(L)}
+                assert len(fs) <= j + 1 and min(sum(f) for f in fs) >= (j * B) // L
+
+
+def _move_corners(w0: tuple[int, ...], moves) -> tuple[int, ...] | None:
+    v = list(w0)
+    for p, sg in moves:
+        v[p - 1] += sg
+        v[p] -= sg
+    return tuple(v) if min(v) >= 1 else None
+
+
+def test_repeat_theorem_excludes_words_near_balance() -> None:
+    """Corollary 16 in practice, with the exact size exponent: whenever (k + 1)(j + 1) < L for
+    the window j of displacement span 3, a balanced word with k corners moved one step each
+    (any gcd) has a repeated stretch of weight >= sigma + tau, so Theorem 4 excludes it."""
+    rng = random.Random(5)
+    n = 0
+    for L in (120, 200, 300, 306, 400, 600):
+        B0 = math.floor(L * LOG2_3) + 1
+        for B in (B0, B0 + 1, B0 + 5):
+            w0 = balanced_word(L, B)
+            d = 2**B - 3**L
+            for k in (1, 2, 3, 5, 8):
+                if max_moved_corners(L, B, 3, exact=True) < k:
+                    continue
+                j = moved_corner_window(L, B, 3, exact=True)
+                for _ in range(4):
+                    w = None
+                    while w is None:
+                        ps = rng.sample(range(L), k)
+                        w = _move_corners(w0, [(p, rng.choice((1, -1))) for p in ps])
+                    assert height_spread(w) < 3
+                    jj, X, _, _ = longest_repeat(w)
+                    assert jj >= j and X >= float(height_spread(w)) + size_exponent(L, B)
+                    assert repeat_excludes(w) and cycle_numerator(w) % d != 0
+                    n += 1
+    assert n == 360
+
+
+def test_repeat_theorem_numbers() -> None:
+    """The explicit form of Corollary 16, valid for every B: k corners with displacement span s
+    are excluded when k + 1 < L / Psi(L, s).  L / Psi increases, so each k has a threshold.
+    At Hercher's floor L = 137 528 045 312 the window is 341 letters."""
+    assert all(moved_corner_reach(L + 1, s) > moved_corner_reach(L, s) for s in (1, 3, 7) for L in range(3, 3000))
+
+    def first_L(k: int, s: int) -> int:
+        L = 3
+        while not k + 1 < moved_corner_reach(L, s):
+            L += 1
+        return L
+
+    assert first_L(0, 1) == 62
+    assert [first_L(k, 3) for k in (1, 2, 3, 4, 5, 10, 100)] == [149, 242, 340, 443, 548, 1104, 13414]
+    # the explicit form is implied by the window count, for every admissible B
+    for L in (62, 149, 340, 1000, 5000):
+        for B in range(math.floor(L * LOG2_3) + 1, 2 * L, max(1, L // 7)):
+            assert max_moved_corners(L, B, 3) + 1 >= math.ceil(moved_corner_reach(L, 3)) - 1
+    H = 137528045312
+    BH = math.floor(H * LOG2_3) + 1
+    assert moved_corner_window(H, BH, 3) == 341 and max_moved_corners(H, BH, 3) == 402128786
+    assert math.floor(moved_corner_reach(H, 3)) == 401035065
+    lo, hi = 0, H
+    while lo < hi:  # arbitrary swaps: k swaps move at most k corners, with displacement span at most k + 1
+        mid = (lo + hi + 1) // 2
+        lo, hi = (mid, hi) if mid + 1 < moved_corner_reach(H, mid + 1) else (lo, mid - 1)
+    assert lo == 466608
+
+
+def test_three_moved_corners_every_length() -> None:
+    """Corollary 18: at most three corners of a balanced word moved one step each, positive
+    letters, any gcd, every L.  (i) L >= 340: the explicit form.  (ii) 30 <= L <= 339: the
+    window count with the exact size exponent settles all 23 583 pairs.  (iii) L <= 29: all
+    words checked directly, through the sum c_bal + sum of the moved terms, which is a unit
+    times c(w) modulo d."""
+    assert 4 < moved_corner_reach(340, 3) and not 4 < moved_corner_reach(339, 3)
+    pairs = 0
+    for L in range(30, 340):
+        for B in range(math.floor(L * LOG2_3) + 1, 2 * L):
+            assert max_moved_corners(L, B, 3, exact=True) >= 3
+            pairs += 1
+    assert pairs == 23583
+    words = 0
+    for L in range(3, 30):
+        for B in range(math.floor(L * LOG2_3) + 1, 2 * L):
+            w0 = balanced_word(L, B)
+            d = 2**B - 3**L
+            half = (d + 1) // 2
+            X, term = 0, []
+            for p, x in enumerate(w0):
+                term.append(pow(3, L - 1 - p, d) * pow(2, X, d) % d)
+                X += x
+            c0 = sum(term) % d
+            assert c0 == cycle_numerator(w0) % d
+            for k in (1, 2, 3):
+                for ps in combinations(range(L), k):
+                    for sgs in product((1, -1), repeat=k):
+                        w = _move_corners(w0, list(zip(ps, sgs)))
+                        if w is None:
+                            continue
+                        S = (c0 + sum(term[p] if sg == 1 else -term[p] * half for p, sg in zip(ps, sgs))) % d
+                        assert S != 0
+                        if words % 997 == 0:  # the sum is a unit times c(w): spot-check the relation
+                            u = 1 if ps[0] != 0 else (half if sgs[0] == 1 else 2)
+                            assert cycle_numerator(w) % d == u * S % d
+                        words += 1
+    assert words == 1087329
+
+
+def test_few_runs_have_few_stretches() -> None:
+    """Corollary 17: a word whose profile has r' jump points in level order has at most
+    (j + 1)(r' + 1) different stretches of length j, each of weight >= floor(jB/L) - (s - 1).
+    Checked on random profiles with values 0 and 1 (unions of raised runs)."""
+    rng = random.Random(8)
+    n = 0
+    for L, B in ((55, 89), (89, 142), (144, 229), (233, 370)):
+        a = 2 * L - B
+        for r in (1, 2, 3, 5, 8):
+            for _ in range(6):
+                cuts = sorted(rng.sample(range(a, L), 2 * r))
+                m = [0] * L
+                for i in range(r):
+                    for D in range(cuts[2 * i], cuts[2 * i + 1]):
+                        m[D] = 1
+                w = profile_word(L, B, m)
+                assert w is not None and displacement(w) == m
+                jumps = sum(1 for D in range(L) if m[D] != m[D - 1])
+                assert jumps <= 2 * r and height_spread(w) < 2
+                for j in (3, 7, 12, 20):
+                    fs = {tuple(w[(p + i) % L] for i in range(j)) for p in range(L)}
+                    assert len(fs) <= (j + 1) * (jumps + 1)
+                    assert min(sum(f) for f in fs) >= (j * B) // L - 1
+                n += 1
+    assert n == 120
+
+
+def test_one_move_from_a_power() -> None:
+    """Lemma 19: c(u^g) = c(u) Phi with Phi = (2^(gB') - 3^(gL')) / (2^B' - 3^L').  Moving one
+    corner of u^g changes c by +-3^alpha 2^beta, so gcd(c(w), Phi) = 1 and d does not divide
+    c(w), for every word u with positive letters and every g >= 2."""
+    n = 0
+    for Lp in range(1, 5):
+        for u in product(range(1, 5), repeat=Lp):
+            Bp = sum(u)
+            if 2**Bp <= 3**Lp:
+                continue
+            for g in (2, 3, 4):
+                w0 = tuple(u) * g
+                L, d = Lp * g, 2 ** (Bp * g) - 3 ** (Lp * g)
+                Phi = d // (2**Bp - 3**Lp)
+                assert Phi * (2**Bp - 3**Lp) == d and cycle_numerator(w0) == cycle_numerator(u) * Phi
+                assert Phi > 1 and gcd(Phi, 6) == 1
+                for p in range(L):
+                    for sg in (1, -1):
+                        w = _move_corners(w0, [(p, sg)])
+                        if w is not None:
+                            assert gcd(cycle_numerator(w), Phi) == 1 and cycle_numerator(w) % d != 0
+                            n += 1
+    assert n == 16452
+
+
+# ---------------------------------------------------------------------------
+# section 7: reach of the norm test, by swap distance from balance
 # ---------------------------------------------------------------------------
 
 

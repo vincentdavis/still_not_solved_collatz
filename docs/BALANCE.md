@@ -1,6 +1,6 @@
-# Loops near perfect balance — the cycle equation in Q(2^(1/L))
+# Loops near perfect balance — norms in Q(2^(1/L)), and repeats
 
-**Provenance.** A user-led pass of 2026-09-30 / 10-01 (`python/collatz_maxodd/balance.py`,
+**Provenance.** A user-led pass of 2026-09-30 to 10-02 (`python/collatz_maxodd/balance.py`,
 `python/tests/test_balance.py`, `web/balance.html`).  The question was whether the idea
 behind Knight's theorem on balanced loops can be pushed one step further.  Labels: **PROVED**
 (complete proof here), **COMPUTED** (exact, pinned by a test), **CITED**.  Classical Collatz
@@ -12,14 +12,15 @@ balanced loop the *high cycle*.  Halbeisen and Hungerbühler (*Acta Arith.* 78 (
 227–239) showed it has the largest smallest member among all loops with the same counts, and
 Knight showed it is never integral.  Section 2 gives a second proof of Knight's theorem.
 Lemmas 1 and 2 are standard facts — an index computation and a substitution — arranged for
-this purpose; Corollary 4, Theorems 1, 2 and 3 and the table of section 6 were not found in
-the sources checked (section 8).  Independent referee passes re-derived every step of Theorems 1
+this purpose; Corollary 4, Theorems 1, 2 and 3 and the table of section 7 were not found in
+the sources checked (section 9).  Section 6 combines two classical facts (Terras and Everett;
+Belaga); its Theorem 4 and corollaries were not found stated in those sources either.  Independent referee passes re-derived every step of Theorems 1
 and 2.  Neither found an error in a theorem.  The second found that the citation of Rhin's
 bound was justified by a false inequality; the bound actually used is Rhin's own statement,
 and the citation is now exact.  A third pass re-derived section 5 and found no error; it
 replaced a test that proved nothing, made the mass criterion independent of the rotation,
 and supplied proofs for two remarks that had only been computed.  All their corrections are
-folded in.
+folded in.  Section 6 has not been refereed yet.
 
 **A correction to the conversation.**  Before this write-up, the one-swap estimate was quoted
 with an 8 % margin per member and Smyth's constant.  That estimate used the element
@@ -174,7 +175,7 @@ Each `D ∈ [1, L−1]` occurs once, so there are `2(L − b) − 1` internal sw
 nothing new: the `e = 0` swap gives another rotation of the balanced word (`γ_0 = θ` is a
 unit), and the `e = 1` and `k = 2` swaps give the same cyclic word (`γ_1 = η_2`).  So there
 are `2(L − b) − 3` distinct unbalanced cyclic words at distance 1 — the distance-1 column of
-section 6.  The counts 159, 2 059 and 3 034 below are of internal swaps.
+section 7.  The counts 159, 2 059 and 3 034 below are of internal swaps.
 
 **Theorem 1.** Let `L ≥ 2`, `gcd(L, B) = 1`, `log₂3 < B/L < 2`.  No one-swap word of slope
 `B/L` is the halving word of a positive integer loop of `3n+1`.
@@ -417,7 +418,8 @@ coprime pairs.  COMPUTED (`test_theorem2_finite_range`):
   raising those at levels 141 and 187 gives a word of 1s and 2s whose element
   `1 − θ + θ^96 − θ^141 + θ^142 − θ^187 + θ^188` has an odd norm of about `11.33 d`.  The word
   is not a loop, because `d` does not divide that norm, but no bound on its size can show it.
-  Section 5 shows what to count instead of swaps.
+  Section 5 shows what to count instead of swaps, and section 6 settles three swaps by
+  another route (Corollary 18).
 
 ## 5. One run of levels (PROVED, given the CITED bound of Ellison and a COMPUTED check for `L ≤ 17`)
 
@@ -587,7 +589,8 @@ Let `g ≥ 1`.  By Lemma 12, `D₁ ≥ a`, so `1 ≤ g < f ≤ b`.  As `q > 0` a
   `1 − θ^(g₁) + θ^(f₁) − θ^(g₂) + θ^(f₂)`.  If both runs consist of `12` corners the mass is
   below `1 + 4·16/9 = 73/9 < 9`, the two-raise bound of Lemma 9, so the proof of Theorem 2
   should carry over, with Rhin's bound and a finite check.  This is not done here.  Three
-  runs can exceed 9: at `(100, 159)` the levels 59, 61 and 63 give mass 11.2.
+  runs can exceed 9: at `(100, 159)` the levels 59, 61 and 63 give mass 11.2.  Section 6
+  excludes any number of runs once `L` is large enough (Corollary 17).
 * COMPUTED, in the suite.
   * Lemma 10 and the normalization hold on 4 600 random words with `L ≤ 30`; the element and
     `c(w)` have the same gcd with `d`, non-trivial on 303 of them.
@@ -609,7 +612,215 @@ Let `g ≥ 1`.  By Lemma 12, `D₁ ≥ a`, so `1 ≤ g < f ≤ b`.  As `q > 0` a
     elements with `L ≤ 34`.
   * 8 661 two-run words with `L ≤ 34`: largest mass 7.62, none a loop.
 
-## 6. How far the norm test reaches (COMPUTED)
+## 6. Repeats (PROVED; at the smallest `B` the explicit bound uses the CITED bound of Rhin)
+
+Sections 3 to 5 bound a norm.  This section uses no number field and no coprimality.  It
+combines two classical facts.  Two members of a loop that share their next halvings are
+congruent modulo a high power of 2 (Terras 1976, Everett 1977).  And the members of a loop
+are bounded in terms of its staircase (Belaga 2003 for the smallest).  Together they forbid
+long repeated stretches in any loop whose staircase stays near the line.  Words near balance
+are full of such stretches.
+
+**Notation.**  A positive loop has odd members `n_0, …, n_(L−1)`, all different, and halving
+counts `x_p`, with `2^(x_p) n_(p+1) = 3n_p + 1` and indices modulo `L`.  As before
+`B = Σ x_p`, `d = 2^B − 3^L > 0`, and `D'_p = pB − L X_p` are the generalized levels of
+section 5.  Let `m` and `M` be the smallest and largest members, and
+
+    σ := (max_p D'_p − min_p D'_p)/L,      τ := −log₂(2^(B/L) − 3).
+
+`σ` is the *height spread* of the word: the vertical extent, in halvings, of the staircase's
+deviation from the line.  A balanced word has `σ = (L − 1)/L`.  `τ` is the *size exponent* of
+the slope.  A *stretch* of length `j` at position `p` is `x_p, …, x_(p+j−1)`, read
+cyclically, and its *weight* is the sum of its letters.
+
+**Lemma 13 (repeat identity).**  If the stretches of length `j` at two positions `p ≢ q`
+(mod `L`) are equal, with weight `X`, then
+
+    3^j (n_p − n_q) = 2^X (n_(p+j) − n_(q+j)).
+
+Hence `2^X` divides `n_p − n_q`, `3^j` divides `n_(p+j) − n_(q+j)`, and
+`M − m ≥ max(2^X, 3^j)`.
+
+*Proof.* If `x_p = x_q = x`, subtracting `2^x n_(q+1) = 3n_q + 1` from
+`2^x n_(p+1) = 3n_p + 1` gives `2^x (n_(p+1) − n_(q+1)) = 3 (n_p − n_q)`.  Apply this `j`
+times.  The members are distinct, so both differences are non-zero.  ∎
+
+The `+1` cancels, so the identity holds for loops of `3n+q` as well.  It is the Syracuse
+form of the lemma of Terras and Everett: integers with the same first `k` parities are
+congruent modulo `2^k`.
+
+**Lemma 14 (sizes).**  For every member,
+
+    2^((D'_p − max D')/L)  ≤  n_p (2^(B/L) − 3)  ≤  2^((D'_p − min D')/L).
+
+In particular `m ≤ 2^τ` and `M ≤ 2^(σ+τ)`.
+
+*Proof.* `n_p = c(w^(p))/d` for the rotation `w^(p)` that starts at `p`, and
+`c(w^(p)) = Σ_(i<L) 3^(L−1−i) 2^(X_(p+i) − X_p)`, with `X_(i+L) = X_i + B`.  Since
+`X_(p+i) − X_p = iB/L + (D'_p − D'_(p+i))/L`,
+
+    c(w^(p)) = 3^(L−1) Σ_(i<L) ρ^i 2^((D'_p − D'_(p+i))/L),      ρ = 2^(B/L)/3.
+
+Bound the last factor above by `2^((D'_p − min D')/L)` and below by `2^((D'_p − max D')/L)`,
+and use `3^(L−1) Σ_(i<L) ρ^i = 3^(L−1)(ρ^L − 1)/(ρ − 1) = d/(2^(B/L) − 3)`.  ∎
+
+So the member at corner `p` is `2^(D'_p/L)` up to the factor `2^σ`: the generalized levels are
+the logarithms of the members.  The bound `m ≤ 1/(2^(B/L) − 3)` is classical (CITED: Belaga
+2003, for `3x+d`); it also follows from `2^B = Π(3 + 1/n_i)`.
+
+**Theorem 4 (repeats).**  In a positive loop of `3n+1`, a stretch that occurs at two
+different positions has weight `X < σ + τ`.
+
+*Proof.* `2^X ≤ M − m < M ≤ 2^(σ+τ)`, by Lemmas 13 and 14.  ∎
+
+In terms of the members alone: `M − m ≥ 2^X`, so a repeat of weight `X` forces a spread
+`M/m ≥ 1 + 2^X (2^(B/L) − 3)`.  For `3n+q` every bound carries a factor `q`, and the statement
+is `X < log₂ q + σ + τ`.
+
+*How large is `τ`.*  Put `δ = B − L log₂3` and `Λ = δ log 2 = B log 2 − L log 3`.  Then
+`2^(B/L) − 3 = 3(2^(δ/L) − 1) > 3Λ/L`, so `τ < log₂(L/(3Λ))`.  Write `B₀ = ⌊L log₂3⌋ + 1`.
+
+* If `B ≥ B₀ + 1`, then `Λ > log 2` and `τ < log₂ L − 1.05`.  No citation is needed.
+* If `B = B₀`, then `Λ ≥ B^(−13.3)` (CITED: Rhin, section 4), and
+  `τ < log₂(L/3) + 13.3 log₂ B`.
+* For a given pair `τ` is a number: `τ(13, 21) = 3.97`, `τ(41, 65) = 10.2`,
+  `τ(306, 485) = 16.6`, `τ(987, 1565) = 9.53`.
+
+So a loop has no repeated stretch of weight `σ + log₂(L/3) + 13.3 log₂ B` or more, which is
+about `σ + 14.3 log₂ L`.
+
+**Lemma 15 (balanced words are full of repeats).**  Let `gcd(L, B) = 1` and `1 ≤ j ≤ L − 1`.
+The stretch of length `j` at a corner of the lower Christoffel word depends only on which of
+the `j + 1` arcs, cut out of `Z/L` by the levels `0, −b, −2b, …, −jb`, contains the corner's
+level.  So there are at most `j + 1` different stretches of length `j`, each of weight
+`⌊jB/L⌋` or `⌈jB/L⌉`.  A balanced word with `gcd(L, B) = g > 1` has at most
+`min(j + 1, L/g)` different stretches of length `j`, with the same weights.
+
+*Proof.* By Lemma 5 the corner of level `D` is followed by a 2 exactly when `D ≥ a`, and the
+next corner has level `D + b` modulo `L`.  So the `i`-th letter of the stretch is 2 exactly
+when `D + ib` lies in `[a, L)` modulo `L`, that is, when `D` lies in the cyclic interval from
+`−(i+1)b` to `−ib`, because `a ≡ −b`.  The endpoints of these intervals, for `0 ≤ i < j`, are
+the `j + 1` cut points.  The weight is `X_(p+j) − X_p = ⌊(p+j)B/L⌋ − ⌊pB/L⌋`.  For `g > 1`
+the balanced word is `u^g`, with `u` the Christoffel word of `(L/g, B/g)`.  A stretch of
+`u^g` depends only on its position modulo `L/g`, which gives the bound `L/g`, and for
+`j < L/g` it is a stretch of `u`.  ∎
+
+**Corollary 16 (few moved corners).**  Let `log₂3 < B/L < 2`, with any gcd, and let `c` be a
+balanced word of length `L` and sum `B`.  Let `w` be a word with positive letters whose
+staircase differs from that of `c` at `k` corners, by at most `u` steps up and `v` steps
+down.  Put `s = u + v + 1`.  If some `j` satisfies
+
+    (k + 1)(j + 1) < L      and      ⌊jB/L⌋ ≥ s + τ,
+
+then no rotation of `w` is a loop.  For every admissible `B` this holds as soon as
+
+    k + 1 < L/Ψ(L, s),      Ψ(L, s) := 2 + (s + 1 + log₂(L/3) + 13.3 log₂(L log₂3 + 1))/log₂3.
+
+*Proof.* The generalized levels of `w` are `D_p − L m_p`, where the levels `D_p` of `c` lie
+in an interval of length at most `L − 1` and `−v ≤ m_p ≤ u`.  So `σ(w) < s`.  Call a position `t` *clean* if none of the
+corners `t, t+1, …, t+j` is moved.  The stretch of length `j` of `w` at a clean position is
+that of `c`.  Each moved corner spoils at most `j + 1` positions, so at least
+`L − k(j + 1) ≥ j + 2` positions are clean.  By Lemma 15 they carry at most `j + 1`
+different stretches.  So two clean positions carry the same stretch, of weight at least
+`⌊jB/L⌋ ≥ s + τ > σ + τ`.  Theorem 4 forbids this in a loop.
+
+For the explicit form let `τ̄ = log₂(L/3) + 13.3 log₂(L log₂3 + 1)`.  It exceeds `τ` for
+every admissible `B`: at `B₀` because `B₀ < L log₂3 + 1`, and above `B₀` because
+`log₂ L − 1.05 < τ̄`.  Take `j = ⌈(s + 1 + τ̄)/log₂3⌉`.  Then
+`⌊jB/L⌋ > j log₂3 − 1 ≥ s + τ̄`, and `j + 1 ≤ Ψ(L, s)`.  ∎
+
+`L/Ψ(L, s)` increases with `L`, because `Ψ > 13.1 ≥ L·∂Ψ/∂L`.  So for each `k` and `s` the
+explicit form holds from some length on.  COMPUTED (`test_repeat_theorem_numbers`), for
+corners moved one step each, `s = 3`:
+
+| moved corners `k` | 1 | 2 | 3 | 4 | 5 | 10 | 100 |
+|---|---|---|---|---|---|---|---|
+| explicit form holds for every `L ≥` | 149 | 242 | 340 | 443 | 548 | 1 104 | 13 414 |
+
+For `k = 0` and `s = 1` it holds for every `L ≥ 62`: a third proof of Knight's theorem at
+those lengths.  At `L = 137 528 045 312`, the least number of odd members a loop can have
+(CITED: Hercher 2023, with Barina 2025), `Ψ = 342.9` and the stretch needed has 341 letters.
+There the corollary excludes up to 401 035 064 corners moved one step each.  For arbitrary
+swaps, `k` swaps move at most `k` corners and `s ≤ k + 1`, and it excludes every
+`k ≤ 466 608`.
+
+**Corollary 17 (few runs).**  Let `gcd(L, B) = 1`.  Let `w` be a word with positive letters
+whose profile `m` (section 5) takes values in `[−v, u]` and has `r'` *jump points*: levels
+`D` with `m(D) ≠ m(D − 1)`, read cyclically.  Put `s = u + v + 1`.  If some `j` satisfies
+`(r' + 1)(j + 1) < L` and `⌊jB/L⌋ ≥ 2s − 1 + τ`, then no rotation of `w` is a loop.  This
+holds as soon as `r' + 1 < L/Ψ(L, 2s − 1)`.
+
+*Proof.* The letter after the corner of level `D` is
+`F(D) = 1 + [D ≥ a] + m(D + b) − m(D)`, with levels modulo `L`.  `F` changes only at the
+levels 0 and `a ≡ −b`, at the jump points, and at the jump points shifted by `−b`.  The
+stretch of length `j` at level `D` is `F(D), F(D + b), …, F(D + (j−1)b)`.  So it is constant
+on the arcs cut out by the points `−ib` and `t − ib`, for `0 ≤ i ≤ j` and `t` a jump point:
+at most `(j + 1)(r' + 1)` arcs.  If that is less than `L`, some arc holds two levels, and two
+corners carry the same stretch.  Its weight is
+`X_(p+j) − X_p + m_(p+j) − m_p ≥ ⌊jB/L⌋ − (s − 1) ≥ s + τ > σ + τ`.  The explicit form
+follows as in Corollary 16.  ∎
+
+Raising `r` runs by one step, the setting of Theorem 3 with several runs, has `s = 2` and
+`r' ≤ 2r`.  So it is excluded when `2r + 1 < L/Ψ(L, 3)`: two runs for every `L ≥ 443`, three
+for `L ≥ 655`, and up to 200 517 532 runs at Hercher's length.
+
+**Corollary 18 (three corners, every length).**  Let `L ≥ 2` and `log₂3 < B/L < 2`, with any
+gcd.  A word with positive letters that differs from a balanced word in at most three
+corners, each by one step, is not a loop.  In particular no loop is within three swaps of a
+balanced word.
+
+*Proof.* Use Corollary 16 with `k ≤ 3` and `s = 3`.
+
+* `L ≥ 340`: the explicit form.
+* `30 ≤ L ≤ 339`: COMPUTED.  For each of the 23 583 pairs `(L, B)` some `j` has
+  `4(j + 1) < L` and `⌊jB/L⌋ ≥ 3 + τ`, with the exact value of `τ`.
+* `L ≤ 29`: COMPUTED.  All 1 087 329 such words were checked directly
+  (`test_three_moved_corners_every_length`).
+
+A swap moves one corner by one step.  Moving a corner by two steps needs both its neighbours
+to move as well, so it takes four swaps.  Hence three swaps move at most three corners, each
+by one step.  ∎
+
+**Lemma 19 (next to a repeated pattern).**  Let `u` be a word with positive letters, of
+length `L'` and sum `B'`, with `2^(B') > 3^(L')`, and let `g ≥ 2`.  A word obtained from
+`u^g` by moving one corner by one step is not a loop.
+
+*Proof.* After a rotation the corner is not corner 0.  `c(u^g) = c(u)·Φ`, with
+`Φ = Σ_(i<g) 3^((g−1−i)L') 2^(iB') = d/d'` and `d' = 2^(B') − 3^(L')`.  Moving corner `p`
+changes `c` by `3^(L−1−p) 2^(X_p)` or by `−3^(L−1−p) 2^(X_p − 1)`.  `Φ` divides `d`, so it is
+coprime to 6, and `Φ > 1`.  So `Φ` does not divide `c(w)`, and neither does `d`.  ∎
+
+This needs no bound on `2^B − 3^L` and no restriction on `L`.  With Theorems 0 and 1 it shows
+that no loop is one swap from a balanced word for any `(L, B)`, coprime or not.
+
+**Remarks.**
+* What this adds.  Theorems 1 to 3 hold for every `L` with small finite checks, but reach
+  only two swaps or one run, and only coprime `(L, B)`.  Theorem 4 needs a long repeat, so it
+  needs `L` large compared with `k log L`; within that range it covers any gcd, any number
+  of moved corners up to `L/Ψ`, and any number of runs up to half of that.  Corollary 18
+  joins the two ranges for three corners.
+* Knight's identity `3f(1u0) − f(0u1) + 1 = 2^(k−1)/(2^k − 3^x)` also compares two members
+  of the balanced loop whose parity vectors share a long block `u`.  It extracts an exact
+  divisibility where Lemma 13 extracts a size.
+* What it does not reach.  The theorem needs a repeat of weight `σ + τ`.  Loops made of a
+  few long runs have `σ` of order `L`, so it says nothing about circuits.  A word without
+  long repeats, as a random word is, is untouched.  That is still the whole open problem.
+* It really is about `3n+1`.  For `3n+q` the bound is `X < log₂ q + σ + τ`.  No bound free
+  of `q` can hold: with `q = d` every word is a loop of `3n+q`, with members `c(w^(p))`.
+* COMPUTED, in the suite.
+  * Lemma 13 on all 1 681 loops of the `3n+q` census with `L ≥ 2`: 100 137 pairs of positions
+    with a common stretch (`test_repeat_identity_on_real_loops`).
+  * Lemma 14 on all 22 405 members of the census loops with `2^B > 3^L`, and the inequality
+    `X < log₂ q + σ + τ` for their longest repeats; the closest comes within 2.63
+    (`test_member_size_bounds_on_real_loops`).
+  * Lemma 15 for every coprime pair with `L ≤ 70` and every non-coprime pair with `L ≤ 60`.
+  * Corollary 16 in practice: 360 balanced words with up to 8 corners moved, at six lengths
+    from 120 to 600 and three values of `B`, each have a repeat of weight at least `σ + τ`.
+  * Corollary 17: 120 random profiles with up to 8 runs have at most `(j + 1)(r' + 1)`
+    stretches of length `j`.
+  * Lemma 19 on 16 452 words: `gcd(c(w), Φ) = 1`.
+
+## 7. How far the norm test reaches (COMPUTED)
 
 Corollary 3 applies to every word.  Among the primitive cyclic words made of 1s and 2s with
 the balanced counts, grouped by how many adjacent swaps separate them from the balanced word,
@@ -631,12 +842,15 @@ word at distance 1 (Theorem 1) and at distance 2 (Theorem 2).  Beyond that, Theo
 the `a(a − 1)/2` run words of each slope, which reach distance `⌊a/2⌋`: for instance 3 of the
 129 words at distance 3 for `(18, 29)`.  The norm of a typical word grows with its
 distance: in samples of 4 000 moves of `k` corners at `(610, 967)`, the share with norm below
-`d` is 99.8 % for `k = 4`, 63.5 % for `k = 6` and 0.1 % for `k = 10` (not pinned).  Everything here assumes `gcd(L, B) = 1`; when `gcd(L, B) > 1` no loop's word is
-balanced, the most balanced primitive words are one swap from a power of a Christoffel word,
-and Lemma 1 and Theorems 1, 2 and 3 do not cover them.  At distance 3 the size argument
-fails for some words (section 4, last remark).
+`d` is 99.8 % for `k = 4`, 63.5 % for `k = 6` and 0.1 % for `k = 10` (not pinned).  The norm
+test assumes `gcd(L, B) = 1`; when `gcd(L, B) > 1` no loop's word is balanced, the most
+balanced primitive words are one swap from a power of a Christoffel word, and Lemma 1 and
+Theorems 1, 2 and 3 do not cover them.  At distance 3 the size argument fails for some words
+(section 4, last remark).  Section 6 fills both gaps by a different argument: Lemma 19 and
+Corollary 18 cover every gcd up to three swaps, and Corollary 16 covers `k` swaps once `L` is
+large compared with `k log L`.
 
-## 7. Strategy filter (`docs/FILTER.md`)
+## 8. Strategy filter (`docs/FILTER.md`)
 
 | test | verdict |
 |---|---|
@@ -651,17 +865,30 @@ and 3 exclude families of loop shapes, but at the opposite end: theirs are the m
 unbalanced loops, these the loops within two swaps of perfect balance or one run of levels
 away from it, for coprime `(L, B)`.
 
-## 8. Literature and novelty
+Theorem 4 passes the same five tests.  A: every bound carries a factor `q`, and for large `q`
+loops next to balance exist.  B: it uses `2^(B/L) > 3`.  C: it combines a 2-adic congruence
+with a bound on real size, so it is not a statement about residues alone.  D: it is exact.
+E: at the smallest `B` it uses Rhin's bound for `2^B − 3^L`.
+
+## 9. Literature and novelty
 
 Knight (2023/2026) settles balanced loops; Halbeisen–Hungerbühler (1997) give their extremal
 property; Fernández and Ibáñez (arXiv 2607.24844, 2026) study Christoffel words as extremal
 structures.  None of these uses norms in `Q(2^(1/L))` or treats words one or two swaps, or
 one run of levels, from balance; Lemmas 1 and 2 are standard (an index computation and a substitution).  Corollary 4,
-Theorems 1, 2 and 3 and the table of section 6 were not found in these sources.  A wider
+Theorems 1, 2 and 3 and the table of section 7 were not found in these sources.  A wider
 literature search is needed before calling Theorems 1, 2 and 3 new mathematics; they are new
 to this repository.
 
-## 9. Verification
+Section 6 is built from classical parts.  Lemma 13 is the lemma of Terras (*Acta Arith.* 30
+(1976) 241–252) and Everett (*Adv. Math.* 25 (1977) 42–45) in Syracuse form.  The bound
+`m ≤ 1/(2^(B/L) − 3)` is Belaga's (*Acta Arith.* 106 (2003) 197–206, for `3x+d`).  Rhin's
+bound is used as in section 4.  Searches on 2026-10-02 found no statement of the two-sided
+bound of Lemma 14, of Theorem 4, or of Corollaries 16 to 18: not in Knight, in Rozier and
+Terracol (arXiv 2502.00948), in Fernández and Ibáñez, or in the surveys consulted.  The
+argument is short enough to be folklore, so the same caution applies.
+
+## 10. Verification
 
 | claim | test |
 |---|---|
@@ -683,7 +910,14 @@ to this repository.
 | Theorem 3: constants, exact `d`, `L ≤ 17` directly, Rhin route, exact norms | `test_run_theorem`, `test_run_exact_norms` |
 | Theorem 3 needs positive letters | `test_positive_letters_are_needed` |
 | runs: lowering, counts, swap distance | `test_run_duality_and_counts`, `test_run_words_reach_far_from_balance` |
-| section 6 | `test_reach_profiles` |
+| Lemma 13 (repeat identity) on real `3n+q` loops | `test_repeat_identity_on_real_loops` |
+| Lemma 14 (sizes) and Theorem 4 on real `3n+q` loops | `test_member_size_bounds_on_real_loops`, `test_longest_repeat_and_spread` |
+| Lemma 15 (stretches of balanced words) | `test_balanced_words_are_full_of_repeats` |
+| Corollary 16: in practice, explicit form, thresholds, Hercher's length | `test_repeat_theorem_excludes_words_near_balance`, `test_repeat_theorem_numbers` |
+| Corollary 17 (few runs) | `test_few_runs_have_few_stretches` |
+| Corollary 18 (three corners, every length) | `test_three_moved_corners_every_length` |
+| Lemma 19 (next to a repeated pattern) | `test_one_move_from_a_power` |
+| section 7 | `test_reach_profiles` |
 | filter test A | `test_q13_has_balanced_and_one_swap_loops` |
 
-Run: `cd python && uv run pytest tests/test_balance.py` (31 tests).
+Run: `cd python && uv run pytest tests/test_balance.py` (40 tests).

@@ -137,6 +137,7 @@ verified convergence bound `X₀` (Barina), and archimedean/valuation bounds on
 | loop sieve: the shadow of the verified bound | ✓ | ✓ | ✓ | ✗ | — | density measurement; never excludes a finite cycle |
 | remainder-only membership rules beyond T0 | — | — | ✗ | — | — | impossible: rational loops meet every class prime to 3 (docs/LOOP_SIEVE.md L5) |
 | norm test near balance, in `Q(2^(1/L))` | ✓ | ✓ | ✓ | ✓ | ✓ | passes all five: rules out the loop shapes within two swaps of perfect balance, and those one run of levels away (docs/BALANCE.md); like the circuit results, a family of shapes, not every loop |
+| repeats: a stretch occurring twice forces `M − m ≥ 2^X`, against `M ≤ 2^σ/(2^(B/L) − 3)` | ✓ | ✓ | ✓ | ✓ | ✓ | passes all five: every bound carries a factor `q`, it uses `2^(B/L) > 3`, it combines a 2-adic congruence with real size, it is exact, and at the smallest `B` it uses Rhin's bound; rules out every loop within three swaps of balance and, for long loops, within about `L/343` moved corners (docs/BALANCE.md section 6); says nothing about patterns without long repeats |
 
 ¹ also covered by the in-repo impossibility theorem: the sieve has no finite
 transfer matrix (state grows like `2^{1.76j}` — `deathdepth.py`).

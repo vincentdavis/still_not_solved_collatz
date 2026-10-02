@@ -33,12 +33,23 @@ Classical Collatz, ``q = 1``.  A loop with ``L`` odd members and ``B`` halvings 
   raising a whole run of consecutive levels by one step costs three terms,
   ``1 - theta^g + theta^f``, whatever its length: the one-swap proof applies and no such word
   is a loop (``run_word``, ``run_element``).
+* **Repeats.**  No number field here.  If the halving words starting at two different members
+  agree for ``j`` letters of total weight ``X``, then
+  ``3^j (n_p - n_q) = 2^X (n_(p+j) - n_(q+j))``, so the two members differ by a multiple of
+  ``2^X``.  Every member is at most ``2^sigma / (2^(B/L) - 3)``, ``sigma`` the height spread
+  of the staircase.  So a loop has no repeated stretch of weight
+  ``X >= sigma - log2(2^(B/L) - 3)``.  Balanced words have only ``j + 1`` stretches of length
+  ``j``, so every word that differs from one in few corners, or whose profile has few jumps,
+  is excluded once ``L`` is large (``longest_repeat``, ``repeat_excludes``,
+  ``max_moved_corners``).
 """
 
 from __future__ import annotations
 
 import cmath
 import math
+from decimal import Decimal, getcontext
+from fractions import Fraction
 from math import gcd
 
 __all__ = [
@@ -79,6 +90,18 @@ __all__ = [
     "run_word",
     "run_element",
     "run_log_norm_bound",
+    "balanced_word",
+    "profile_word",
+    "generalized_levels",
+    "height_spread",
+    "repeat_at_length",
+    "longest_repeat",
+    "size_exponent",
+    "size_exponent_bound",
+    "repeat_excludes",
+    "moved_corner_window",
+    "max_moved_corners",
+    "moved_corner_reach",
 ]
 
 LOG2_3 = math.log2(3)
@@ -539,3 +562,136 @@ def run_log_norm_bound(L: int, B: int) -> float:
     element with ``g >= 1`` and ``D1 >= 2L - B`` (then ``1 <= g < f <= b``)."""
     b = B - L
     return 0.5 * L * math.log(1 + 4 ** ((b - 1) / L) + 4 ** (b / L))
+
+
+# ----------------------------------------------------------------------------- repeats
+
+
+def balanced_word(L: int, B: int) -> tuple[int, ...]:
+    """The balanced word of length ``L`` and sum ``B``, for any gcd: the lower Christoffel word
+    of ``(L/g, B/g)`` repeated ``g = gcd(L, B)`` times."""
+    g = gcd(L, B)
+    return christoffel(L // g, B // g) * g
+
+
+def profile_word(L: int, B: int, m: list[int]) -> tuple[int, ...] | None:
+    """Inverse of ``displacement``: the word whose corner of level ``D`` sits ``m[D]`` steps above
+    the lower Christoffel staircase (``gcd(L, B) = 1``, ``m[0] = 0``); ``None`` if a letter is
+    not positive."""
+    if gcd(L, B) != 1 or len(m) != L or m[0] != 0:
+        raise ValueError("need gcd(L, B) = 1, one displacement per level, and m[0] = 0")
+    X = [(p * B) // L + m[(p * B) % L] for p in range(L)] + [B]
+    w = tuple(X[p + 1] - X[p] for p in range(L))
+    return w if min(w) >= 1 else None
+
+
+def generalized_levels(w: tuple[int, ...] | list[int]) -> list[int]:
+    """``D'_p = pB - L X'_p`` for ``p = 0, ..., L-1``: one integer in each residue class of
+    ``pB`` modulo ``L``; ``D'_p / L`` is the height of the line above corner ``p``."""
+    L, B = len(w), sum(w)
+    out, X = [], 0
+    for p, x in enumerate(w):
+        out.append(p * B - L * X)
+        X += x
+    return out
+
+
+def height_spread(w: tuple[int, ...] | list[int]) -> Fraction:
+    """``sigma = (max D' - min D') / L``: the vertical extent, in halvings, of the staircase's
+    deviation from the straight line.  Balanced words have ``sigma = (L - 1)/L``."""
+    D = generalized_levels(w)
+    return Fraction(max(D) - min(D), len(w))
+
+
+def repeat_at_length(w: tuple[int, ...] | list[int], j: int) -> tuple[int, int] | None:
+    """Two different cyclic positions ``p < q`` whose next ``j`` letters agree, or ``None``."""
+    w = tuple(w)
+    L = len(w)
+    if not 1 <= j < L:
+        return None
+    ww = w + w
+    seen: dict[tuple[int, ...], int] = {}
+    for p in range(L):
+        f = ww[p : p + j]
+        if f in seen:
+            return seen[f], p
+        seen[f] = p
+    return None
+
+
+def longest_repeat(w: tuple[int, ...] | list[int]) -> tuple[int, int, int, int]:
+    """``(j, X, p, q)``: the largest ``j`` such that some stretch of ``j`` letters occurs at two
+    different cyclic positions ``p < q``, and the weight ``X`` of that stretch.  ``(0, 0, 0, 0)``
+    if all letters are different.  (A repeat of length ``j`` contains one of length ``j - 1``,
+    so a binary search finds the largest.)"""
+    w = tuple(w)
+    L = len(w)
+    lo, hi, best = 0, L - 1, None
+    while lo < hi:
+        mid = (lo + hi + 1) // 2
+        r = repeat_at_length(w, mid)
+        if r is None:
+            hi = mid - 1
+        else:
+            lo, best = mid, r
+    if lo == 0 or best is None:
+        return 0, 0, 0, 0
+    p, q = best
+    return lo, sum((w + w)[p : p + lo]), p, q
+
+
+def size_exponent(L: int, B: int) -> float:
+    """``tau = -log2(2^(B/L) - 3)``: by Lemma 14 every member of a loop is at most
+    ``2^(sigma + tau)`` and the smallest is at most ``2^tau``.  Computed with 60 digits, so it
+    is reliable for any ``L`` in reach."""
+    if 2**B <= 3**L:
+        raise ValueError("need 2^B > 3^L")
+    getcontext().prec = 60
+    two = Decimal(2)
+    v = (Decimal(B) / Decimal(L) * two.ln()).exp() - 3
+    return float(-v.ln() / two.ln())
+
+
+def size_exponent_bound(L: int, B: int) -> float:
+    """Upper bound for ``size_exponent`` that needs no computation with ``d``:
+    ``2^(B/L) - 3 > 3 Lambda / L`` with ``Lambda = B log 2 - L log 3``.  For
+    ``B = floor(L log2 3) + 1`` Rhin's bound ``Lambda >= B^(-13.3)`` gives
+    ``log2(L/3) + 13.3 log2 B``; for larger ``B``, ``Lambda > log 2`` gives ``log2(L / (3 log 2))``."""
+    if B == math.floor(L * LOG2_3) + 1:
+        return math.log2(L / 3) + 13.3 * math.log2(B)
+    return math.log2(L / (3 * math.log(2)))
+
+
+def repeat_excludes(w: tuple[int, ...] | list[int]) -> bool:
+    """Theorem 4 applied to ``w`` with the exact size exponent: True when ``w`` has a repeated
+    stretch of weight ``X >= sigma + tau``, which no loop of ``3n+1`` can have."""
+    L, B = len(w), sum(w)
+    _, X, _, _ = longest_repeat(w)
+    return X >= float(height_spread(w)) + size_exponent(L, B)
+
+
+def moved_corner_window(L: int, B: int, s: int, exact: bool = False) -> int:
+    """Least ``j`` with ``floor(jB/L) >= s + tau``: the length of stretch whose repetition
+    Corollary 16 needs when the corner displacements span ``s - 1`` steps.  ``tau`` is the
+    bound of ``size_exponent_bound`` (or the exact value when ``exact``)."""
+    need = s + (size_exponent(L, B) + 1e-9 if exact else size_exponent_bound(L, B))
+    j = max(1, math.floor(need * L / B) - 1)
+    while (j * B) // L < need:
+        j += 1
+    return j
+
+
+def max_moved_corners(L: int, B: int, s: int = 3, exact: bool = False) -> int:
+    """Corollary 16: largest ``k`` such that a word differing from a balanced word in ``k``
+    corners, with displacements spanning ``s - 1`` steps, cannot be a loop: the largest ``k``
+    with ``(k + 1)(j + 1) < L`` for ``j = moved_corner_window``.  ``-1`` if even ``k = 0`` fails."""
+    j = moved_corner_window(L, B, s, exact)
+    return (L - 1) // (j + 1) - 1
+
+
+def moved_corner_reach(L: int, s: int = 3) -> float:
+    """Explicit form valid for every ``B``: ``k`` moved corners are excluded whenever
+    ``k + 1 < L / Psi`` with ``Psi = 2 + (s + 1 + log2(L/3) + 13.3 log2(L log2 3 + 1)) / log2 3``.
+    Returns ``L / Psi``."""
+    psi = 2 + (s + 1 + math.log2(L / 3) + 13.3 * math.log2(L * LOG2_3 + 1)) / LOG2_3
+    return L / psi
