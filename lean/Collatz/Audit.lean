@@ -33,6 +33,7 @@ import Collatz.Halving
 import Collatz.Census
 import Collatz.QTransfer
 import Collatz.Words
+import Collatz.Repeat
 
 /-! ## Definitions (`Collatz/Odd.lean`) -/
 #print axioms Collatz.v2
@@ -437,3 +438,45 @@ header says why each one is not a theorem. -/
 #print axioms Collatz.deficit_bracket_k5
 #print axioms Collatz.deadMass
 #print axioms Collatz.dyadic_mass_conservation_witness
+
+/-! ## The repeat theorem (`Collatz/Repeat.lean`).
+
+Theorem 4 of docs/BALANCE.md in whole numbers: a stretch of halving counts that
+occurs at two different places of a cycle forces members apart
+(`repeat_identity`, `repeat_gap_M`), the largest member is bounded through the
+size test and its height (`max_pow_le`), hence `repeat_theorem`.  Every
+statement is instantiated on the real cycle `cycle5`. -/
+#print axioms Collatz.three_mul_split
+#print axioms Collatz.coprime_split
+#print axioms Collatz.three_pow_odd
+#print axioms Collatz.size_pos
+#print axioms Collatz.size_mono
+#print axioms Collatz.le_of_size
+#print axioms Collatz.Cycle.window
+#print axioms Collatz.Cycle.window_zero_left
+#print axioms Collatz.Cycle.window_congr
+#print axioms Collatz.Cycle.le_window
+#print axioms Collatz.Cycle.repeat_identity
+#print axioms Collatz.Cycle.repeat_split
+#print axioms Collatz.Cycle.y_ne_of_mod_ne
+#print axioms Collatz.Cycle.repeat_gap
+#print axioms Collatz.Cycle.repeat_gap_M
+#print axioms Collatz.Cycle.repeat_lt_M
+#print axioms Collatz.Cycle.bb_period
+#print axioms Collatz.Cycle.m_le_of_size
+#print axioms Collatz.Cycle.max_chain
+#print axioms Collatz.Cycle.max_pow_le
+#print axioms Collatz.Cycle.repeat_bound
+#print axioms Collatz.Cycle.repeat_theorem
+#print axioms Collatz.Cycle.repeat_theorem_q1
+#print axioms Collatz.Cycle.repeat_unique
+#print axioms Collatz.cycle5_bb
+#print axioms Collatz.cycle5_agree
+#print axioms Collatz.cycle5_window
+#print axioms Collatz.cycle5_repeat_identity
+#print axioms Collatz.cycle5_repeat_gap
+#print axioms Collatz.cycle5_size
+#print axioms Collatz.cycle5_height
+#print axioms Collatz.cycle5_max_pow_le
+#print axioms Collatz.cycle5_repeat_bound
+#print axioms Collatz.cycle5_repeat_theorem

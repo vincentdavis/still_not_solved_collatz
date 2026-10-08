@@ -12,7 +12,7 @@ lake build      # zero errors, zero warnings
 
 **Status: no `sorry` anywhere.** `#print axioms` runs at build time on **every
 named declaration** — every theorem, every definition, the `Cycle` structure
-itself, and every `Cycle` instance (341 declarations, `Collatz/Audit.lean`).
+itself, and every `Cycle` instance (375 declarations, `Collatz/Audit.lean`).
 All report `[propext, Quot.sound]`, `[propext]`, or nothing — no `sorryAx`, and
 no `Classical.choice`.
 
@@ -35,6 +35,7 @@ no `Classical.choice`.
 | `Collatz/Cycle.lean` | `structure Cycle`, `bb`/`BB`/`cc`, faithfulness, T0–T8 |
 | `Collatz/Bridge.lean` | `iter`, and `Cycle.ofOrbit` — **every real `S_q`-cycle yields a `Cycle q`** |
 | `Collatz/Examples.lean` | three hand-built `Cycle` instances + worked examples |
+| `Collatz/Repeat.lean` | **the repeat theorem** (docs/BALANCE.md, Theorem 4) in whole numbers: `repeat_identity`, `repeat_gap_M`, `max_pow_le`, `repeat_theorem`; instantiated on `cycle5` |
 | `Collatz/Guards.lean` | `#guard` + `example` value pins; three bridge-built instances |
 | `Collatz/Audit.lean` | `#print axioms` for every named declaration |
 | `Collatz/Unproved.lean` | comments only — what is **not** formalized and why |
@@ -290,6 +291,10 @@ Infrastructure, also proved: `M_odd`, `M_pos`, `y_pos`, `step_mul`, `S_eq`,
 * **The 2-adic sieve beyond T8** (`M ≢ 97, 125 mod 128`, the limiting density
   0.2863…). Individual kills are three-line computations like T8; the general
   statement is an induction over forward exponent vectors.
+* **Near balance, beyond the repeat theorem** (`docs/BALANCE.md`). Theorem 4 is
+  formalized (`Collatz/Repeat.lean`, last section of this file). Theorems 1–3
+  need a number field; Ellison's and Rhin's bounds stay cited; the corollaries
+  about patterns near balance need the count of stretches of a Christoffel word.
 * **That any nontrivial `q = 1` cycle exists.** That is the open problem, and it
   is what caveat 2 below is about.
 
@@ -440,4 +445,69 @@ as a hypothesis. The value here is that everything *after* the Baker input is
 machine-checked and choice-free.
 
 NOVELTY: none. This is the classical Crandall-style squeeze, rearranged to avoid ℝ.
+
+---
+
+## `Collatz/Repeat.lean` — the repeat theorem
+
+`docs/BALANCE.md` section 6, Lemmas 13 and 14 and Theorem 4, in whole numbers.
+Valid for every `q`. 34 declarations: 32 on `[propext, Quot.sound]`, 2 on `[propext]`.
+
+**The statement.** Suppose the same stretch of halving counts occurs at two
+different places of a cycle: `j` steps with `X` halvings in total. Then
+
+```
+hN :  (3 * 2^N + q)^L ≤ 2^(N*L + B)                  -- N ≥ τ + log₂ q
+hD :  ∀ k, 1 ≤ k ≤ L → k * B ≤ L * B_k + D           -- height of the largest member
+   ⟹  (X + 1) * L < N * L + D                         -- `Cycle.repeat_theorem`
+```
+
+that is, `X + 1 < N + D/L`. The written theorem is `X < σ + τ − 1` with two real
+numbers: the size exponent `τ = −log₂(2^(B/L) − 3)` and the height spread `σ`
+of the staircase. Core Lean has no reals, so both enter as whole-number
+certificates, as `log₂ 3` does in `Collatz/Halving.lean`.
+
+| | |
+|---|---|
+| `Cycle.window` | `window p j = bb (p+1) + … + bb (p+j)`, the weight of a stretch |
+| `Cycle.repeat_identity` | `3^j·y(p+j) + 2^X·y(r) = 3^j·y(r+j) + 2^X·y(p)` when the stretches below `p` and `r` agree; `q` cancels |
+| `Cycle.repeat_split` | the two differences share one cofactor: `2^X·t` and `3^j·t` |
+| `Cycle.repeat_gap_M` | `m + 2^(X+1) ≤ M` and `m + 2·3^j ≤ M` when `p ≢ r (mod L)` |
+| `Cycle.bb_period` | the halving pattern has no period shorter than `L` |
+| `Cycle.m_le_of_size` | `b·m ≤ a` whenever `(3a + qb)^L ≤ a^L·2^B` |
+| `Cycle.max_pow_le` | `(b·M)^L ≤ a^L·2^D` under the same test and `hD` |
+| `Cycle.repeat_bound` | `(b·2^(X+1))^L < a^L·2^D`, the fraction form |
+| `Cycle.repeat_theorem`, `repeat_theorem_q1` | the statement above |
+| `Cycle.repeat_unique` | a stretch with `X + 1 ≥ N + s` halvings occurs at one place only |
+
+**No analysis is needed.** The written proof of the bound on `M` sums a
+geometric series with the real ratio `2^(B/L)/3`. `Cycle.max_chain` replaces it
+by a walk: go backwards from `M` until the first member at or below the
+threshold `a/b`. Every member passed on the way multiplies by at most `2^(B/L)`
+per step (`size_mono`), and the first member below the threshold costs at most
+`(3a + qb)/b`. The coprimality of `2^X` and `3^j` is two plain inductions
+(`coprime_split`); no `gcd` appears.
+
+**Nothing is lost by clearing denominators.** The threshold is an arbitrary
+fraction `a/b`. Letting it decrease to `q/(2^(B/L) − 3)` recovers the real
+statement `M ≤ q·2^(τ + D/L)`.
+
+### Non-vacuity
+
+`cycle5 = {49, 31, 19}` has halving counts `1, 1, 3` backwards from the maximum,
+so the stretch "one step, one halving" occurs at two places. Every theorem above
+is instantiated there: `3·(31 − 19) = 36 = 2·(49 − 31)` with `t = 6`;
+`19 + 4 ≤ 49` and `19 + 6 ≤ 49`; the size test at `a/b = 29`,
+`92^3 = 778688 ≤ 780448 = 29^3·32`; the height `D = 4`;
+`49^3 = 117649 ≤ 390224 = 29^3·2^4`; and `(1 + 1)·3 = 6 < 5·3 + 4`.
+`python/tests/test_balance.py::test_lean_statements_on_real_loops` replays the
+same statements on 1 681 real loops of `3n+q`.
+
+### What this is not
+
+Not a bound on `τ`: Ellison's and Rhin's theorems are cited in
+`docs/BALANCE.md`, not proved here. Not the corollaries about patterns near
+balance: those need the count of stretches of a Christoffel word. Not Theorems
+1–3 of `docs/BALANCE.md`, which need a number field. See
+`Collatz/Unproved.lean`, entry 8.
 

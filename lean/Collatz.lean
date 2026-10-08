@@ -9,6 +9,11 @@
   Weger 2005, Kaneda 2015, Hercher 2023); T3, T4, T5 and T8 are one-line
   corollaries of that folklore.  The contribution here is machine-checked
   certainty and a small reusable `Cycle` API, not new mathematics.
+
+  `Collatz/Repeat.lean` adds the repeat theorem of docs/BALANCE.md (Theorem 4).
+  Its two ingredients are classical (Terras 1976 and Everett 1977; Crandall
+  1978, Eliahou 1993 and Belaga 2003).  Whether their combination is new is
+  discussed, with hedges, in docs/BALANCE.md section 9; no claim is made here.
 -/
 import Collatz.Odd
 import Collatz.Core
@@ -21,6 +26,7 @@ import Collatz.Halving
 import Collatz.Census
 import Collatz.QTransfer
 import Collatz.Words
+import Collatz.Repeat
 import Collatz.Pigeonhole
 import Collatz.Equivalence
 import Collatz.Bridge

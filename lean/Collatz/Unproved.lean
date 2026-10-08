@@ -153,4 +153,51 @@
 
   which needs (a) + (b) on top.
 
+  ---------------------------------------------------------------------------
+  8.  Loops near perfect balance (docs/BALANCE.md): what is and is not here
+  ---------------------------------------------------------------------------
+  Formalized, in `Collatz/Repeat.lean`: section 6 up to Theorem 4.
+      Lemma 13   `Cycle.repeat_identity`, `repeat_split`, `repeat_gap_M`
+      Lemma 14   `Cycle.m_le_of_size` (smallest member) and `Cycle.max_pow_le`
+                 (largest member, through its own height, not the full spread)
+      Theorem 4  `Cycle.repeat_bound`, `Cycle.repeat_theorem`,
+                 `Cycle.repeat_theorem_q1`, `Cycle.repeat_unique`
+  The two real numbers of the written statement, `tau` and `sigma`, enter as
+  whole-number certificates (`hN`, `hD`); the header of `Repeat.lean` explains
+  why nothing is lost.
+
+  NOT formalized:
+
+  (a) Theorems 1, 2, 3 (one swap, two swaps, one run).  They bound the norm of
+      an element of `Z[2^(1/L)]` by Parseval's identity over the complex
+      embeddings.  That needs a number field, its embeddings and a norm; none
+      of it exists in Lean 4 core.
+
+  (b) The Diophantine inputs.  Ellison's `2^B - 3^L > 2.56^L` and Rhin's
+      `|B log 2 - L log 3| >= B^(-13.3)` are CITED in docs/BALANCE.md and stay
+      cited.  In `Repeat.lean` they would only supply a value of `N` for the
+      hypothesis `hN`; for a given pair `(L, B)` that hypothesis is a
+      comparison of two integers and needs neither.
+
+  (c) Lemma 15 and Corollaries 16-18 (few moved corners, few runs, three
+      corners for every length).  These are statements about Christoffel
+      words: a balanced word has at most `j + 1` different stretches of length
+      `j`, so a word that differs from it in few places repeats a stretch.
+      The pigeonhole step is `Pigeonhole.exists_repeat`, already in this
+      project; the count of stretches of a Christoffel word is not formalized.
+      Once a repeat is exhibited, `Cycle.repeat_unique` is the step that
+      forbids it.  The finite checks behind Corollary 18 (1,087,329 words) are
+      computations and belong in Python.
+
+  (d) Lemma 19 (one corner move from a repeated pattern).
+
+  (e) The lower half of Lemma 14, `n_p (2^(B/L) - 3) >= 2^((D'_p - max D')/L)`.
+      Theorem 4 does not use it.
+
+  VACUITY, AS IN ENTRY 7.  For `q = 1` every statement of `Repeat.lean` is
+  about a hypothetical cycle.  The statements hold for every `q`, and each is
+  instantiated on the real cycle `cycle5 = {49, 31, 19}` of `3n + 5` at the end
+  of the file; `python/tests/test_balance.py::test_lean_statements_on_real_loops`
+  replays the same statements on 1,681 real loops of `3n + q`.
+
 -/

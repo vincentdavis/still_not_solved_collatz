@@ -1,7 +1,8 @@
 # Loops near perfect balance — norms in Q(2^(1/L)), and repeats
 
 **Provenance.** A user-led pass of 2026-09-30 to 10-02 (`python/collatz_maxodd/balance.py`,
-`python/tests/test_balance.py`, `web/balance.html`).  The question was whether the idea
+`python/tests/test_balance.py`, `web/balance.html`), and on 2026-10-08 a Lean 4
+formalization of Lemmas 13 and 14 and Theorem 4 (`lean/Collatz/Repeat.lean`, section 6.1).  The question was whether the idea
 behind Knight's theorem on balanced loops can be pushed one step further.  Labels: **PROVED**
 (complete proof here), **COMPUTED** (exact, pinned by a test), **CITED**.  Classical Collatz
 only (`q = 1`); the 3n+q census is a harness.
@@ -677,6 +678,9 @@ the logarithms of the members.  The bound `m ≤ 1/(2^(B/L) − 3)` is classical
 **Theorem 4 (repeats).**  In a positive loop of `3n+1`, a stretch that occurs at two
 different positions has weight `X < σ + τ − 1`.
 
+Lemma 13, the upper half of Lemma 14 and this theorem are machine-checked in Lean
+(section 6.1).
+
 *Proof.* `2^(X+1) ≤ M − m < M ≤ 2^(σ+τ)`, by Lemmas 13 and 14.  ∎
 
 The corollaries below use only the weaker `X < σ + τ`.  In terms of the members alone:
@@ -870,6 +874,101 @@ that no loop is one swap from a balanced word for any `(L, B)`, coprime or not.
     three actual swaps are all covered.
   * Lemma 19 on 349 770 further words.
 
+### 6.1 Theorem 4 in Lean (PROVED, machine-checked)
+
+Lemmas 13 and 14 and Theorem 4 are formalized in `lean/Collatz/Repeat.lean`, inside the
+Mathlib-free Lean 4 development of this repository.  The file has no `sorry`.  The gate
+`lean/check.sh` passes, and its axiom audit reports `[propext, Quot.sound]` for 32 of the 34
+new declarations and `[propext]` for the other two: no `Classical.choice`.  The statements hold for every `3n+q`, and each
+is instantiated on a loop that exists.
+
+**Dictionary.**  Lean lists a loop backwards from its largest member: `y 0 = M`, and
+`y (k+1)` is the member before `y k`, with `3·y(k+1) + q = 2^(bb (k+1))·y k`.  If `M = n_t`
+in the notation above, then
+
+    y k = n_(t−k),      bb k = x_(t−k),      BB k = bb 1 + … + bb k = X_t − X_(t−k).
+
+`window p j = bb (p+1) + … + bb (p+j)` is the weight of the stretch of length `j` that
+starts at the member `y (p+j)` and ends at the member `y p`.  The level difference between
+the largest member and the member `k` steps before it is `D'_t − D'_(t−k) = kB − L·BB k`.
+
+**Hypotheses.**  Lean 4 core has no real numbers.  The two real numbers of Theorem 4 enter
+through whole-number certificates, as `log₂3` does in `lean/Collatz/Halving.lean`.
+
+| name | Lean hypothesis | meaning |
+|---|---|---|
+| repeat | `bb (p+i+1) = bb (r+i+1)` for `i < j`, and `p % L ≠ r % L` | the same stretch of length `j` occurs at two different places; `X = window p j` |
+| size, fraction | `(3a + qb)^L ≤ a^L · 2^B`, `b > 0` | `a/b ≥ q/(2^(B/L) − 3)`; for `q = 1`, `a/b ≥ 2^τ` |
+| size, exponent | `(3·2^N + q)^L ≤ 2^(N·L + B)` | `N ≥ τ + log₂ q` |
+| height | `k·B ≤ L·BB k + D` for `1 ≤ k ≤ L` | `D ≥ D'_t − min D'`: the largest member sits at most `D` level units above the lowest level |
+
+The least `D` allowed by the height hypothesis is `D'_t − min D'`, which is at most `σL`.
+
+**Statements.**
+
+| in this file | Lean name | whole-number statement |
+|---|---|---|
+| Lemma 13, identity | `Cycle.repeat_identity` | `3^j·y(p+j) + 2^X·y(r) = 3^j·y(r+j) + 2^X·y(p)` |
+| Lemma 13, one cofactor | `Cycle.repeat_split` | if `y(r+j) ≤ y(p+j)`: `y(p+j) = y(r+j) + 2^X·t` and `y(p) = y(r) + 3^j·t` |
+| Lemma 13, gap | `Cycle.repeat_gap_M` | `m + 2^(X+1) ≤ M` and `m + 2·3^j ≤ M` |
+| words are primitive | `Cycle.bb_period` | if `bb (i+1) = bb (d+i+1)` for all `i`, then `L` divides `d` |
+| Lemma 14, smallest member | `Cycle.m_le_of_size` | `b·m ≤ a` |
+| Lemma 14, largest member | `Cycle.max_pow_le` | `(b·M)^L ≤ a^L · 2^D` |
+| Theorem 4, fraction form | `Cycle.repeat_bound` | `(b·2^(X+1))^L < a^L · 2^D` |
+| Theorem 4 | `Cycle.repeat_theorem` | `(X + 1)·L < N·L + D` |
+| Theorem 4, `q = 1` | `Cycle.repeat_theorem_q1` | the same, with size test `(3·2^N + 1)^L ≤ 2^(N·L + B)` |
+| a heavy stretch occurs once | `Cycle.repeat_unique` | if `k·B ≤ L·(BB k + s)` and `X + 1 ≥ N + s`, then `p ≡ r (mod L)` |
+
+**How this compares with Theorem 4.**  `Cycle.repeat_theorem` reads `X + 1 < N + D/L` for
+every whole `N ≥ τ`, with `D/L = (D'_t − min D')/L ≤ σ`.  `Cycle.repeat_bound` reads
+`2^(X+1) < (a/b)·2^(D/L)` for every fraction `a/b ≥ 2^τ`.  Letting `a/b` decrease to `2^τ`
+in `Cycle.max_pow_le` gives `M ≤ 2^(τ + D/L)`, and with `2^(X+1) < M` this is
+
+    X + 1 < τ + (D'_t − min D')/L ≤ τ + σ.
+
+So the Lean statements give Theorem 4, with `σ` replaced by the height of the largest member
+alone.  Lemma 14 gives that form too, since its upper bound is stated member by member.
+Nothing is lost by clearing denominators: the family of whole-number statements over all
+fractions `a/b` is equivalent to the real statement.
+
+**A proof of the bound on `M` without real numbers.**  The proof of Lemma 14 above sums a
+geometric series with the real ratio `ρ`.  The Lean proof replaces the sum by a walk
+(`Cycle.max_chain`).  Let `T = a/b` pass the size test.
+
+* A member `n ≥ T` has `(3n + q)^L ≤ n^L·2^B` (`size_mono`): the step out of `n` multiplies
+  by at most `2^(B/L)`.
+* Walk backwards from `M = y 0`.  While every member met so far exceeds `T`, induction on
+  `k` gives `M^L·2^(L·BB k) ≤ (y k)^L·2^(kB)`.
+* The smallest member is at most `T` (`m_le_of_size`), so the walk meets a first `k'` in
+  `[1, L]` with `y k' ≤ T`.  There
+  `M^L·2^(L·BB k') ≤ (3·y k' + q)^L·2^((k'−1)B) ≤ ((3a + qb)/b)^L·2^((k'−1)B) ≤ (a/b)^L·2^(k'B)`.
+* The height hypothesis `k'B ≤ L·BB k' + D` turns this into `(bM)^L ≤ a^L·2^D`.  ∎
+
+In real terms `M ≤ T·2^((D'_t − D'_(t−k'))/L)`: only the level of the first member below the
+threshold matters.  This is a second proof of the upper half of Lemma 14 for the largest
+member.
+
+**What is not formalized** (also `lean/Collatz/Unproved.lean`, entry 8).
+
+* Theorems 1, 2 and 3.  They need the number field `Q(2^(1/L))`, its embeddings and a norm.
+* The bounds of Ellison and Rhin.  They stay CITED.  In Lean they would only supply a value
+  of `N`; for a given pair `(L, B)` the size test is a comparison of two integers.
+* Lemma 15 and Corollaries 16 to 18.  The count of stretches of a Christoffel word is not
+  formalized.  Once a repeat is exhibited, `Cycle.repeat_unique` is the step that forbids it.
+* Lemma 19, and the lower half of Lemma 14, which Theorem 4 does not use.
+
+For `q = 1` the Lean statements are about a hypothetical loop, as every statement about
+loops of `3n+1` other than `{1}` is.  They are not vacuous as statements about `3n+q`:
+
+* in Lean, each is instantiated on the loop `49 → 19 → 31 → 49` of `3n+5`, where the stretch
+  "one step, one halving" occurs twice: `3·(31 − 19) = 36 = 2·(49 − 31)`, `t = 6`,
+  `M − m = 30`;
+* in Python, `test_lean_statements_on_real_loops` replays every Lean statement, in Lean's
+  indexing, on the 1 681 loops of the census with `L ≥ 2`, over 131 120 repeated stretches.
+  With the least `N` and the least `D`, the smallest value of `N + D/L − (X + 1)` is
+  `13/7`.  The bound of `Cycle.max_pow_le`, with `b = 64` and the least `a`, comes within
+  3.6 % of equality.
+
 ## 7. How far the norm test reaches (COMPUTED)
 
 Corollary 3 applies to every word.  Among the primitive cyclic words made of 1s and 2s with
@@ -969,6 +1068,8 @@ the same caution applies.
 | runs: lowering, counts, swap distance | `test_run_duality_and_counts`, `test_run_words_reach_far_from_balance` |
 | Lemma 13 (repeat identity) on real `3n+q` loops | `test_repeat_identity_on_real_loops` |
 | Lemma 14 (sizes) and Theorem 4 on real `3n+q` loops | `test_member_size_bounds_on_real_loops`, `test_longest_repeat_and_spread` |
+| Lemmas 13 and 14 and Theorem 4, machine-checked (section 6.1) | `lean/Collatz/Repeat.lean`, gate `lean/check.sh` |
+| the Lean statements replayed on real `3n+q` loops | `test_lean_statements_on_real_loops` |
 | Lemma 15 (stretches of balanced words) | `test_balanced_words_are_full_of_repeats` |
 | Corollary 16: in practice, explicit form, thresholds, Hercher's length, arbitrary swaps | `test_repeat_theorem_excludes_words_near_balance`, `test_repeat_theorem_numbers`, `test_swap_span` |
 | Corollary 17 (few runs) | `test_few_runs_have_few_stretches` |
@@ -977,4 +1078,5 @@ the same caution applies.
 | section 7 | `test_reach_profiles` |
 | filter test A | `test_q13_has_balanced_and_one_swap_loops` |
 
-Run: `cd python && uv run pytest tests/test_balance.py` (41 tests).
+Run: `cd python && uv run pytest tests/test_balance.py` (42 tests), and
+`cd lean && ./check.sh` (375 declarations, of which 34 are in `Collatz/Repeat.lean`).

@@ -776,6 +776,103 @@ def test_member_size_bounds_on_real_loops(census) -> None:
     assert members == 22405 and -2.7 < gap < -2.6
 
 
+def _lean_cycle(c) -> tuple[list[int], list[int], list[int]]:
+    """A loop in the notation of lean/Collatz/Cycle.lean: y[0] = M, y[k+1] is the member
+    before y[k], bb[k] is the halving count of the step y[k] -> y[k-1] (so bb[0] is unused),
+    and BB[k] = bb[1] + ... + bb[k].  Indices are taken modulo L by the caller."""
+    ns, w = _orbit(c)
+    L = c.L
+    top = ns.index(max(ns))
+    y = [ns[(top - k) % L] for k in range(L)]
+    bb = [w[(top - k) % L] for k in range(L)]
+    for k in range(L):
+        assert 3 * y[(k + 1) % L] + c.q == 2 ** bb[(k + 1) % L] * y[k]  # Cycle.bb_spec
+    BB = [0]
+    for k in range(1, L + 1):
+        BB.append(BB[-1] + bb[k % L])
+    return y, bb, BB
+
+
+def test_lean_statements_on_real_loops(census) -> None:
+    """lean/Collatz/Repeat.lean, statement by statement, on every 3n+q loop of the census.
+
+    The Lean file proves these for every cycle; this test replays the same whole-number
+    statements, in the same backward indexing, on loops that exist.  It guards the
+    transcription, not the proof: Lean checks the proof, nothing checks that a formal
+    statement means what the prose says except reading it and trying it.
+
+    repeat_identity  3^j y(p+j) + 2^X y(r) = 3^j y(r+j) + 2^X y(p)
+    repeat_split     y(p+j) - y(r+j) = 2^X t  and  y(p) - y(r) = 3^j t  with one t
+    repeat_gap_M     m + 2^(X+1) <= M  and  m + 2 * 3^j <= M
+    m_le_of_size     b m <= a           whenever (3a + qb)^L <= a^L 2^B
+    max_pow_le       (b M)^L <= a^L 2^D whenever also k B <= L B_k + D for 1 <= k <= L
+    repeat_theorem   (X + 1) L < N L + D whenever (3 * 2^N + q)^L <= 2^(N L + B)
+    bb_period        the halving counts have no period shorter than L"""
+    loops = pairs = 0
+    slack = math.inf
+    tight = -math.inf
+    for c in census:
+        L, q = c.L, c.q
+        if L < 2:
+            continue
+        loops += 1
+        y, bb, BB = _lean_cycle(c)
+        B, M, m = BB[L], y[0], min(y)
+
+        def window(p: int, j: int) -> int:
+            return sum(bb[(p + i) % L] for i in range(1, j + 1))
+
+        assert all(window(0, k) == BB[k] for k in range(L + 1))  # window_zero_left
+        for d in range(1, L):  # bb_period
+            assert any(bb[(i + 1) % L] != bb[(d + i + 1) % L] for i in range(L))
+
+        # the two certificates: N and a/b for the size, D for the height of the largest member
+        N = 0
+        while (3 * 2**N + q) ** L > 2 ** (N * L + B):
+            N += 1
+        assert N == 0 or (3 * 2 ** (N - 1) + q) ** L > 2 ** ((N - 1) * L + B)
+        D = max(k * B - L * BB[k] for k in range(1, L + 1))
+        assert D >= 0 and all(k * B <= L * BB[k] + D for k in range(1, L + 1))
+        b = 64
+        lo, hi = 0, b * 2**N  # least a with (3a + qb)^L <= a^L 2^B
+        while lo + 1 < hi:
+            mid = (lo + hi) // 2
+            if (3 * mid + q * b) ** L <= mid**L * 2**B:
+                hi = mid
+            else:
+                lo = mid
+        a = hi
+        assert (3 * a + q * b) ** L <= a**L * 2**B
+        assert b * m <= a and m <= 2**N  # m_le_of_size
+        assert (b * M) ** L <= a**L * 2**D and M**L <= 2 ** (N * L + D)  # max_pow_le
+        tight = max(tight, math.log2(M * b / a) - D / L)
+
+        for p in range(L):
+            for r in range(p + 1, L):
+                j = 0
+                while bb[(p + j + 1) % L] == bb[(r + j + 1) % L]:
+                    j += 1
+                    assert j < L  # by bb_period the agreement stops
+                for jj in sorted({1, j} - {0}):
+                    if jj > j:
+                        continue
+                    pairs += 1
+                    X = window(p, jj)
+                    assert X == window(r, jj)  # window_congr
+                    yp, yr = y[p], y[r]
+                    ypj, yrj = y[(p + jj) % L], y[(r + jj) % L]
+                    assert 3**jj * ypj + 2**X * yr == 3**jj * yrj + 2**X * yp  # repeat_identity
+                    t, rem = divmod(ypj - yrj, 2**X)  # repeat_split
+                    assert rem == 0 and yp - yr == 3**jj * t and t % 2 == 0 and t != 0
+                    assert m + 2 ** (X + 1) <= M and m + 2 * 3**jj <= M  # repeat_gap_M
+                    assert (b * 2 ** (X + 1)) ** L < a**L * 2**D  # repeat_bound
+                    assert (X + 1) * L < N * L + D  # repeat_theorem
+                    slack = min(slack, (N * L + D - (X + 1) * L) / L)
+    assert (loops, pairs) == (1681, 131120)
+    assert abs(slack - 13 / 7) < 1e-12  # the closest any loop comes to X + 1 = N + D/L
+    assert -0.052 < tight < -0.051  # max_pow_le is within 3.6 % of equality on some loop
+
+
 def test_longest_repeat_and_spread() -> None:
     """The helpers behind Theorem 4: longest_repeat agrees with a naive search, the balanced
     word has spread (L-1)/L, and size_exponent is below its Rhin / log 2 bound."""
