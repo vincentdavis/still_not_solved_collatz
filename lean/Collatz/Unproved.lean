@@ -157,14 +157,22 @@
   8.  Loops near perfect balance (docs/BALANCE.md): what is and is not here
   ---------------------------------------------------------------------------
   Formalized, in `Collatz/Repeat.lean`: section 6 up to Theorem 4.
-      Lemma 13   `Cycle.repeat_identity`, `repeat_split`, `repeat_gap_M`
-      Lemma 14   `Cycle.m_le_of_size` (smallest member) and `Cycle.max_pow_le`
-                 (largest member, through its own height, not the full spread)
-      Theorem 4  `Cycle.repeat_bound`, `Cycle.repeat_theorem`,
-                 `Cycle.repeat_theorem_q1`, `Cycle.repeat_unique`
+      Lemma 13   `Cycle.repeat_identity` (the identity), `repeat_split` and
+                 `repeat_dvd` (both divisibilities, with one cofactor),
+                 `repeat_gap_M` (the gap between largest and smallest)
+      Lemma 14   upper half only: `Cycle.m_le_of_size` (smallest member),
+                 `Cycle.member_pow_le` (any member, through its own height),
+                 `Cycle.max_pow_le` (largest member)
+      Theorem 4  `Cycle.repeat_bound` (exact form, over fractions `a/b`);
+                 `Cycle.repeat_theorem`, `repeat_theorem_q1`, `repeat_unique`
+                 (size exponent rounded up to a whole number `N`)
   The two real numbers of the written statement, `tau` and `sigma`, enter as
-  whole-number certificates (`hN`, `hD`); the header of `Repeat.lean` explains
-  why nothing is lost.
+  whole-number certificates (`hK` or `hN`, and `hD`).  For `repeat_bound` and
+  `member_pow_le` nothing is lost: the family of statements over all fractions
+  is equivalent to the real statement.  `repeat_theorem` and its two
+  corollaries can be one unit weaker than Theorem 4, because `N` is whole;
+  they give `X < log2 q + sigma + tau`, which is what the corollaries of
+  docs/BALANCE.md use.
 
   NOT formalized:
 
@@ -183,11 +191,11 @@
       corners for every length).  These are statements about Christoffel
       words: a balanced word has at most `j + 1` different stretches of length
       `j`, so a word that differs from it in few places repeats a stretch.
-      The pigeonhole step is `Pigeonhole.exists_repeat`, already in this
-      project; the count of stretches of a Christoffel word is not formalized.
-      Once a repeat is exhibited, `Cycle.repeat_unique` is the step that
-      forbids it.  The finite checks behind Corollary 18 (1,087,329 words) are
-      computations and belong in Python.
+      The pigeonhole step is `Collatz.exists_repeat` (`Collatz/Pigeonhole.lean`),
+      already in this project; the count of stretches of a Christoffel word is
+      not formalized.  Once a repeat is exhibited, `Cycle.repeat_unique` is the
+      step that forbids it.  The finite checks behind Corollary 18 (1,087,329
+      words) are computations and belong in Python.
 
   (d) Lemma 19 (one corner move from a repeated pattern).
 
@@ -195,9 +203,13 @@
       Theorem 4 does not use it.
 
   VACUITY, AS IN ENTRY 7.  For `q = 1` every statement of `Repeat.lean` is
-  about a hypothetical cycle.  The statements hold for every `q`, and each is
-  instantiated on the real cycle `cycle5 = {49, 31, 19}` of `3n + 5` at the end
-  of the file; `python/tests/test_balance.py::test_lean_statements_on_real_loops`
-  replays the same statements on 1,681 real loops of `3n + q`.
+  about a hypothetical cycle.  The statements hold for every `q`.  The general
+  ones, all except `repeat_theorem_q1`, are instantiated on the real cycle
+  `cycle5 = {49, 31, 19}` of `3n + 5` at the end of the file; with `L = 3` that
+  shows the hypotheses can be met together and nothing about sharpness.
+  `python/tests/test_balance.py::test_lean_statements_on_real_loops` replays
+  the statements on 1,681 real loops of `3n + q`, and
+  `test_lean_size_hypothesis_is_needed` exhibits a loop on which `N` cannot be
+  lowered by one.
 
 -/

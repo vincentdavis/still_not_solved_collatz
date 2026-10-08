@@ -793,6 +793,91 @@ def _lean_cycle(c) -> tuple[list[int], list[int], list[int]]:
     return y, bb, BB
 
 
+def _replay_lean(c) -> dict:
+    """Every statement of lean/Collatz/Repeat.lean on one loop of 3n+q, in Lean's indexing.
+
+    Returns the least certificates and the slack.  N is the least exponent passing the size
+    test hN, a/b (b = 64) the least fraction passing hK, D the least height passing hD."""
+    L, q = c.L, c.q
+    y, bb, BB = _lean_cycle(c)
+    B, M, m = BB[L], y[0], min(y)
+
+    def window(p: int, j: int) -> int:
+        return sum(bb[(p + i) % L] for i in range(1, j + 1))
+
+    assert all(window(0, k) == BB[k] for k in range(L + 1))  # window_zero_left
+    assert all(window(s, j) >= j for s in range(L) for j in (1, L))  # le_window
+    for d in range(1, L):  # bb_period: no shift by d < L fixes the pattern
+        assert any(bb[(i + 1) % L] != bb[(d + i + 1) % L] for i in range(L))
+
+    N = 0
+    while (3 * 2**N + q) ** L > 2 ** (N * L + B):
+        N += 1
+    assert N == 0 or (3 * 2 ** (N - 1) + q) ** L > 2 ** ((N - 1) * L + B)
+    b = 64
+    lo, hi = 0, b * 2**N  # least a with (3a + qb)^L <= a^L 2^B
+    while lo + 1 < hi:
+        mid = (lo + hi) // 2
+        if (3 * mid + q * b) ** L <= mid**L * 2**B:
+            hi = mid
+        else:
+            lo = mid
+    a = hi
+    assert (3 * a + q * b) ** L <= a**L * 2**B
+    assert b * m <= a and m <= 2**N  # m_le_of_size
+
+    heights = []
+    for s in range(L):
+        n = y[s]
+        if a <= b * n:  # size_mono
+            assert (3 * n + q) ** L <= n**L * 2**B
+        if n**L * 2**B <= (3 * n + q) ** L:  # le_of_size
+            assert b * n <= a
+        Ds = max(k * B - L * window(s, k) for k in range(1, L + 1))  # least D for member s
+        assert Ds >= 0
+        assert (b * n) ** L <= a**L * 2**Ds and n**L <= 2 ** (N * L + Ds)  # member_pow_le
+        heights.append(Ds)
+    D = heights[0]  # the largest member: hD of max_pow_le
+    assert D == max(k * B - L * BB[k] for k in range(1, L + 1))
+    assert (b * M) ** L <= a**L * 2**D  # max_pow_le
+    sw = -(-D // L)  # least whole s with k B <= L (B_k + s)
+    assert all(k * B <= L * (BB[k] + sw) for k in range(1, L + 1))
+
+    stretches = 0
+    slack = slack_unique = None
+    for p in range(L):
+        for r in range(p + 1, L):
+            j = 0
+            while bb[(p + j + 1) % L] == bb[(r + j + 1) % L]:
+                j += 1
+                assert j < L  # by bb_period the agreement stops
+            for jj in range(1, j + 1):
+                stretches += 1
+                X = window(p, jj)
+                assert X == window(r, jj)  # window_congr
+                yp, yr = y[p], y[r]
+                ypj, yrj = y[(p + jj) % L], y[(r + jj) % L]
+                assert 3**jj * ypj + 2**X * yr == 3**jj * yrj + 2**X * yp  # repeat_identity
+                t0, rem = divmod(ypj - yrj, 2**X)  # repeat_split
+                assert rem == 0 and yp - yr == 3**jj * t0
+                t, rem = divmod(ypj - yrj, 2 ** (X + 1))  # repeat_dvd
+                assert rem == 0 and yp - yr == 2 * 3**jj * t and t != 0
+                assert abs(ypj - yrj) >= 2 ** (X + 1) and abs(yp - yr) >= 2 * 3**jj  # repeat_gap
+                assert m + 2 ** (X + 1) <= M and m + 2 * 3**jj <= M  # repeat_gap_M
+                assert 2 ** (X + 1) < M  # repeat_lt_M
+                assert (b * (m + 2 ** (X + 1))) ** L <= a**L * 2**D  # repeat_bound
+                assert (X + 1) * L < N * L + D  # repeat_theorem
+                assert N + sw > X + 1  # repeat_unique, contrapositive
+                v = Fraction(N * L + D - (X + 1) * L, L)
+                slack = v if slack is None else min(slack, v)
+                u = N + sw - (X + 1)
+                slack_unique = u if slack_unique is None else min(slack_unique, u)
+    return {
+        "N": N, "D": D, "a": a, "b": b, "M": M, "L": L, "stretches": stretches,
+        "slack": slack, "slack_unique": slack_unique,
+    }  # fmt: skip
+
+
 def test_lean_statements_on_real_loops(census) -> None:
     """lean/Collatz/Repeat.lean, statement by statement, on every 3n+q loop of the census.
 
@@ -802,75 +887,65 @@ def test_lean_statements_on_real_loops(census) -> None:
     statement means what the prose says except reading it and trying it.
 
     repeat_identity  3^j y(p+j) + 2^X y(r) = 3^j y(r+j) + 2^X y(p)
-    repeat_split     y(p+j) - y(r+j) = 2^X t  and  y(p) - y(r) = 3^j t  with one t
+    repeat_dvd       y(p+j) - y(r+j) = 2^(X+1) t  and  y(p) - y(r) = 2 * 3^j t  with one t
     repeat_gap_M     m + 2^(X+1) <= M  and  m + 2 * 3^j <= M
-    m_le_of_size     b m <= a           whenever (3a + qb)^L <= a^L 2^B
-    max_pow_le       (b M)^L <= a^L 2^D whenever also k B <= L B_k + D for 1 <= k <= L
-    repeat_theorem   (X + 1) L < N L + D whenever (3 * 2^N + q)^L <= 2^(N L + B)
+    m_le_of_size     b m <= a             whenever (3a + qb)^L <= a^L 2^B
+    member_pow_le    (b y_s)^L <= a^L 2^D whenever also k B <= L W_k + D for 1 <= k <= L
+    repeat_bound     (b (m + 2^(X+1)))^L <= a^L 2^D
+    repeat_theorem   (X + 1) L < N L + D  whenever (3 * 2^N + q)^L <= 2^(N L + B)
+    repeat_unique    a stretch with X + 1 >= N + s occurs at one place
     bb_period        the halving counts have no period shorter than L"""
-    loops = pairs = 0
-    slack = math.inf
+    loops = stretches = with_repeat = 0
+    slack = slack_unique = math.inf
     tight = -math.inf
     for c in census:
-        L, q = c.L, c.q
-        if L < 2:
+        if c.L < 2:
             continue
         loops += 1
-        y, bb, BB = _lean_cycle(c)
-        B, M, m = BB[L], y[0], min(y)
-
-        def window(p: int, j: int) -> int:
-            return sum(bb[(p + i) % L] for i in range(1, j + 1))
-
-        assert all(window(0, k) == BB[k] for k in range(L + 1))  # window_zero_left
-        for d in range(1, L):  # bb_period
-            assert any(bb[(i + 1) % L] != bb[(d + i + 1) % L] for i in range(L))
-
-        # the two certificates: N and a/b for the size, D for the height of the largest member
-        N = 0
-        while (3 * 2**N + q) ** L > 2 ** (N * L + B):
-            N += 1
-        assert N == 0 or (3 * 2 ** (N - 1) + q) ** L > 2 ** ((N - 1) * L + B)
-        D = max(k * B - L * BB[k] for k in range(1, L + 1))
-        assert D >= 0 and all(k * B <= L * BB[k] + D for k in range(1, L + 1))
-        b = 64
-        lo, hi = 0, b * 2**N  # least a with (3a + qb)^L <= a^L 2^B
-        while lo + 1 < hi:
-            mid = (lo + hi) // 2
-            if (3 * mid + q * b) ** L <= mid**L * 2**B:
-                hi = mid
-            else:
-                lo = mid
-        a = hi
-        assert (3 * a + q * b) ** L <= a**L * 2**B
-        assert b * m <= a and m <= 2**N  # m_le_of_size
-        assert (b * M) ** L <= a**L * 2**D and M**L <= 2 ** (N * L + D)  # max_pow_le
-        tight = max(tight, math.log2(M * b / a) - D / L)
-
-        for p in range(L):
-            for r in range(p + 1, L):
-                j = 0
-                while bb[(p + j + 1) % L] == bb[(r + j + 1) % L]:
-                    j += 1
-                    assert j < L  # by bb_period the agreement stops
-                for jj in sorted({1, j} - {0}):
-                    if jj > j:
-                        continue
-                    pairs += 1
-                    X = window(p, jj)
-                    assert X == window(r, jj)  # window_congr
-                    yp, yr = y[p], y[r]
-                    ypj, yrj = y[(p + jj) % L], y[(r + jj) % L]
-                    assert 3**jj * ypj + 2**X * yr == 3**jj * yrj + 2**X * yp  # repeat_identity
-                    t, rem = divmod(ypj - yrj, 2**X)  # repeat_split
-                    assert rem == 0 and yp - yr == 3**jj * t and t % 2 == 0 and t != 0
-                    assert m + 2 ** (X + 1) <= M and m + 2 * 3**jj <= M  # repeat_gap_M
-                    assert (b * 2 ** (X + 1)) ** L < a**L * 2**D  # repeat_bound
-                    assert (X + 1) * L < N * L + D  # repeat_theorem
-                    slack = min(slack, (N * L + D - (X + 1) * L) / L)
-    assert (loops, pairs) == (1681, 131120)
-    assert abs(slack - 13 / 7) < 1e-12  # the closest any loop comes to X + 1 = N + D/L
+        r = _replay_lean(c)
+        stretches += r["stretches"]
+        tight = max(tight, math.log2(r["M"] * r["b"] / r["a"]) - r["D"] / r["L"])
+        if r["stretches"]:
+            with_repeat += 1
+            slack = min(slack, r["slack"])
+            slack_unique = min(slack_unique, r["slack_unique"])
+    assert (loops, with_repeat, stretches) == (1681, 1464, 144004)
+    assert slack == Fraction(13, 7)  # the least N + D/L - (X + 1) over the census
+    assert slack_unique == 2  # the least N + s - (X + 1): repeat_unique never comes closer
     assert -0.052 < tight < -0.051  # max_pow_le is within 3.6 % of equality on some loop
+
+
+def test_lean_size_hypothesis_is_needed() -> None:
+    """The size test hN of Cycle.repeat_theorem cannot be relaxed by one.
+
+    On the census the conclusion happens to survive N - 1 (it first fails at N - 2), so a
+    witness has to be built.  The word 4^11 1 (L = 12, B = 45) is a loop of 3n + q with
+    q = (2^45 - 3^12)/7.  Its stretch 4^10 occurs at two places, with X = 40.  The least
+    certificates are N = 39 and D = 33, and 12 * 41 = 492 < 39 * 12 + 33 = 501; with N = 38
+    the right side is 489.  Found by the referee pass of 2026-10-08."""
+    from types import SimpleNamespace
+
+    w = (4,) * 11 + (1,)
+    L, B = len(w), sum(w)
+    d = 2**B - 3**L
+
+    def numerator(v: tuple[int, ...]) -> int:
+        X, total = 0, 0
+        for i, x in enumerate(v):
+            total += 3 ** (L - 1 - i) * 2**X
+            X += x
+        return total
+
+    cs = [numerator(w[p:] + w[:p]) for p in range(L)]
+    g = gcd(d, *cs)
+    q = d // g
+    assert (g, q) == (7, 5026338793913)
+    c = SimpleNamespace(L=L, q=q, elements=(cs[0] // g,))
+    r = _replay_lean(c)
+    assert (r["N"], r["D"], r["M"]) == (39, 33, 3093131606365)
+    assert r["slack"] == Fraction(501 - 492, 12)
+    assert not (12 * 41 < 38 * 12 + 33)  # N - 1 would break the conclusion
+    assert r["slack_unique"] == 1  # 39 + 3 - 41: repeat_unique is sharp here as well
 
 
 def test_longest_repeat_and_spread() -> None:

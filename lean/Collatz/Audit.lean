@@ -443,9 +443,11 @@ header says why each one is not a theorem. -/
 
 Theorem 4 of docs/BALANCE.md in whole numbers: a stretch of halving counts that
 occurs at two different places of a cycle forces members apart
-(`repeat_identity`, `repeat_gap_M`), the largest member is bounded through the
-size test and its height (`max_pow_le`), hence `repeat_theorem`.  Every
-statement is instantiated on the real cycle `cycle5`. -/
+(`repeat_identity`, `repeat_dvd`, `repeat_gap_M`), each member is bounded
+through the size test and its height (`member_pow_le`, `max_pow_le`), hence
+`repeat_bound` (exact form) and `repeat_theorem` (whole-exponent form).  The
+general statements other than `repeat_theorem_q1` are instantiated on the real
+cycle `cycle5`. -/
 #print axioms Collatz.three_mul_split
 #print axioms Collatz.coprime_split
 #print axioms Collatz.three_pow_odd
@@ -456,27 +458,43 @@ statement is instantiated on the real cycle `cycle5`. -/
 #print axioms Collatz.Cycle.window_zero_left
 #print axioms Collatz.Cycle.window_congr
 #print axioms Collatz.Cycle.le_window
+#print axioms Collatz.Cycle.bb_add_mul
 #print axioms Collatz.Cycle.repeat_identity
 #print axioms Collatz.Cycle.repeat_split
 #print axioms Collatz.Cycle.y_ne_of_mod_ne
+#print axioms Collatz.Cycle.repeat_dvd
 #print axioms Collatz.Cycle.repeat_gap
 #print axioms Collatz.Cycle.repeat_gap_M
 #print axioms Collatz.Cycle.repeat_lt_M
 #print axioms Collatz.Cycle.bb_period
 #print axioms Collatz.Cycle.m_le_of_size
-#print axioms Collatz.Cycle.max_chain
+#print axioms Collatz.Cycle.exists_m_after
+#print axioms Collatz.Cycle.member_chain
+#print axioms Collatz.Cycle.member_pow_le
 #print axioms Collatz.Cycle.max_pow_le
 #print axioms Collatz.Cycle.repeat_bound
 #print axioms Collatz.Cycle.repeat_theorem
 #print axioms Collatz.Cycle.repeat_theorem_q1
 #print axioms Collatz.Cycle.repeat_unique
 #print axioms Collatz.cycle5_bb
+#print axioms Collatz.cycle5_bb4
 #print axioms Collatz.cycle5_agree
 #print axioms Collatz.cycle5_window
 #print axioms Collatz.cycle5_repeat_identity
+#print axioms Collatz.cycle5_repeat_split
+#print axioms Collatz.cycle5_repeat_dvd
 #print axioms Collatz.cycle5_repeat_gap
+#print axioms Collatz.cycle5_repeat_gap_M
+#print axioms Collatz.cycle5_repeat_lt_M
+#print axioms Collatz.cycle5_bb_period
 #print axioms Collatz.cycle5_size
+#print axioms Collatz.cycle5_m_le_of_size
+#print axioms Collatz.cycle5_BB12
 #print axioms Collatz.cycle5_height
+#print axioms Collatz.cycle5_height_31
+#print axioms Collatz.cycle5_member_pow_le
 #print axioms Collatz.cycle5_max_pow_le
 #print axioms Collatz.cycle5_repeat_bound
+#print axioms Collatz.cycle5_size_exp
 #print axioms Collatz.cycle5_repeat_theorem
+#print axioms Collatz.cycle5_repeat_unique

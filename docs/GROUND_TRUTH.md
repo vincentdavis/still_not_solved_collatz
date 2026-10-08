@@ -389,9 +389,9 @@ formalized.
 
 ## 7. Formalization status (`lean/`)
 
-Lean 4.33.1, **no Mathlib**, `"packages": []`. 375 declarations audited
+Lean 4.33.1, **no Mathlib**, `"packages": []`. 391 declarations audited
 (current count; earlier revisions of this section said 302 and then 341):
-270 depend on `[propext, Quot.sound]`, 32 on `[propext]`, 73 on
+286 depend on `[propext, Quot.sound]`, 32 on `[propext]`, 73 on
 nothing. Zero
 `sorry`, zero `axiom`, zero `native_decide`, zero `set_option`.
 
@@ -828,16 +828,22 @@ Knight or the related work checked; a wider literature search is pending.  Indep
 referee passes found no error in Theorems 1, 2 or 3; the second corrected the citation of
 Rhin's bound and enumerated the 8 942 349 896 two-swap words of the finite range; the third
 checked 4 857 430 974 run words with `L ≤ 700`; a fourth found no error in Theorem 4.
-**In Lean** (2026-10-08, `lean/Collatz/Repeat.lean`, 34 declarations, no `sorry`, no
-`Classical.choice`): the repeat identity; `M − m ≥ 2^(X+1)` and `M − m ≥ 2·3^j`; the bound
-`(bM)^L ≤ a^L 2^D` on the largest member; and Theorem 4 as `(X + 1)L < NL + D`.  Here
-`(3·2^N + q)^L ≤ 2^(NL + B)` certifies `N ≥ τ + log₂ q`, and `kB ≤ L·B_k + D` for
-`1 ≤ k ≤ L` certifies that the largest member sits at most `D` level units above the lowest
-level, so `D/L ≤ σ`.  Valid for every `q`, instantiated on the loop `{49, 31, 19}` of
-`3n+5`, and replayed in Python on 131 120 repeated stretches of 1 681 real loops.  The
-bound on `M` is proved by a walk back from the maximum, with no real numbers.  Theorems 1–3
-and the corollaries of Theorem 4 are not formalized (`Collatz/Unproved.lean`, entry 8).
-Witnesses: `test_balance.py` (42), `lean/check.sh`.
+**In Lean** (2026-10-08, `lean/Collatz/Repeat.lean`, 50 declarations, no `sorry`, no
+`Classical.choice`): the repeat identity and both divisibilities; `M − m ≥ 2^(X+1)` and
+`M − m ≥ 2·3^j`; the bound `(b·n)^L ≤ a^L 2^D` for every member `n`, with `D` at least the
+height of that member above the lowest level; Theorem 4 in exact form,
+`(b(m + 2^(X+1)))^L ≤ a^L 2^D` for every fraction `a/b` with `(3a + qb)^L ≤ a^L 2^B`; and
+in whole-exponent form, `(X + 1)L < NL + D` whenever `(3·2^N + q)^L ≤ 2^(NL + B)`, that
+is `N ≥ τ + log₂ q`.  The height hypothesis is `kB ≤ L·B_k + D` for `1 ≤ k ≤ L`; the least
+such `D` is the height of the largest member, which is at most `σL`.  The whole-exponent
+form can be one unit weaker than Theorem 4.  Valid for every `q`, instantiated on the loop
+`{49, 31, 19}` of `3n+5`, and replayed in Python on 144 004 repeated stretches of 1 681
+real loops; a constructed loop of `3n + (2^45 − 3^12)/7` shows `N` cannot be lowered by
+one.  The member bound is proved by a walk back to the first member below the threshold,
+with no real numbers.  A fifth referee pass found the formal statements faithful and two
+claims in the surrounding prose wrong; both are corrected.  Theorems 1–3 and the
+corollaries of Theorem 4 are not formalized (`Collatz/Unproved.lean`, entry 8).
+Witnesses: `test_balance.py` (43), `lean/check.sh`.
 
 ### Verification status
 
@@ -861,10 +867,10 @@ Witnesses: `test_balance.py` (42), `lean/check.sh`.
 | landing form: bijection, leaf rule mod 9, saturation, automaton = `Φ_k`, `S_k(q) = q·S_k(1)` (docs/LANDING.md) | ✓ (`test_landing.py`, 24) | ✗ — not formalized (Lemma U and T0 are; the rest is bookkeeping) |
 | drop function: parity/sign, height classes, fibers = divisors of `3d+1` of the form `2^x − 3`, unbounded multiplicity, telescoping, zero-sum sets vs chains, the gates at both ends on zero-sum sets (docs/DROP.md) | ✓ (`test_drop.py`, 26) | ✗ — not formalized (two-line identities and computation) |
 | loop sieve: power-of-2 rule and closure, counting bound `C(log₂N + 2d, d)`, doorways, shadow of `2^71` (exact word model, rate `λ/3`), rational loops through every open class (docs/LOOP_SIEVE.md) | ✓ (`test_loopsieve.py`, 18) | ✗ — not formalized (T0 and the closure are one-liners; the rest is computation) |
-| near balance: `Z[θ]/(θ^B − 3) ≅ Z/d`, θ-identity, norm test, Knight's case (second proof, lowest terms), spread ≥ 1.8614, one- and two-swap theorems, run theorem, repeat theorem (docs/BALANCE.md) | ✓ (`test_balance.py`, 42) | ✓ `Repeat.lean` for the repeat theorem: `repeat_identity`, `repeat_gap_M`, `max_pow_le`, `repeat_theorem` (Lemmas 13, 14 and Theorem 4 in whole numbers). ✗ for the rest: Theorems 1–3 need norms in number fields, the corollaries need Christoffel-word counts, the finite checks are computation |
+| near balance: `Z[θ]/(θ^B − 3) ≅ Z/d`, θ-identity, norm test, Knight's case (second proof, lowest terms), spread ≥ 1.8614, one- and two-swap theorems, run theorem, repeat theorem (docs/BALANCE.md) | ✓ (`test_balance.py`, 43) | ✓ `Repeat.lean` for the repeat theorem: `repeat_identity`, `repeat_dvd`, `repeat_gap_M`, `member_pow_le`, `repeat_bound`, `repeat_theorem` (Lemma 13, the upper half of Lemma 14 and Theorem 4 in whole numbers). ✗ for the rest: Theorems 1–3 need norms in number fields, the corollaries need Christoffel-word counts, the finite checks are computation |
 | over-dispersion, tail rate, box dimension | ✓ | ✗ — infeasible in-kernel, open, unresolved limit |
 
-Lean total: **375 declarations**, all certifying `[propext, Quot.sound]` or
+Lean total: **391 declarations**, all certifying `[propext, Quot.sound]` or
 `[propext]` — no `sorry`, no `Classical.choice`, no Mathlib.
 
 ### A duplication that was removed

@@ -11,8 +11,10 @@
   certainty and a small reusable `Cycle` API, not new mathematics.
 
   `Collatz/Repeat.lean` adds the repeat theorem of docs/BALANCE.md (Theorem 4).
-  Its two ingredients are classical (Terras 1976 and Everett 1977; Crandall
-  1978, Eliahou 1993 and Belaga 2003).  Whether their combination is new is
+  The congruence behind it is classical (Terras 1976, Everett 1977), and so is
+  the bound on the smallest member (attributed to Crandall 1978, Eliahou 1993
+  and Belaga 2003).  The bound on the other members through their height was
+  not found stated in the sources checked.  Whether the combination is new is
   discussed, with hedges, in docs/BALANCE.md section 9; no claim is made here.
 -/
 import Collatz.Odd

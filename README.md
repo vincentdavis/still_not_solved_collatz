@@ -98,7 +98,7 @@ cycle with `M ≤ 20000` for every admissible `q ≤ 999`); of these 1681 have
 | **T8** | `q=1`: `M ≢ 9 (mod 16)`, hence `M ≡ 1, 5, 13 (mod 16)`; with T3, `M ≡ 5, 17, 29 (mod 48)` | none (mod-16 half) | proved | `Cycle.T8`, `T8_mod16`, `T3_T8` | real orbits from the **smallest** member of each dead class, so the kill is verified unconditional | almost certainly folklore |
 | **D2** | `M > 11q/7 ⇒ M ≡ 17q, 29q, 53q, 101q (mod 108)` | `M > 11q/7` | proved (on paper) | **not formalized** | exhaustive sieve, all odd `M ≤ 2·10⁶` at `q=1` | standard backward-sieve pruning |
 | **D3** | `M > 49q/5 ⇒ M ≡ 101q, 125q, 161q, 233q, 269q, 317q (mod 324)` | `M > 49q/5` | proved (on paper) | **not formalized** | same | same |
-| **R** | the repeat theorem (docs/BALANCE.md, Theorem 4): if a stretch of `j` steps and `X` halvings occurs at two different places of a cycle, then `3^j (n_a − n_b) = 2^X (n_a' − n_b')` for the members at its two starts and two ends, `M − m ≥ max(2^(X+1), 2·3^j)`, and `(X+1)·L < N·L + D` | size test `(3·2^N + q)^L ≤ 2^(N·L+B)`; height `k·B ≤ L·B_k + D` for `1 ≤ k ≤ L` | proved | `Cycle.repeat_identity`, `repeat_gap_M`, `max_pow_le`, `repeat_theorem` (`Collatz/Repeat.lean`) | 131 120 repeated stretches of 1 681 cycles | the congruence is Terras 1976 and Everett, *Adv. Math.* 25 (1977) 42–45; the smallest-member bound is Crandall 1978, Eliahou 1993 and Belaga, *Acta Arith.* 106 (2003) 197–206; the combination was not found stated and may be folklore |
+| **R** | the repeat theorem (docs/BALANCE.md, Theorem 4): if a stretch of `j` steps and `X` halvings occurs at two different places of a cycle, then `3^j (n_a − n_b) = 2^X (n_a' − n_b')` for the members at its two starts and two ends, `M − m ≥ max(2^(X+1), 2·3^j)`, `m + 2^(X+1) ≤ (a/b)·2^(D/L)`, and `(X+1)·L < N·L + D` | size test `(3a + qb)^L ≤ a^L·2^B`, or `(3·2^N + q)^L ≤ 2^(N·L+B)` for the last form; height `k·B ≤ L·B_k + D` for `1 ≤ k ≤ L` | proved | `Cycle.repeat_identity`, `repeat_dvd`, `repeat_gap_M`, `member_pow_le`, `repeat_bound`, `repeat_theorem` (`Collatz/Repeat.lean`) | 144 004 repeated stretches of 1 681 cycles | the congruence is Terras 1976 and Everett, *Adv. Math.* 25 (1977) 42–45; the smallest-member bound is attributed to Crandall 1978, Eliahou 1993 and Belaga, *Acta Arith.* 106 (2003) 197–206 (secondary sources); the bound on the largest member and the combination were not found stated and may be folklore |
 
 ### FALSE claims, kept as warnings
 
@@ -179,9 +179,9 @@ docs/STRUCTURE.md       what the maximum tells you: L <= |R(O)|, the slow ascent
 python/                 collatz_maxodd — cycle search, sieves, backward tree,
                         cycle equation, death-depth tail, 3n+q census, certification from
                         either end, 3-adic witness, cycle structure, the SAT box,
-                        the ledgers and the landing form; 486 tests
+                        the ledgers and the landing form; 487 tests
 lean/                   Collatz — Mathlib-free Lean 4 development, 0 sorry,
-                        0 axioms beyond propext/Quot.sound, 375 audited decls
+                        0 axioms beyond propext/Quot.sound, 391 audited decls
 web/                    data.json (140 KB) + DATA.md — precomputed visualization
                         data (wheel, backward tree, sieve layers, real cycles,
                         Diophantine table), plus index.html — the published interactive note,
@@ -220,7 +220,7 @@ standard library; `pytest` is the only dev dependency.
 $ cd python
 $ uv run pytest
 ...
-486 passed in 56.09s
+487 passed in 57.09s
 
 $ uv run python -m collatz_maxodd                  # full report
 $ uv run python -m collatz_maxodd --q-max 499 --bound 20000 --depth 10
@@ -260,7 +260,7 @@ ALL CHECKS PASSED
 warning in Lean. `check.sh` is the real gate, and it has five steps: clean build
 with zero warnings, a source scan for unsoundness escape hatches
 (`sorry`/`axiom`/`native_decide`/`set_option`/`unsafe`/…), a forced-rebuild
-axiom audit (375 declarations: 270 on `[propext, Quot.sound]`, 32 on `[propext]`,
+axiom audit (391 declarations: 286 on `[propext, Quot.sound]`, 32 on `[propext]`,
 73 on none; no `sorryAx`, no `Classical.choice`), a coverage check that every
 named declaration is actually audited, and a Mathlib-free check. It has been
 verified to *fail* on four deliberately injected defects, including a

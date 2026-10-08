@@ -12,7 +12,7 @@ lake build      # zero errors, zero warnings
 
 **Status: no `sorry` anywhere.** `#print axioms` runs at build time on **every
 named declaration** — every theorem, every definition, the `Cycle` structure
-itself, and every `Cycle` instance (375 declarations, `Collatz/Audit.lean`).
+itself, and every `Cycle` instance (391 declarations, `Collatz/Audit.lean`).
 All report `[propext, Quot.sound]`, `[propext]`, or nothing — no `sorryAx`, and
 no `Classical.choice`.
 
@@ -35,7 +35,7 @@ no `Classical.choice`.
 | `Collatz/Cycle.lean` | `structure Cycle`, `bb`/`BB`/`cc`, faithfulness, T0–T8 |
 | `Collatz/Bridge.lean` | `iter`, and `Cycle.ofOrbit` — **every real `S_q`-cycle yields a `Cycle q`** |
 | `Collatz/Examples.lean` | three hand-built `Cycle` instances + worked examples |
-| `Collatz/Repeat.lean` | **the repeat theorem** (docs/BALANCE.md, Theorem 4) in whole numbers: `repeat_identity`, `repeat_gap_M`, `max_pow_le`, `repeat_theorem`; instantiated on `cycle5` |
+| `Collatz/Repeat.lean` | **the repeat theorem** (docs/BALANCE.md, Theorem 4) in whole numbers: `repeat_identity`, `repeat_dvd`, `repeat_gap_M`, `member_pow_le`, `repeat_bound`, `repeat_theorem`; instantiated on `cycle5` |
 | `Collatz/Guards.lean` | `#guard` + `example` value pins; three bridge-built instances |
 | `Collatz/Audit.lean` | `#print axioms` for every named declaration |
 | `Collatz/Unproved.lean` | comments only — what is **not** formalized and why |
@@ -450,64 +450,78 @@ NOVELTY: none. This is the classical Crandall-style squeeze, rearranged to avoid
 
 ## `Collatz/Repeat.lean` — the repeat theorem
 
-`docs/BALANCE.md` section 6, Lemmas 13 and 14 and Theorem 4, in whole numbers.
-Valid for every `q`. 34 declarations: 32 on `[propext, Quot.sound]`, 2 on `[propext]`.
+`docs/BALANCE.md` section 6, Lemma 13, the upper half of Lemma 14 and Theorem 4,
+in whole numbers. Valid for every `q`. 50 declarations: 48 on
+`[propext, Quot.sound]`, 2 on `[propext]`.
 
 **The statement.** Suppose the same stretch of halving counts occurs at two
 different places of a cycle: `j` steps with `X` halvings in total. Then
 
 ```
+hK :  (3a + q b)^L ≤ a^L * 2^B                       -- a/b ≥ q / (2^(B/L) − 3)
+hD :  ∀ k, 1 ≤ k ≤ L → k * B ≤ L * B_k + D           -- D ≥ height of the largest member
+   ⟹  (b * (m + 2^(X+1)))^L ≤ a^L * 2^D              -- `Cycle.repeat_bound`
+
 hN :  (3 * 2^N + q)^L ≤ 2^(N*L + B)                  -- N ≥ τ + log₂ q
-hD :  ∀ k, 1 ≤ k ≤ L → k * B ≤ L * B_k + D           -- height of the largest member
    ⟹  (X + 1) * L < N * L + D                         -- `Cycle.repeat_theorem`
 ```
 
-that is, `X + 1 < N + D/L`. The written theorem is `X < σ + τ − 1` with two real
-numbers: the size exponent `τ = −log₂(2^(B/L) − 3)` and the height spread `σ`
-of the staircase. Core Lean has no reals, so both enter as whole-number
-certificates, as `log₂ 3` does in `Collatz/Halving.lean`.
+The written theorem is `X < σ + τ − 1` for `q = 1`, with two real numbers: the
+size exponent `τ = −log₂(2^(B/L) − 3)` and the height spread `σ` of the
+staircase. Core Lean has no reals, so both enter as whole-number certificates,
+as `log₂ 3` does in `Collatz/Halving.lean`. `hD` is a lower bound on `D`; the
+value `D = σL` always satisfies it.
+
+* `repeat_bound` is the exact form. Letting `a/b` decrease to the threshold
+  gives `m + 2^(X+1) ≤ q·2^(τ + D/L)`, which is Theorem 4. The inequality is not
+  strict, so the limit loses nothing.
+* `repeat_theorem` rounds the size exponent up to a whole number `N`. It reads
+  `X + 1 < N + D/L` and gives `X < log₂ q + σ + τ`, the form the corollaries of
+  `docs/BALANCE.md` use. It can be one unit weaker than Theorem 4.
 
 | | |
 |---|---|
-| `Cycle.window` | `window p j = bb (p+1) + … + bb (p+j)`, the weight of a stretch |
-| `Cycle.repeat_identity` | `3^j·y(p+j) + 2^X·y(r) = 3^j·y(r+j) + 2^X·y(p)` when the stretches below `p` and `r` agree; `q` cancels |
-| `Cycle.repeat_split` | the two differences share one cofactor: `2^X·t` and `3^j·t` |
+| `Cycle.window` | `window p j = bb (p+1) + … + bb (p+j)`, the weight of the stretch that starts at `y (p+j)` and ends at `y p` |
+| `Cycle.repeat_identity` | `3^j·y(p+j) + 2^X·y(r) = 3^j·y(r+j) + 2^X·y(p)` when the two stretches agree; `q` cancels |
+| `Cycle.repeat_split`, `repeat_dvd` | the two differences share one cofactor, and it is even: `2^(X+1)·t` and `2·3^j·t` |
 | `Cycle.repeat_gap_M` | `m + 2^(X+1) ≤ M` and `m + 2·3^j ≤ M` when `p ≢ r (mod L)` |
 | `Cycle.bb_period` | the halving pattern has no period shorter than `L` |
-| `Cycle.m_le_of_size` | `b·m ≤ a` whenever `(3a + qb)^L ≤ a^L·2^B` |
-| `Cycle.max_pow_le` | `(b·M)^L ≤ a^L·2^D` under the same test and `hD` |
-| `Cycle.repeat_bound` | `(b·2^(X+1))^L < a^L·2^D`, the fraction form |
-| `Cycle.repeat_theorem`, `repeat_theorem_q1` | the statement above |
+| `Cycle.m_le_of_size` | `b·m ≤ a` whenever `hK` |
+| `Cycle.member_pow_le` | `(b·y s)^L ≤ a^L·2^D` for any member, `D` at least its height |
+| `Cycle.max_pow_le` | the same for the largest member |
+| `Cycle.repeat_bound`, `repeat_theorem`, `repeat_theorem_q1` | the statements above |
 | `Cycle.repeat_unique` | a stretch with `X + 1 ≥ N + s` halvings occurs at one place only |
 
-**No analysis is needed.** The written proof of the bound on `M` sums a
-geometric series with the real ratio `2^(B/L)/3`. `Cycle.max_chain` replaces it
-by a walk: go backwards from `M` until the first member at or below the
+**No analysis is needed.** The written proof of the size bound sums a geometric
+series with the real ratio `2^(B/L)/3`. `Cycle.member_chain` replaces it by a
+walk: go backwards from the member until the first member at or below the
 threshold `a/b`. Every member passed on the way multiplies by at most `2^(B/L)`
 per step (`size_mono`), and the first member below the threshold costs at most
 `(3a + qb)/b`. The coprimality of `2^X` and `3^j` is two plain inductions
 (`coprime_split`); no `gcd` appears.
 
-**Nothing is lost by clearing denominators.** The threshold is an arbitrary
-fraction `a/b`. Letting it decrease to `q/(2^(B/L) − 3)` recovers the real
-statement `M ≤ q·2^(τ + D/L)`.
-
 ### Non-vacuity
 
 `cycle5 = {49, 31, 19}` has halving counts `1, 1, 3` backwards from the maximum,
-so the stretch "one step, one halving" occurs at two places. Every theorem above
-is instantiated there: `3·(31 − 19) = 36 = 2·(49 − 31)` with `t = 6`;
-`19 + 4 ≤ 49` and `19 + 6 ≤ 49`; the size test at `a/b = 29`,
-`92^3 = 778688 ≤ 780448 = 29^3·32`; the height `D = 4`;
-`49^3 = 117649 ≤ 390224 = 29^3·2^4`; and `(1 + 1)·3 = 6 < 5·3 + 4`.
+so the stretch "one step, one halving" occurs at two places. The general
+statements are instantiated there, all except `repeat_theorem_q1`:
+`3·(31 − 19) = 36 = 2·(49 − 31)` with cofactor `6 = 2·3`; `19 + 4 ≤ 49` and
+`19 + 6 ≤ 49`; the size test at `a/b = 29`, `92^3 = 778688 ≤ 780448 = 29^3·32`;
+heights `D = 4` for `49` and `D = 2` for `31`; `49^3 = 117649 ≤ 390224 = 29^3·2^4`;
+`(19 + 4)^3 = 12167 ≤ 390224`; `(1 + 1)·3 = 6 < 5·3 + 4`; and `repeat_unique`
+with `N + s = 7 = X + 1` on the stretch `1, 1, 3, 1`.
+
+With `L = 3` these bounds are far from sharp. The example shows that the
+hypotheses can be met together, nothing more.
 `python/tests/test_balance.py::test_lean_statements_on_real_loops` replays the
-same statements on 1 681 real loops of `3n+q`.
+statements on 1 681 real loops of `3n+q`, and
+`test_lean_size_hypothesis_is_needed` gives a loop on which `N` cannot be
+lowered by one.
 
 ### What this is not
 
 Not a bound on `τ`: Ellison's and Rhin's theorems are cited in
 `docs/BALANCE.md`, not proved here. Not the corollaries about patterns near
-balance: those need the count of stretches of a Christoffel word. Not Theorems
-1–3 of `docs/BALANCE.md`, which need a number field. See
-`Collatz/Unproved.lean`, entry 8.
-
+balance: those need the count of stretches of a Christoffel word. Not the lower
+half of Lemma 14. Not Theorems 1–3 of `docs/BALANCE.md`, which need a number
+field. See `Collatz/Unproved.lean`, entry 8.
