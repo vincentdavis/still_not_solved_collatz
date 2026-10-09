@@ -42,6 +42,13 @@ Classical Collatz, ``q = 1``.  A loop with ``L`` odd members and ``B`` halvings 
   ``j``, so every word that differs from one in few corners, or whose profile has few jumps,
   is excluded once ``L`` is large (``longest_repeat``, ``repeat_excludes``,
   ``max_moved_corners``).
+* **Local repeats.**  The gap ``2^(X+1)`` is a gap between the two members the stretch starts
+  from, and the member at corner ``p`` is at most ``2^(tau + h_p/L)``, ``h_p`` its height above
+  the lowest level.  So ``X + 1 < tau + max(h_p, h_q)/L``: only the two starting members
+  matter, and the rest of the staircase is free (``heights``, ``local_repeat``).  A word whose
+  staircase stays on or below a balanced one and touches it along ``2j + 2`` consecutive
+  corners, ``floor(jB/L) >= tau``, is therefore not a loop (``touching_stretch``,
+  ``low_stretch_length``).
 """
 
 from __future__ import annotations
@@ -105,6 +112,13 @@ __all__ = [
     "moved_corner_window",
     "max_moved_corners",
     "moved_corner_reach",
+    "heights",
+    "least_size_exponent",
+    "local_repeat",
+    "low_stretch_window",
+    "low_stretch_length",
+    "touching_stretch",
+    "max_lowered_corners",
 ]
 
 LOG2_3 = math.log2(3)
@@ -731,3 +745,116 @@ def moved_corner_reach(L: int, s: int = 3) -> float:
     Returns ``L / Psi``."""
     psi = 2 + (s + 1 + math.log2(L / 3) + 13.3 * math.log2(L * LOG2_3 + 1)) / LOG2_3
     return L / psi
+
+
+# ----------------------------------------------------------------------------- local repeats
+
+
+def heights(w: tuple[int, ...] | list[int]) -> list[int]:
+    """``h_p = D'_p - min D'``: the height of corner ``p`` above the lowest level, in level
+    units (``h_p / L`` halvings).  By Lemma 14 the member at corner ``p`` of a loop of ``3n+1``
+    is at most ``2^(tau + h_p/L)``: low corners carry small members.  In the staircase drawing
+    the low corners are the ones that reach highest against the line."""
+    D = generalized_levels(w)
+    lo = min(D)
+    return [x - lo for x in D]
+
+
+def least_size_exponent(L: int, B: int, q: int = 1) -> int:
+    """Least whole ``N >= 0`` with ``(3 * 2^N + q)^L <= 2^(N L + B)``, that is
+    ``N >= tau + log2 q``: the size test ``hN`` of ``lean/Collatz/Repeat.lean``.  Exact integer
+    arithmetic, for moderate ``L``."""
+    if 2**B <= 3**L:
+        raise ValueError("need 2^B > 3^L")
+    N = 0
+    while (3 * 2**N + q) ** L > 2 ** (N * L + B):
+        N += 1
+    return N
+
+
+def local_repeat(
+    w: tuple[int, ...] | list[int], q: int = 1, local: bool = True
+) -> tuple[int, int, int, int] | None:
+    """Theorem 5 applied to ``w``: ``(p, r, j, X)`` such that the stretches of length ``j`` at the
+    different positions ``p`` and ``r`` are equal, with weight ``X``, and
+
+        (X + 1) L >= N L + max(h_p, h_r),        N = least_size_exponent(L, B, q).
+
+    No loop of ``3n+q`` has such a pair (``Cycle.repeat_theorem_local`` in Lean, read
+    contrapositively).  ``None`` if no pair qualifies.  With ``local=False`` the height of the
+    two starting corners is replaced by the full spread ``max D' - min D'``, which is the test
+    of Theorem 4.  Exact; cost about ``L^2`` times the longest repeat."""
+    w = tuple(w)
+    L, B = len(w), sum(w)
+    N = least_size_exponent(L, B, q)
+    h = heights(w)
+    spread = max(h)
+    ww = w + w
+    pre = [0]
+    for x in ww:
+        pre.append(pre[-1] + x)
+    for j in range(1, L):
+        groups: dict[tuple[int, ...], list[int]] = {}
+        for p in range(L):
+            groups.setdefault(ww[p : p + j], []).append(p)
+        any_repeat = False
+        for members in groups.values():
+            if len(members) < 2:
+                continue
+            any_repeat = True
+            a, b = sorted(members, key=lambda t: h[t])[:2]  # the two lowest starting corners
+            X = pre[a + j] - pre[a]
+            if (X + 1) * L >= N * L + (max(h[a], h[b]) if local else spread):
+                return min(a, b), max(a, b), j, X
+        if not any_repeat:
+            return None
+    return None
+
+
+def low_stretch_window(L: int, B: int, u: int = 0, exact: bool = False) -> int:
+    """Least ``j`` with ``floor(jB/L) >= u + tau``: the length of stretch whose repetition
+    Corollary 20 needs when the staircase rises at most ``u`` steps above the balanced one.
+    ``tau`` is the bound of ``size_exponent_bound`` (or the exact value when ``exact``)."""
+    return moved_corner_window(L, B, u, exact)
+
+
+def low_stretch_length(L: int, B: int, u: int = 0, exact: bool = False) -> int:
+    """Corollary 20: a word whose staircase stays at most ``u`` steps above a balanced one and
+    agrees with it on this many consecutive letters, ``2j + 1`` with ``j = low_stretch_window``,
+    is not a loop.  The agreement is along ``2j + 2`` consecutive corners."""
+    return 2 * low_stretch_window(L, B, u, exact) + 1
+
+
+def touching_stretch(
+    w: tuple[int, ...] | list[int], c: tuple[int, ...] | list[int], j: int, u: int = 0
+) -> int | None:
+    """Hypothesis of Corollary 20.  With ``m_p = X_p(w) - X_p(c)`` the displacement of corner
+    ``p`` of ``w`` above the corner of ``c``: the first ``p0`` such that ``m`` is constant on the
+    ``2j + 2`` corners ``p0, ..., p0 + 2j + 1`` (read cyclically) and ``m_p <= m_p0 + u`` at every
+    corner.  ``None`` if there is none.  ``w`` and ``c`` must have the same length and sum."""
+    w, c = tuple(w), tuple(c)
+    L = len(w)
+    if len(c) != L or sum(c) != sum(w):
+        raise ValueError("w and c must have the same length and sum")
+    if 2 * j + 2 > L:
+        return None
+    m, d = [], 0
+    for x, y in zip(w, c):
+        m.append(d)
+        d += x - y
+    top = max(m)
+    run = 0  # number of consecutive equal letters ending at the current position
+    for t in range(2 * L):
+        run = run + 1 if w[t % L] == c[t % L] else 0
+        if run >= 2 * j + 1:
+            p0 = (t - 2 * j) % L
+            if top <= m[p0] + u:
+                return p0
+    return None
+
+
+def max_lowered_corners(L: int, B: int, u: int = 0, exact: bool = False) -> int:
+    """Corollary 21: the largest ``k`` such that a word differing from a balanced word in ``k``
+    corners, each moved any number of steps down and at most ``u`` steps up, cannot be a loop:
+    the largest ``k`` with ``k (2j + 3) <= L`` for ``j = low_stretch_window``."""
+    return L // (2 * low_stretch_window(L, B, u, exact) + 3)

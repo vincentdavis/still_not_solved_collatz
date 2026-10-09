@@ -65,6 +65,13 @@ from collatz_maxodd.balance import (
     two_swaps,
     window_suffices,
     word_element,
+    heights,
+    least_size_exponent,
+    local_repeat,
+    low_stretch_length,
+    low_stretch_window,
+    max_lowered_corners,
+    touching_stretch,
 )
 from collatz_maxodd.syracuse import syracuse_with_exponent
 
@@ -843,8 +850,8 @@ def _replay_lean(c) -> dict:
     sw = -(-D // L)  # least whole s with k B <= L (B_k + s)
     assert all(k * B <= L * (BB[k] + sw) for k in range(1, L + 1))
 
-    stretches = 0
-    slack = slack_unique = None
+    stretches = sharper = 0
+    slack = slack_unique = slack_local = None
     for p in range(L):
         for r in range(p + 1, L):
             j = 0
@@ -872,9 +879,21 @@ def _replay_lean(c) -> dict:
                 slack = v if slack is None else min(slack, v)
                 u = N + sw - (X + 1)
                 slack_unique = u if slack_unique is None else min(slack_unique, u)
+                # the local forms: only the heights of the two starting members enter
+                sp, sr = (p + jj) % L, (r + jj) % L
+                hbig = heights[sp] if ypj >= yrj else heights[sr]
+                hboth = max(heights[sp], heights[sr])
+                assert (b * (min(ypj, yrj) + 2 ** (X + 1))) ** L <= a**L * 2**hbig  # repeat_bound_local
+                assert (X + 1) * L < N * L + hbig  # repeat_theorem_local_of_le
+                assert (X + 1) * L < N * L + hboth  # repeat_theorem_local
+                assert N + -(-hboth // L) > X + 1  # repeat_unique_local, contrapositive
+                sharper += hboth < D
+                v = Fraction(N * L + hboth - (X + 1) * L, L)
+                slack_local = v if slack_local is None else min(slack_local, v)
     return {
         "N": N, "D": D, "a": a, "b": b, "M": M, "L": L, "stretches": stretches,
         "slack": slack, "slack_unique": slack_unique,
+        "slack_local": slack_local, "sharper": sharper,
     }  # fmt: skip
 
 
@@ -894,9 +913,11 @@ def test_lean_statements_on_real_loops(census) -> None:
     repeat_bound     (b (m + 2^(X+1)))^L <= a^L 2^D
     repeat_theorem   (X + 1) L < N L + D  whenever (3 * 2^N + q)^L <= 2^(N L + B)
     repeat_unique    a stretch with X + 1 >= N + s occurs at one place
-    bb_period        the halving counts have no period shorter than L"""
-    loops = stretches = with_repeat = 0
-    slack = slack_unique = math.inf
+    bb_period        the halving counts have no period shorter than L
+    repeat_bound_local, repeat_theorem_local, repeat_unique_local
+                     the same with D the height of the two members the stretch starts from"""
+    loops = stretches = with_repeat = sharper = 0
+    slack = slack_unique = slack_local = math.inf
     tight = -math.inf
     for c in census:
         if c.L < 2:
@@ -909,7 +930,12 @@ def test_lean_statements_on_real_loops(census) -> None:
             with_repeat += 1
             slack = min(slack, r["slack"])
             slack_unique = min(slack_unique, r["slack_unique"])
+            slack_local = min(slack_local, r["slack_local"])
+            sharper += r["sharper"]
     assert (loops, with_repeat, stretches) == (1681, 1464, 144004)
+    # local forms: the two starting members sit below the largest member in 120 116 cases,
+    # and the least value of N + max(h)/L - (X + 1) is exactly 1
+    assert (sharper, slack_local) == (120116, 1)
     assert slack == Fraction(13, 7)  # the least N + D/L - (X + 1) over the census
     assert slack_unique == 2  # the least N + s - (X + 1): repeat_unique never comes closer
     assert -0.052 < tight < -0.051  # max_pow_le is within 3.6 % of equality on some loop
@@ -1222,6 +1248,265 @@ def test_one_move_from_a_power() -> None:
 # ---------------------------------------------------------------------------
 # section 7: reach of the norm test, by swap distance from balance
 # ---------------------------------------------------------------------------
+
+
+# ---------------------------------------------------------------------------
+# section 6.2: local repeats (Theorem 5)
+# ---------------------------------------------------------------------------
+
+
+def _loop_of_word(w: tuple[int, ...]) -> tuple[int, list[int]] | None:
+    """A primitive word as a loop of 3n+q: ``(q, members)`` with ``q = d/g`` and members
+    ``c(w^(p))/g``, ``g = gcd(d, c(w))``.  ``None`` if ``2^B <= 3^L``."""
+    L, B = len(w), sum(w)
+    d = 2**B - 3**L
+    if d <= 0:
+        return None
+    cs = [cycle_numerator(w[p:] + w[:p]) for p in range(L)]
+    g = gcd(d, *cs)
+    return d // g, [c // g for c in cs]
+
+
+def _check_local_theorem(w: tuple[int, ...], q: int, ns: list[int]) -> tuple[int, int, Fraction | None]:
+    """Theorem 5 on one loop of 3n+q, forward notation: every repeated stretch, exactly.
+    Returns (stretches, stretches where the local height is below the spread, least slack)."""
+    L, B = len(w), sum(w)
+    for p in range(L):
+        assert 2 ** w[p] * ns[(p + 1) % L] == 3 * ns[p] + q
+    N = least_size_exponent(L, B, q)
+    h = heights(w)
+    spread = max(h)
+    for p in range(L):  # Lemma 14, member by member, in the form of Cycle.member_pow_le
+        assert ns[p] ** L <= 2 ** (N * L + h[p])
+    count = sharper = 0
+    slack = None
+    for p in range(L):
+        for r in range(p + 1, L):
+            j = X = 0
+            while j < L - 1 and w[(p + j) % L] == w[(r + j) % L]:
+                X += w[(p + j) % L]
+                j += 1
+                hh = max(h[p], h[r])
+                assert abs(ns[p] - ns[r]) >= 2 ** (X + 1)
+                assert (X + 1) * L < N * L + hh  # Theorem 5
+                count += 1
+                sharper += hh < spread
+                v = Fraction(N * L + hh - (X + 1) * L, L)
+                slack = v if slack is None else min(slack, v)
+    return count, sharper, slack
+
+
+def test_local_repeat_theorem_on_real_loops(census) -> None:
+    """Theorem 5 on every 3n+q loop of the census: a stretch of weight X that starts at two
+    different members has X + 1 < N + max(h_p, h_r)/L, where h is the height of a starting
+    member above the lowest level and N >= tau + log2 q is the least whole exponent passing the
+    size test.  Theorem 4 has the full spread in place of max(h_p, h_r).  The functions
+    local_repeat (both forms) must find nothing to exclude on a loop that exists."""
+    loops = stretches = sharper = 0
+    slack = math.inf
+    for c in census:
+        if c.L < 2:
+            continue
+        ns, w = _orbit(c)
+        w = tuple(w)
+        loops += 1
+        n, sh, sl = _check_local_theorem(w, c.q, ns)
+        stretches += n
+        sharper += sh
+        if sl is not None:
+            slack = min(slack, sl)
+        assert local_repeat(w, c.q) is None and local_repeat(w, c.q, local=False) is None
+    # 141 056 of the 144 004 stretches start from two members that both sit below the spread
+    assert (loops, stretches, sharper, slack) == (1681, 144004, 141056, 1)
+
+
+def test_local_repeat_theorem_on_every_small_word() -> None:
+    """Theorem 5 is not vacuous: every primitive word with positive letters is the halving word
+    of a loop of 3n + d/g, and the theorem holds there with log2 q added to tau.  All words
+    with L <= 9 and 2^B > 3^L, B <= 2L + 1."""
+    words = stretches = sharper = integral = 0
+    slack = math.inf
+    for L in range(2, 10):
+        for B in range(smallest_B(L), 2 * L + 2):
+            for cuts in combinations(range(1, B), L - 1):
+                w = tuple(b - a for a, b in zip((0,) + cuts, cuts + (B,)))
+                if not _primitive(w):
+                    continue
+                q, ns = _loop_of_word(w)
+                words += 1
+                integral += q == 1
+                n, sh, sl = _check_local_theorem(w, q, ns)
+                stretches += n
+                sharper += sh
+                if sl is not None:
+                    slack = min(slack, sl)
+                assert local_repeat(w, q) is None
+    assert (words, stretches, sharper, integral, slack) == (122422, 1688793, 1550704, 0, 2)
+
+
+def test_consecutive_corners_of_a_balanced_word_repeat() -> None:
+    """Lemma 20: among any j + 2 consecutive corners of a balanced word, two carry the same
+    stretch of length j (1 <= j <= L - 2), whatever the gcd.  So 2j + 1 consecutive letters of
+    a balanced word always contain a repeated stretch of length j."""
+    pairs = cases = 0
+    for L in range(3, 61):
+        for B in range(smallest_B(L), 2 * L):
+            c = balanced_word(L, B)
+            cc = c + c + c
+            pairs += 1
+            for j in range(1, L - 1):
+                for p0 in range(L):
+                    seen = {cc[p0 + i : p0 + i + j] for i in range(j + 2)}
+                    assert len(seen) <= j + 1
+                    cases += 1
+    assert (pairs, cases) == (729, 1292357)
+
+
+def _below_and_touching(c: tuple[int, ...], p0: int, touch: int, u: int, rng: random.Random) -> tuple[int, ...]:
+    """A word whose staircase agrees with that of ``c`` on the ``touch`` corners from ``p0``,
+    rises at most ``u`` steps above it elsewhere, and otherwise wanders below it: the
+    displacement falls by at most one per step (only where ``c`` has a 2) and jumps back up
+    freely, which makes long runs of 1s followed by one large letter."""
+    L = len(c)
+    m = [0] * L
+    cur = 0
+    for t in range(touch, L):
+        p = (p0 + t) % L
+        prev_letter = c[(p - 1) % L]
+        lowest = cur + 1 - prev_letter  # keeps the letter before corner p positive
+        r = rng.random()
+        if r < 0.75:
+            cur = lowest
+        elif r < 0.9:
+            cur = rng.randint(lowest, max(lowest, u))
+        else:
+            cur = max(lowest, rng.randint(min(0, lowest), u))
+        m[p] = cur
+    w = tuple(c[p] + m[(p + 1) % L] - m[p] for p in range(L))
+    return w
+
+
+def test_low_stretch_corollary() -> None:
+    """Corollary 20 in practice.  Words that lie on or below a balanced staircase (at most u
+    steps above it), and touch it along 2j + 2 consecutive corners with floor(jB/L) >= N + u,
+    are excluded by Theorem 5: local_repeat finds the forbidden pair among the touching
+    corners.  Theorem 4 does not see most of them, because their spread is large.  Each word
+    is a genuine loop of 3n + d/g with q = d/g > 1, and with that q nothing is excluded."""
+    rng = random.Random(20261009)
+    made = local_only = 0
+    biggest_spread = Fraction(0)
+    for L in (60, 90, 120, 150):
+        for B in (smallest_B(L), smallest_B(L) + 1, smallest_B(L) + 7):
+            if B >= 2 * L:
+                continue
+            c = balanced_word(L, B)
+            N = least_size_exponent(L, B)
+            for u in (0, 1, 2):
+                j = 1
+                while (j * B) // L < N + u:
+                    j += 1
+                assert 2 * j + 2 <= L
+                for _ in range(6):
+                    p0 = rng.randrange(L)
+                    w = _below_and_touching(c, p0, 2 * j + 2, u, rng)
+                    if min(w) < 1 or w == c or not _primitive(w):
+                        continue
+                    assert len(w) == L and sum(w) == B
+                    assert touching_stretch(w, c, j, u) is not None  # the hypothesis
+                    hit = local_repeat(w)
+                    assert hit is not None  # Theorem 5 forbids it
+                    p, r, jj, X = hit
+                    h = heights(w)
+                    assert (X + 1) * L >= N * L + max(h[p], h[r])
+                    made += 1
+                    if local_repeat(w, local=False) is None:
+                        local_only += 1
+                        biggest_spread = max(biggest_spread, height_spread(w))
+                    q, ns = _loop_of_word(w)
+                    assert q > 1  # so w is not a loop of 3n+1 ...
+                    assert local_repeat(w, q) is None  # ... and is consistent as a loop of 3n+q
+                    _check_local_theorem(w, q, ns)
+    # 84 of the 210 words are beyond Theorem 4: only the local form excludes them
+    # and their spread goes up to 18.6 halvings
+    assert (made, local_only, biggest_spread) == (210, 84, Fraction(93, 5))
+
+
+def test_lowered_corners_corollary() -> None:
+    """Corollary 21: k corners of a balanced word moved down by any number of steps (and none
+    up) leave a run of 2j + 2 unmoved corners as soon as k (2j + 3) <= L, so the word is
+    excluded however deep the corners go."""
+    rng = random.Random(7)
+    made = deepest = 0
+    for L, B in ((200, 317), (200, 318), (300, 476), (400, 634), (400, 640)):
+        c = balanced_word(L, B)
+        N = least_size_exponent(L, B)
+        j = 1
+        while (j * B) // L < N:
+            j += 1
+        kmax = L // (2 * j + 3)
+        assert kmax >= 2
+        for _ in range(8):
+            k_target = rng.randint(1, kmax)
+            # pits: the displacement falls by one at each corner that follows a 2 of c, for as
+            # long as the pit lasts, and returns to 0 in one jump (one large letter)
+            m = [0] * L
+            moved = 0
+            for _attempt in range(200):
+                if moved >= k_target:
+                    break
+                start = rng.randrange(1, L - 1)
+                want = rng.randint(1, k_target - moved)
+                if m[start - 1] != 0:
+                    continue
+                depth, t, pit = 0, start, []
+                while len(pit) < want and t < L - 1 and m[t] == 0:
+                    if c[t - 1] == 2:
+                        depth += 1
+                    if depth == 0:
+                        break
+                    pit.append((t, -depth))
+                    t += 1
+                if not pit or m[t] != 0:
+                    continue
+                for pos, val in pit:
+                    m[pos] = val
+                moved += len(pit)
+            w = tuple(c[p] + m[(p + 1) % L] - m[p] for p in range(L))
+            k = sum(1 for x in m if x != 0)
+            if k == 0 or min(w) < 1 or not _primitive(w):
+                continue
+            assert k * (2 * j + 3) <= L and max(m) == 0
+            assert touching_stretch(w, c, j, 0) is not None
+            assert local_repeat(w) is not None
+            made += 1
+            deepest = max(deepest, -min(m))
+    assert (made, deepest) == (40, 19)
+
+
+def test_local_repeat_numbers() -> None:
+    """The numbers quoted in section 6.2.  At Hercher's length a balanced stretch of 679
+    letters (Rhin's explicit bound) or 97 letters (the exact size exponent) suffices; the
+    explicit form 2 Psi(L, u) - 1 bounds the length for every admissible B."""
+    H = 137528045312
+    BH = smallest_B(H)
+    assert (low_stretch_window(H, BH), low_stretch_length(H, BH)) == (339, 679)
+    assert (low_stretch_window(H, BH, exact=True), low_stretch_length(H, BH, exact=True)) == (48, 97)
+    assert low_stretch_length(H, BH, 1) == 681
+    assert (max_lowered_corners(H, BH), max_lowered_corners(H, BH, exact=True)) == (201950139, 1389172174)
+    for L in (100, 1000, 10**4, 10**6, H):
+        for u in (0, 1, 3):
+            for B in (smallest_B(L), smallest_B(L) + 1, smallest_B(L) + L // 10):
+                assert low_stretch_length(L, B, u) <= 2 * (L / moved_corner_reach(L, u)) - 1
+    # small pairs, exact: how many consecutive letters must agree with the balanced word
+    need = {}
+    for L, B in ((13, 21), (41, 65), (200, 317), (306, 485), (987, 1565)):
+        N = least_size_exponent(L, B)
+        j = 1
+        while (j * B) // L < N:
+            j += 1
+        need[(L, B)] = 2 * j + 1
+        assert need[(L, B)] == low_stretch_length(L, B, exact=True)
+    assert need == {(13, 21): 7, (41, 65): 15, (200, 317): 19, (306, 485): 23, (987, 1565): 15}
 
 
 def _canon(w: tuple[int, ...]) -> tuple[int, ...]:

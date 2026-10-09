@@ -55,6 +55,7 @@ svg .swp{stroke:var(--rise);stroke-width:2.4;fill:none}
 svg .dot{fill:var(--rise)}
 svg .band1{fill:var(--ray);opacity:.16}
 svg .band2{fill:var(--fall);opacity:.2}
+svg .band0{fill:var(--ink-3);opacity:.1}
 button{font:inherit;font-size:.88rem;padding:4px 10px;border:1px solid var(--rule);border-radius:4px;background:var(--surface);color:var(--ink);cursor:pointer}
 svg .curve{fill:none;stroke-width:2}
 svg .lab{fill:var(--ink-2);font-size:10.5px;paint-order:stroke;stroke:var(--surface);stroke-width:4px;stroke-linejoin:round}
@@ -83,7 +84,7 @@ li{margin:4px 0}
     <h1>Near-Balanced Loops</h1>
   </header>
   <p class="lede">A loop of 3n+1 with <code>L</code> odd members and <code>B</code> halvings has a halving pattern: how many times each member is halved. Drawn as a staircase, the pattern climbs from <code>(0, 0)</code> to <code>(L, B)</code>.
-  The most balanced pattern, the Christoffel word, stays within one step of the straight line between the endpoints. Kevin Knight proved that this loop never consists of whole numbers. This page shows that the same is true one and two swaps away from balance, and for a whole run of corners moved together, by moving the loop equation into the number field built from the <code>L</code>-th root of 2. A second, simpler argument about repeated stretches of the pattern then reaches much further for long loops.</p>
+  The most balanced pattern, the Christoffel word, stays within one step of the straight line between the endpoints. Kevin Knight proved that this loop never consists of whole numbers. This page shows that the same is true one and two swaps away from balance, and for a whole run of corners moved together, by moving the loop equation into the number field built from the <code>L</code>-th root of 2. A second, simpler argument about repeated stretches of the pattern then reaches much further for long loops. Its newest form looks at two members only, and rules out any pattern that hangs below a balanced one and touches it along a short run.</p>
 
   <h2>The idea in one line <span class="tag">proved</span></h2>
   <p class="note">The loop's first member is <code>c/d</code> with <code>d = 2<sup>B</sup> − 3<sup>L</sup></code> (Böhm and Sontacchi). Let <code>θ = 2<sup>1/L</sup></code>. When <code>L</code> and <code>B</code> share no factor, dividing by <code>d</code> is the same as dividing by <code>θ<sup>B</sup> − 3</code> in the ring <code>Z[θ]</code>, because <code>2<sup>B</sup> − 3<sup>L</sup></code> is exactly the norm of <code>θ<sup>B</sup> − 3</code>.
@@ -94,6 +95,7 @@ li{margin:4px 0}
     <li><b>Two swaps away.</b> Each swap moves one corner of the staircase by one step, so two swaps leave a five-term expression. At the smallest <code>B</code>, Parseval bounds its norm by about <code>8.46<sup>L/2</sup> ≈ 2.91<sup>L</sup></code>, once the mixed case, one corner up and one down, is multiplied by <code>1 + θ/2</code>, whose norm is almost exactly 1. That is below <code>2<sup>B</sup> − 3<sup>L</sup> ≈ 3<sup>L</sup></code>. The gap is small, so it takes Rhin's lower bound for <code>2<sup>B</sup> − 3<sup>L</sup></code> beyond <code>L = 4000</code> and an exact check below it.</li>
     <li><b>A run of levels.</b> Swaps are not the right unit. Give each corner a level, its distance below the straight line. The sum changes only where two corners that are neighbours in level are moved differently. So raising a whole run of consecutive levels leaves three terms, <code>1 − θ<sup>g</sup> + θ<sup>f</sup></code>, and the one-swap proof applies. This rules out some patterns far from balance: sets of swaps as far as about <code>0.2·L</code> swaps away, at the smallest <code>B</code>, and patterns containing a 3, which no swaps reach.</li>
     <li><b>Repeats.</b> A second argument needs no number field. If the same stretch of halving counts appears twice in a loop, the two members where it starts differ by a multiple of <code>2<sup>X</sup></code>, where <code>X</code> is the number of halvings in the stretch. But the members of a loop whose staircase stays near the line are small. Patterns near balance are full of long repeats, so none of them is a loop once <code>L</code> is large compared with the number of moved corners. At the shortest length a loop can have, this excludes about 400 million moved corners.</li>
+    <li><b>Only two members matter.</b> The two members where a repeated stretch starts differ by a multiple of <code>2<sup>X+1</sup></code>, so the larger one exceeds <code>2<sup>X+1</sup></code>. A member is small when its corner comes close to the straight line. So two corners close to the line cannot share a long stretch, whatever the rest of the staircase does. A staircase that hangs below a balanced one, and touches it along a short run of corners, is therefore not a loop.</li>
   </ul>
 
   <h2>Explore a pattern <span class="tag">exact, in your browser</span></h2>
@@ -132,6 +134,17 @@ li{margin:4px 0}
   <div class="card"><svg id="qchart" viewBox="0 0 1000 340" role="img" aria-label="number of moved corners excluded by the repeat argument against the length of the loop"></svg></div>
   <div class="legend"><span><i style="background:var(--ray)"></i>corners moved one step each</span><span><i style="background:var(--line)"></i>arbitrary swaps</span><span><i style="background:var(--warn)"></i>norm method: 2 swaps</span><span><i style="background:var(--ink-3)"></i>shortest possible loop</span></div>
   <p class="note">Both axes are logarithmic. The curves show the largest number of moved corners, or of swaps, for which the explicit form of the repeat theorem applies at each length. No loop has fewer than 137 528 045 312 odd members, by Hercher's bound with Barina's verification. At that length the theorem excludes 401 035 064 corners moved one step each, and 27 426 966 arbitrary swaps.</p>
+
+  <h2>Hanging below a balanced staircase <span class="tag">exact, in your browser</span></h2>
+  <p class="note">The newest result applies the repeat argument to two members only. Give each corner its level, the distance below the straight line, and measure it from the lowest level of the whole staircase. Call that the corner's height <code>h/L</code>. The member at a corner is at most <code>2<sup>τ + h/L</sup></code>, so corners of small height hold small members. Two members that share a stretch with <code>X</code> halvings differ by a multiple of <code>2<sup>X+1</sup></code>. So a loop has no shared stretch with <code>X + 1 ≥ τ + h/L</code>, where <code>h/L</code> is the larger of the two heights. Below, a balanced staircase is kept along a short run of corners and pushed down everywhere else, by a different amount each time. The pushed-down part holds large members and plays no role. Two corners of the kept run always share a stretch that is too long.</p>
+  <div class="controls" role="group" aria-label="Hanging staircase controls">
+    <label class="ctl">length <select id="tl" aria-label="length and halvings for the hanging staircase"></select></label>
+    <button id="tb" type="button">another shape</button>
+  </div>
+  <div class="card"><svg id="tpath" viewBox="0 0 1000 380" role="img" aria-label="staircase hanging below a balanced staircase and touching it along a short run"></svg></div>
+  <div class="legend"><span><i style="background:var(--ink-3)"></i>balanced staircase, and the run where the two agree (grey band)</span><span><i style="background:var(--rise)"></i>pattern hanging below it; dots mark the two members</span><span><i style="background:var(--ray)"></i>first copy of the shared stretch</span><span><i style="background:var(--fall)"></i>second copy</span></div>
+  <div class="out" id="tverdict" aria-live="polite"></div>
+  <p class="note">At the shortest length a loop can have, 137 528 045 312 odd members, the kept run needs 679 letters with Rhin's bound for <code>τ</code>, and 97 with the exact value of <code>τ</code> at that length. The other letters, more than 137 billion of them, only have to keep the staircase on or below the balanced one.</p>
 
   <h2>How big the norms are <span class="tag">computed</span></h2>
   <div class="card"><svg id="chart" viewBox="0 0 1000 380" role="img" aria-label="per-member size of norms and of 2^B - 3^L against L"></svg></div>
@@ -173,6 +186,12 @@ li{margin:4px 0}
   <b>4.</b> A balanced pattern has at most <code>j + 1</code> different stretches of length <code>j</code>. Each moved corner spoils at most <code>j + 1</code> starting places. If more than <code>j + 1</code> places are left, two of them carry the same stretch, and step 3 is violated once the stretch is long enough.
   <b>5.</b> For three corners, Ellison's bound settles every <code>L ≥ 77</code>. An exact check settles the pairs with <code>30 ≤ L ≤ 76</code>, and the 1 087 329 cases with <code>L ≤ 29</code> are checked directly. So this case does not need Rhin's bound. ∎</div>
   <div class="proof"><b>Checked by machine.</b> Steps 1 to 3 are proved in Lean 4, in <code>lean/Collatz/Repeat.lean</code>, with no <code>sorry</code> and no Mathlib. Lean's core has no real numbers, so <code>τ</code> and <code>σ</code> enter as whole-number tests. One is a whole number <code>N</code> with <code>(3·2<sup>N</sup> + 1)<sup>L</sup> ≤ 2<sup>NL + B</sup></code>, which says <code>N ≥ τ</code>. The other is a whole number <code>D</code> at least as large as the height of the largest member above the lowest level of the staircase. The value <code>D = σ·L</code> always qualifies. The checked statement is <code>(X + 1)·L &lt; N·L + D</code>, which is <code>X + 1 &lt; N + D/L</code>. Because <code>N</code> is whole, this can be one halving weaker than the theorem as stated on paper. An exact form, with a fraction in place of <code>2<sup>N</sup></code>, is checked as well. Steps 4 and 5 are not in Lean and are checked by the Python tests. Theorems 1 to 3 need a number field and are not in Lean either.</div>
+  <div class="proof"><b>Theorem 5.</b> Take a loop of 3n+1 and suppose the same stretch of halving counts, with <code>X</code> halvings, starts at two different members. Let <code>h/L</code> be the larger of the heights of those two corners above the lowest level of the staircase. Then <code>X + 1 &lt; τ + h/L</code>. Two consequences follow. A pattern whose staircase stays on or below a balanced one, and agrees with it along <code>2j + 2</code> consecutive corners with <code>⌊jB/L⌋ ≥ τ</code>, is not a loop. And a balanced pattern with <code>k</code> corners moved down, each by any number of steps, is not a loop once <code>k(2j + 3) ≤ L</code>.</div>
+  <div class="proof"><b>Proof sketch.</b>
+  <b>1.</b> The two members differ by a multiple of <code>2<sup>X+1</sup></code>, by step 1 of Theorem 4 and because both are odd. So the larger one exceeds <code>2<sup>X+1</sup></code>.
+  <b>2.</b> By step 2 of Theorem 4, applied to that member alone, it is at most <code>2<sup>τ + h/L</sup></code>.
+  <b>3.</b> A balanced pattern has at most <code>j + 1</code> different stretches of length <code>j</code>, so two of any <code>j + 2</code> consecutive corners share one. In a staircase that touches a balanced one from below, the touching corners have height less than 1. So both members are below <code>2<sup>τ+1</sup></code>, while the shared stretch has at least <code>τ</code> halvings. ∎
+  Steps 1 and 2 are checked in Lean. Step 3 is checked by the Python tests.</div>
   <p class="note"><b>A corollary.</b> A loop whose largest member is less than 1.86 times its smallest would have to be balanced, so by Knight's theorem every loop other than <code>1 → 4 → 2 → 1</code> spreads by at least that factor.</p>
   <p class="note"><b>It really is about 3n+1.</b> For 3n+13, where <code>2<sup>8</sup> − 3<sup>5</sup> = 13</code>, both kinds of loop exist: the balanced <code>319 → 485 → 367 → 557 → 421</code> and the one-swap <code>283 → 431 → 653 → 493 → 373</code>. That is Knight's Figure 1, multiplied by 13.</p>
 
@@ -192,10 +211,10 @@ li{margin:4px 0}
     <li><b>Balanced loops are Knight's.</b> K. Knight, <em>Collatz high cycles do not exist</em>, Discrete Mathematics 349 (2026) 114812. His proof uses the reversal symmetry of Christoffel words. Halbeisen and Hungerbühler (1997) had shown this loop has the largest smallest member for its counts.</li>
     <li><b>Mirror image of the circuit results.</b> Steiner (1977) and Simons–de Weger (2005) rule out loops made of a few long runs, the least balanced kind, using Baker's theory. This result rules out loops next to perfect balance.</li>
     <li><b>The repeat argument is built from classical parts.</b> Terras (1976) and Everett (1977) showed that whole numbers with the same first <code>k</code> parities agree modulo <code>2<sup>k</sup></code>. Belaga (2003) bounded the smallest member of a loop by <code>1/(2<sup>B/L</sup> − 3)</code>. Rhin (1987) gave the lower bound for <code>2<sup>B</sup> − 3<sup>L</sup></code>.</li>
-    <li><b>Novelty.</b> The number-field form, the one- and two-swap theorems, the run theorem, the repeat theorem with its corollaries and the spread corollary are not in Knight's paper or the related work found so far. The repeat argument is short enough to be folklore. A wider literature search is still needed before calling any of this new mathematics.</li>
+    <li><b>Novelty.</b> The number-field form, the one- and two-swap theorems, the run theorem, the repeat theorem with its corollaries and its local form, and the spread corollary are not in Knight's paper or the related work found so far. The repeat argument is short enough to be folklore. A wider literature search is still needed before calling any of this new mathematics.</li>
   </ul>
 
-  <p class="note" style="margin-top:22px"><b>Provenance.</b> Proofs: <code>docs/BALANCE.md</code>. Tests: <code>python/tests/test_balance.py</code> (43), including exact norms of all 3 034 one-swap elements with <code>L ≤ 45</code>, all 1 722 two-swap elements and all 4 589 run elements with <code>L ≤ 22</code>, the whole finite range of Theorem 2, a check of the norm test on 709 real 3n+q loops, and the repeat identity on 100 137 pairs of members of 1 681 real 3n+q loops. An independent referee pass of Theorem 1 found no mathematical error and checked directly that all 60 150 617 one-swap patterns with <code>L ≤ 1200</code> are non-integral. A second pass re-derived Theorem 2, corrected the citation of Rhin's bound, and listed all 8 942 349 896 words of the finite range, obtained by two successive swaps, without finding a loop. A third pass re-derived Theorem 3, found no error, and checked 4 857 430 974 run patterns with <code>L ≤ 700</code> directly. A fourth pass re-derived Theorem 4 and found no error in the mathematics; it found a rounding bug in the code for the shortest possible loop length, removed Rhin's bound from the three-swap case, and improved the count for arbitrary swaps. The repeat identity, the bound on each member and Theorem 4 are machine-checked in Lean 4 (<code>lean/Collatz/Repeat.lean</code>, 50 declarations, no <code>sorry</code>), and the Lean statements are replayed on 144 004 repeated stretches of the 1 681 real loops. A fifth pass refereed the Lean file. It found the formal statements faithful and two sentences of the surrounding prose wrong, and both are corrected. The explorer recomputes everything in this browser.
+  <p class="note" style="margin-top:22px"><b>Provenance.</b> Proofs: <code>docs/BALANCE.md</code>. Tests: <code>python/tests/test_balance.py</code> (49), including exact norms of all 3 034 one-swap elements with <code>L ≤ 45</code>, all 1 722 two-swap elements and all 4 589 run elements with <code>L ≤ 22</code>, the whole finite range of Theorem 2, a check of the norm test on 709 real 3n+q loops, and the repeat identity on 100 137 pairs of members of 1 681 real 3n+q loops. An independent referee pass of Theorem 1 found no mathematical error and checked directly that all 60 150 617 one-swap patterns with <code>L ≤ 1200</code> are non-integral. A second pass re-derived Theorem 2, corrected the citation of Rhin's bound, and listed all 8 942 349 896 words of the finite range, obtained by two successive swaps, without finding a loop. A third pass re-derived Theorem 3, found no error, and checked 4 857 430 974 run patterns with <code>L ≤ 700</code> directly. A fourth pass re-derived Theorem 4 and found no error in the mathematics; it found a rounding bug in the code for the shortest possible loop length, removed Rhin's bound from the three-swap case, and improved the count for arbitrary swaps. The repeat identity, the bound on each member and Theorem 4 are machine-checked in Lean 4 (<code>lean/Collatz/Repeat.lean</code>, 62 declarations, no <code>sorry</code>), and the Lean statements are replayed on 144 004 repeated stretches of the 1 681 real loops. A fifth pass refereed the Lean file. It found the formal statements faithful and two sentences of the surrounding prose wrong, and both are corrected. Theorem 5 is checked on the same 144 004 stretches, and on all 122 422 patterns with <code>L ≤ 9</code> taken as loops of 3n+q. The explorer recomputes everything in this browser.
   Companion pages: <a href="https://claude.ai/artifact/Ka93oeMYfWhb5aLUX2Kooi">front door</a>, <a href="https://claude.ai/artifact/QUjPuwQXxX1Csi9n5XSqxB">loop sieve</a>, <a href="https://claude.ai/artifact/TUdU2rAtKnP9q2HsFcKPa5">multiplicative ledger</a>, <a href="https://claude.ai/artifact/3SGVtUyiuHJmw1Ms5HxrpP">landing form</a>, <a href="https://claude.ai/artifact/4ZAdqTQfk4D9br1KtGKcRk">drop function</a>, <a href="https://claude.ai/artifact/LUiAkgnva2tjYNP1Bwwrgo">main page</a>.
   Source: <a href="https://github.com/vincentdavis/still_not_solved_collatz">github.com/vincentdavis/still_not_solved_collatz</a>.</p>
 </div>
@@ -491,6 +510,58 @@ function renderRepeat(){
 }
 $('ql').addEventListener('change', renderRepeat); $('qk').addEventListener('change', renderRepeat); $('qb').addEventListener('click', function(){ qseed++; renderRepeat(); });
 
+/* hanging below a balanced staircase: Theorem 5 on two low corners */
+[[13, 21], [29, 46], [41, 65], [53, 85], [89, 142], [144, 229], [200, 317]].forEach(function(pr){ var o = document.createElement('option'); o.value = pr[0] + ',' + pr[1]; o.textContent = 'L = ' + pr[0] + ', B = ' + pr[1]; if (pr[0] === 89) o.selected = true; $('tl').appendChild(o); });
+var tseed = 3;
+function renderTouch(){
+  var pr = $('tl').value.split(',').map(Number), L = pr[0], B = pr[1], bal = balancedWord(L, B);
+  var tau = -Math.log2(Math.pow(2, B / L) - 3), N = Math.max(0, Math.ceil(tau - 1e-12)), j = 1;
+  while (Math.floor(j * B / L) < N) j++;
+  var touch = 2 * j + 2, st = (tseed * 7919 + L * 31) % 2147483647 || 1, rnd = function(){ st = (st * 48271) % 2147483647; return st / 2147483647; };
+  var p0 = Math.floor(rnd() * L), m = [], cur = 0, t, i;
+  for (i = 0; i < L; i++) m.push(0);
+  for (t = touch; t < L; t++){
+    var p = (p0 + t) % L, lowest = cur + 1 - bal[(p - 1 + L) % L], r = rnd();
+    cur = r < 0.72 ? lowest : (r < 0.88 ? cur : 0);
+    if (p === 0) cur = 0; /* both staircases are drawn from (0, 0), so corner 0 is left in place */
+    m[p] = cur;
+  }
+  var word = []; for (i = 0; i < L; i++) word.push(bal[i] + m[(i + 1) % L] - m[i]);
+  var Dl = [], Xc = 0; for (i = 0; i < L; i++){ Dl.push(i * B - L * Xc); Xc += word[i]; }
+  var lo = Math.min.apply(null, Dl), sigma = (Math.max.apply(null, Dl) - lo) / L;
+  var a = -1, b = -1;
+  for (var u1 = 0; u1 <= j + 1 && a < 0; u1++) for (var u2 = u1 + 1; u2 <= j + 1; u2++){
+    var same = true; for (i = 0; i < j; i++) if (word[(p0 + u1 + i) % L] !== word[(p0 + u2 + i) % L]){ same = false; break; }
+    if (same){ a = (p0 + u1) % L; b = (p0 + u2) % L; break; }
+  }
+  var Xs = 0; for (i = 0; i < j; i++) Xs += word[(a + i) % L];
+  var ha = (Dl[a] - lo) / L, hb = (Dl[b] - lo) / L, hmax = Math.max(ha, hb), rp = longestRepeat(word);
+  var W = 1000, H = 380, ml = 46, mr = 16, mt = 16, mb = 34, pw = W - ml - mr, ph = H - mt - mb;
+  var X = function(v){ return ml + v / L * pw; }, Y = function(v){ return mt + ph - v / B * ph; }, s = [];
+  function band(start, len, cls){ var e = start + len; if (e <= L) s.push('<rect class="' + cls + '" x="' + X(start).toFixed(1) + '" y="' + mt + '" width="' + (X(e) - X(start)).toFixed(1) + '" height="' + ph + '"/>'); else { s.push('<rect class="' + cls + '" x="' + X(start).toFixed(1) + '" y="' + mt + '" width="' + (X(L) - X(start)).toFixed(1) + '" height="' + ph + '"/>'); s.push('<rect class="' + cls + '" x="' + X(0).toFixed(1) + '" y="' + mt + '" width="' + (X(e - L) - X(0)).toFixed(1) + '" height="' + ph + '"/>'); } }
+  band(p0, touch - 1, 'band0'); band(a, j, 'band1'); band(b, j, 'band2');
+  for (t = 0; t <= B; t += Math.max(1, Math.round(B / 8))) s.push('<line class="grid" x1="' + ml + '" y1="' + Y(t).toFixed(1) + '" x2="' + (ml + pw) + '" y2="' + Y(t).toFixed(1) + '"/><text x="' + (ml - 6) + '" y="' + (Y(t) + 4).toFixed(1) + '" text-anchor="end">' + t + '</text>');
+  for (var u = 0; u <= L; u += Math.max(1, Math.round(L / 10))) s.push('<text x="' + X(u).toFixed(1) + '" y="' + (mt + ph + 16) + '" text-anchor="middle">' + u + '</text>');
+  s.push('<line class="axis" x1="' + ml + '" y1="' + (mt + ph) + '" x2="' + (ml + pw) + '" y2="' + (mt + ph) + '"/>');
+  s.push('<line class="lineref" x1="' + X(0) + '" y1="' + Y(0) + '" x2="' + X(L) + '" y2="' + Y(B) + '"/>');
+  function stair(w, cls){ var pts = [], Xq = 0; pts.push(X(0).toFixed(1) + ',' + Y(0).toFixed(1)); for (var i = 0; i < w.length; i++){ pts.push(X(i).toFixed(1) + ',' + Y(Xq + w[i]).toFixed(1)); Xq += w[i]; pts.push(X(i + 1).toFixed(1) + ',' + Y(Xq).toFixed(1)); } s.push('<polyline class="' + cls + '" points="' + pts.join(' ') + '"/>'); }
+  stair(bal, 'bal'); stair(word, 'swp');
+  [a, b].forEach(function(c0){ var Xi = 0; for (var q = 0; q < c0; q++) Xi += word[q]; s.push('<circle class="dot" cx="' + X(c0).toFixed(1) + '" cy="' + Y(Xi).toFixed(1) + '" r="4"/>'); });
+  s.push('<text x="' + (ml + pw / 2) + '" y="' + (H - 6) + '" text-anchor="middle">odd step i (grey band: the kept run; coloured bands: the two copies of the shared stretch)</text>');
+  $('tpath').innerHTML = s.join('');
+  var d = (2n ** BigInt(B)) - (3n ** BigInt(L)), c = cnum(word), lines = [], deepest = 0, changed = 0;
+  for (i = 0; i < L; i++){ if (m[i] < deepest) deepest = m[i]; if (m[i] !== 0) changed++; }
+  lines.push('pattern ' + word.join(' ') + '   L = ' + L + ', B = ' + B + ', d ≈ 10^' + (d.toString().length - 1));
+  lines.push('kept run: ' + touch + ' corners (' + (touch - 1) + ' letters) from corner ' + p0 + '; ' + changed + ' of the other corners pushed down, the deepest by ' + (-deepest) + ' steps');
+  lines.push('shared stretch: ' + j + ' letters, X = ' + Xs + ' halvings, starting at corners ' + a + ' and ' + b + ', of heights ' + ha.toFixed(2) + ' and ' + hb.toFixed(2));
+  lines.push('size exponent τ = ' + tau.toFixed(2) + '   →  both members would be below 2^' + (tau + hmax).toFixed(2) + ', yet they differ by a multiple of 2^' + (Xs + 1));
+  lines.push('✓ Theorem 5: X + 1 = ' + (Xs + 1) + ' ≥ τ + h/L = ' + (tau + hmax).toFixed(2) + '. Not a loop.');
+  lines.push((rp.X + 1 >= sigma + tau ? '✓' : '·') + ' Theorem 4, which looks at the whole staircase: height spread σ = ' + sigma.toFixed(2) + ', longest repeated stretch X = ' + rp.X + ', needs X + 1 ≥ σ + τ = ' + (sigma + tau).toFixed(2) + (rp.X + 1 >= sigma + tau ? '. It applies too.' : '. It does not apply here.'));
+  lines.push('direct check: c mod d ' + (c % d === 0n ? '= 0  ✗ integral!' : '≠ 0 ✓'));
+  $('tverdict').textContent = lines.join('\n');
+}
+$('tl').addEventListener('change', renderTouch); $('tb').addEventListener('click', function(){ tseed++; renderTouch(); });
+
 /* chart of the reach of the repeat argument */
 (function(){
   var W = 1000, H = 340, ml = 58, mr = 20, mt = 16, mb = 40, pw = W - ml - mr, ph = H - mt - mb, X0 = 2, X1 = 12, Y0 = 0, Y1 = 9.2, L23 = Math.log2(3);
@@ -521,5 +592,6 @@ $('ql').addEventListener('change', renderRepeat); $('qk').addEventListener('chan
 fillSwaps();
 fillRunLow();
 renderRepeat();
+renderTouch();
 })();
 </script>

@@ -166,6 +166,10 @@
       Theorem 4  `Cycle.repeat_bound` (exact form, over fractions `a/b`);
                  `Cycle.repeat_theorem`, `repeat_theorem_q1`, `repeat_unique`
                  (size exponent rounded up to a whole number `N`)
+      Theorem 5  `Cycle.repeat_bound_local` (exact form), and
+                 `Cycle.repeat_theorem_local`, `repeat_unique_local` (whole `N`):
+                 the local form, with the height of the two members the
+                 stretch starts from in place of the height of the largest
   The two real numbers of the written statement, `tau` and `sigma`, enter as
   whole-number certificates (`hK` or `hN`, and `hD`).  For `repeat_bound` and
   `member_pow_le` nothing is lost: the family of statements over all fractions
@@ -187,8 +191,9 @@
       hypothesis `hN`; for a given pair `(L, B)` that hypothesis is a
       comparison of two integers and needs neither.
 
-  (c) Lemma 15 and Corollaries 16-18 (few moved corners, few runs, three
-      corners for every length).  These are statements about Christoffel
+  (c) Lemmas 15 and 20 and Corollaries 16-18, 20 and 21 (few moved corners, few
+      runs, three corners for every length, touching a balanced staircase from
+      below, corners moved down).  These are statements about Christoffel
       words: a balanced word has at most `j + 1` different stretches of length
       `j`, so a word that differs from it in few places repeats a stretch.
       The pigeonhole step is `Collatz.exists_repeat` (`Collatz/Pigeonhole.lean`),

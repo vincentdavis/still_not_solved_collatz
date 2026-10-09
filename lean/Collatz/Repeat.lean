@@ -1,8 +1,8 @@
 /-
   Collatz/Repeat.lean
 
-  THE REPEAT THEOREM (docs/BALANCE.md section 6, Lemmas 13-14 and Theorem 4),
-  in whole numbers.
+  THE REPEAT THEOREM (docs/BALANCE.md section 6, Lemmas 13-14 and Theorems 4
+  and 5), in whole numbers.
 
   WHAT IS PROVED.  Take a cycle of `3n + q` and suppose the same stretch of
   halving counts occurs at two different places of it: `j` consecutive steps
@@ -25,7 +25,12 @@
     7. `Cycle.repeat_unique`        so a stretch with `X + 1 >= N + s`
        halvings occurs at one place only, and
        `Cycle.bb_period`            the halving pattern has no period shorter
-       than `L`.
+       than `L`;
+    8. `Cycle.repeat_bound_local`, `Cycle.repeat_theorem_local`,
+       `Cycle.repeat_unique_local`  the local form (Theorem 5): in 5 and 6 the
+       height `D` of the largest member can be replaced by the heights of the
+       two members the stretch starts from.  Nothing is then asked of the
+       rest of the cycle.
 
   HOW THIS MATCHES THE WRITTEN THEOREM.  docs/BALANCE.md states Theorem 4 for
   `q = 1` as `X < sigma + tau - 1`, with two real numbers:
@@ -68,8 +73,9 @@
 
   WHAT IS NOT HERE.  The two Diophantine inputs that bound `tau` from above
   (Ellison 1971, Rhin 1987) are cited, not formalized.  The word combinatorics
-  that turns "few moved corners" into "some stretch repeats" (Lemma 15 and
-  Corollaries 16-18 of docs/BALANCE.md) is checked in Python, not here.  The
+  that turns "few moved corners" or "touches a balanced staircase" into "some
+  stretch repeats" (Lemmas 15 and 20 and Corollaries 16-18, 20 and 21 of
+  docs/BALANCE.md) is checked in Python, not here.  The
   lower half of Lemma 14 is not formalized.  Theorems 1-3 of docs/BALANCE.md
   need the number field `Q(2^(1/L))` and are out of reach without Mathlib.
 
@@ -152,6 +158,16 @@ theorem three_pow_odd : ∀ j : Nat, 3 ^ j % 2 = 1 := by
   induction j with
   | zero => decide
   | succ j ih => rw [Nat.pow_succ]; omega
+
+/-- Comparing exponents: `(2^X)^L < (2^N)^L * 2^D` gives `X * L < N * L + D`. -/
+theorem exp_lt_of_two_pow_lt {X N D L : Nat}
+    (h : (2 ^ X) ^ L < (2 ^ N) ^ L * 2 ^ D) : X * L < N * L + D := by
+  rw [← Nat.pow_mul, ← Nat.pow_mul, ← Nat.pow_add] at h
+  rcases Nat.lt_or_ge (X * L) (N * L + D) with hlt | hge
+  · exact hlt
+  · exfalso
+    have := two_pow_le hge
+    omega
 
 /-! ## 2. The size test
 
@@ -276,6 +292,17 @@ theorem le_window (p : Nat) : ∀ j, j ≤ C.window p j := by
 theorem bb_add_mul (k n : Nat) : C.bb (k + C.L * n) = C.bb k := by
   show v2 (3 * C.y (k + C.L * n) + q) = v2 (3 * C.y k + q)
   rw [C.y_add_mul]
+
+/-- Windows repeat with period `L` in their end point. -/
+theorem window_add_mul (p n : Nat) : ∀ j, C.window (p + C.L * n) j = C.window p j := by
+  intro j
+  induction j with
+  | zero => rfl
+  | succ j ih =>
+      show C.window (p + C.L * n) j + C.bb (p + C.L * n + j + 1)
+         = C.window p j + C.bb (p + j + 1)
+      have e : p + C.L * n + j + 1 = p + j + 1 + C.L * n := by omega
+      rw [ih, e, C.bb_add_mul]
 
 /-! ## 4. The repeat identity (Lemma 13 of docs/BALANCE.md) -/
 
@@ -685,13 +712,8 @@ theorem repeat_theorem {p r j N D : Nat}
   have hm := C.m_pos
   have hL := C.hL
   have hlt : 2 ^ (C.window p j + 1) < 1 * (C.m + 2 ^ (C.window p j + 1)) := by omega
-  have h2 := Nat.lt_of_lt_of_le (Nat.pow_lt_pow_left hlt (by omega : C.L ≠ 0)) h
-  rw [← Nat.pow_mul, ← Nat.pow_mul, ← Nat.pow_add] at h2
-  rcases Nat.lt_or_ge ((C.window p j + 1) * C.L) (N * C.L + D) with hlt' | hge
-  · exact hlt'
-  · exfalso
-    have := two_pow_le hge
-    omega
+  exact exp_lt_of_two_pow_lt
+    (Nat.lt_of_lt_of_le (Nat.pow_lt_pow_left hlt (by omega : C.L ≠ 0)) h)
 
 /-- **The repeat theorem for `3n + 1`.**  The same statement with `q = 1`: the
     size test reads `(3 · 2^N + 1)^L ≤ 2^(N·L + B)`, which is the exact test
@@ -727,9 +749,115 @@ theorem repeat_unique {p r j N s : Nat}
     omega
   · exact heq
 
+/-! ## 9. The local form (Theorem 5 of docs/BALANCE.md)
+
+Theorem 4 bounds the largest member.  But the gap of Lemma 13 is a gap between
+the two members the repeated stretch starts from, so it is enough to bound the
+larger of those two.  The height `D` is then the height of that member, not of
+the largest member of the cycle.
+
+In the statements below the two copies of the stretch start at the members
+`y (p+j)` and `y (r+j)`.  The height hypothesis for the member `y s` is
+`k · B ≤ L · window s k + D` for `1 ≤ k ≤ L`: `D` is at least the height of
+`y s` above the lowest level, as in `member_pow_le`. -/
+
+/-- **The local repeat theorem, exact form** (Theorem 5 of docs/BALANCE.md).
+
+    Suppose a stretch of `j` steps and `X = window p j` halvings occurs at two
+    different places, and order them so that `y (r+j) ≤ y (p+j)`.  Let `a / b`
+    pass the size test and let `D` be at least the height of the larger starting
+    member `y (p+j)`.  Then
+
+        (b · (y (r+j) + 2 ^ (X+1))) ^ L  ≤  a ^ L · 2 ^ D ,
+
+    i.e. `y (r+j) + 2 ^ (X+1) ≤ (a/b) · 2 ^ (D/L)`.  Nothing is asked of the
+    rest of the cycle. -/
+theorem repeat_bound_local {p r j a b D : Nat} (hb : 0 < b)
+    (hpr : p % C.L ≠ r % C.L)
+    (hagree : ∀ i, i < j → C.bb (p + i + 1) = C.bb (r + i + 1))
+    (hle : C.y (r + j) ≤ C.y (p + j))
+    (hK : (3 * a + q * b) ^ C.L ≤ a ^ C.L * 2 ^ C.BB C.L)
+    (hD : ∀ k, 1 ≤ k → k ≤ C.L → k * C.BB C.L ≤ C.L * C.window (p + j) k + D) :
+    (b * (C.y (r + j) + 2 ^ (C.window p j + 1))) ^ C.L ≤ a ^ C.L * 2 ^ D := by
+  have h := (C.repeat_gap hpr hagree hle).1
+  exact Nat.le_trans (Nat.pow_le_pow_left (Nat.mul_le_mul_left b h) C.L)
+    (C.member_pow_le (p + j) hb hK hD)
+
+/-- The local repeat theorem with a whole exponent, the two copies ordered. -/
+theorem repeat_theorem_local_of_le {p r j N D : Nat}
+    (hpr : p % C.L ≠ r % C.L)
+    (hagree : ∀ i, i < j → C.bb (p + i + 1) = C.bb (r + i + 1))
+    (hle : C.y (r + j) ≤ C.y (p + j))
+    (hN : (3 * 2 ^ N + q) ^ C.L ≤ 2 ^ (N * C.L + C.BB C.L))
+    (hD : ∀ k, 1 ≤ k → k ≤ C.L → k * C.BB C.L ≤ C.L * C.window (p + j) k + D) :
+    (C.window p j + 1) * C.L < N * C.L + D := by
+  have hK : (3 * 2 ^ N + q * 1) ^ C.L ≤ (2 ^ N) ^ C.L * 2 ^ C.BB C.L := by
+    rw [Nat.mul_one, ← Nat.pow_mul, ← Nat.pow_add]
+    exact hN
+  have h := C.repeat_bound_local (by decide : 0 < 1) hpr hagree hle hK hD
+  have hy := C.y_pos (r + j)
+  have hL := C.hL
+  have hlt : 2 ^ (C.window p j + 1)
+           < 1 * (C.y (r + j) + 2 ^ (C.window p j + 1)) := by omega
+  exact exp_lt_of_two_pow_lt
+    (Nat.lt_of_lt_of_le (Nat.pow_lt_pow_left hlt (by omega : C.L ≠ 0)) h)
+
+/-- **The local repeat theorem, whole-exponent form.**
+
+    Let a stretch of `j` steps and `X = window p j` halvings occur at two
+    different places of a cycle.  Let `N` pass the size test, and let `D` be at
+    least the heights of the two members the stretch starts from, `y (p+j)` and
+    `y (r+j)`.  Then `(X + 1) · L < N · L + D`, that is, `X + 1 < N + D / L`.
+
+    `repeat_theorem` is the case where `D` is at least the height of the
+    largest member.  Here the rest of the cycle may sit as high as it likes. -/
+theorem repeat_theorem_local {p r j N D : Nat}
+    (hpr : p % C.L ≠ r % C.L)
+    (hagree : ∀ i, i < j → C.bb (p + i + 1) = C.bb (r + i + 1))
+    (hN : (3 * 2 ^ N + q) ^ C.L ≤ 2 ^ (N * C.L + C.BB C.L))
+    (hDp : ∀ k, 1 ≤ k → k ≤ C.L → k * C.BB C.L ≤ C.L * C.window (p + j) k + D)
+    (hDr : ∀ k, 1 ≤ k → k ≤ C.L → k * C.BB C.L ≤ C.L * C.window (r + j) k + D) :
+    (C.window p j + 1) * C.L < N * C.L + D := by
+  rcases Nat.le_total (C.y (r + j)) (C.y (p + j)) with hle | hle
+  · exact C.repeat_theorem_local_of_le hpr hagree hle hN hDp
+  · have h := C.repeat_theorem_local_of_le (fun e => hpr e.symm)
+      (fun i hi => (hagree i hi).symm) hle hN hDr
+    rw [← C.window_congr j hagree] at h
+    exact h
+
+/-- **Among low members a heavy stretch occurs only once.**  Let `N` pass the
+    size test.  If a stretch with `X + 1 ≥ N + s` halvings starts from two
+    members that both sit at most `s` whole halvings above the lowest level,
+    the two places are the same place: `p ≡ r (mod L)`. -/
+theorem repeat_unique_local {p r j N s : Nat}
+    (hagree : ∀ i, i < j → C.bb (p + i + 1) = C.bb (r + i + 1))
+    (hN : (3 * 2 ^ N + q) ^ C.L ≤ 2 ^ (N * C.L + C.BB C.L))
+    (hDp : ∀ k, 1 ≤ k → k ≤ C.L → k * C.BB C.L ≤ C.L * (C.window (p + j) k + s))
+    (hDr : ∀ k, 1 ≤ k → k ≤ C.L → k * C.BB C.L ≤ C.L * (C.window (r + j) k + s))
+    (hX : N + s ≤ C.window p j + 1) : p % C.L = r % C.L := by
+  rcases Nat.decEq (p % C.L) (r % C.L) with hne | heq
+  · exfalso
+    have hDp' : ∀ k, 1 ≤ k → k ≤ C.L →
+        k * C.BB C.L ≤ C.L * C.window (p + j) k + C.L * s := by
+      intro k h1 h2
+      have h := hDp k h1 h2
+      rw [Nat.mul_add] at h
+      exact h
+    have hDr' : ∀ k, 1 ≤ k → k ≤ C.L →
+        k * C.BB C.L ≤ C.L * C.window (r + j) k + C.L * s := by
+      intro k h1 h2
+      have h := hDr k h1 h2
+      rw [Nat.mul_add] at h
+      exact h
+    have h := C.repeat_theorem_local hne hagree hN hDp' hDr'
+    have h2 : (N + s) * C.L ≤ (C.window p j + 1) * C.L := Nat.mul_le_mul_right _ hX
+    rw [Nat.add_mul, Nat.mul_comm s C.L] at h2
+    omega
+  · exact heq
+
 end Cycle
 
-/-! ## 9. Non-vacuity — the statements above, on a cycle that exists
+/-! ## 10. Non-vacuity — the statements above, on a cycle that exists
 
 `cycle5 : Cycle 5` is the genuine cycle `49 → 19 → 31 → 49` of `3n + 5`
 (`Collatz/Examples.lean`).  Backwards from the maximum its halving counts are
@@ -845,6 +973,29 @@ theorem cycle5_height :
   · rw [cycle5_BB, cycle5_BB12.2]; decide
   · rw [cycle5_BB]; decide
 
+/-- The windows that end at `y 1 = 31`: `W_1, W_2, W_3 = 1, 4, 5`. -/
+theorem cycle5_window1 :
+    cycle5.window 1 1 = 1 ∧ cycle5.window 1 2 = 4 ∧ cycle5.window 1 3 = 5 := by
+  refine ⟨?_, ?_, ?_⟩
+  · show 0 + cycle5.bb 2 = 1
+    rw [cycle5_bb.2.1]
+  · show 0 + cycle5.bb 2 + cycle5.bb 3 = 4
+    rw [cycle5_bb.2.1, cycle5_bb.2.2]
+  · show 0 + cycle5.bb 2 + cycle5.bb 3 + cycle5.bb 4 = 5
+    rw [cycle5_bb.2.1, cycle5_bb.2.2, cycle5_bb4]
+
+/-- The windows that end at `y 2 = 19`: `W_1, W_2, W_3 = 3, 4, 5`. -/
+theorem cycle5_window2 :
+    cycle5.window 2 1 = 3 ∧ cycle5.window 2 2 = 4 ∧ cycle5.window 2 3 = 5 := by
+  have b5 : cycle5.bb 5 = 1 := (cycle5.bb_add_mul 2 1).trans cycle5_bb.2.1
+  refine ⟨?_, ?_, ?_⟩
+  · show 0 + cycle5.bb 3 = 3
+    rw [cycle5_bb.2.2]
+  · show 0 + cycle5.bb 3 + cycle5.bb 4 = 4
+    rw [cycle5_bb.2.2, cycle5_bb4]
+  · show 0 + cycle5.bb 3 + cycle5.bb 4 + cycle5.bb 5 = 5
+    rw [cycle5_bb.2.2, cycle5_bb4, b5]
+
 /-- The member `31 = y 1` sits at most `2` level units above the rest:
     `k · 5 ≤ 3 · W_k + 2` with `W_1, W_2, W_3 = 1, 4, 5`. -/
 theorem cycle5_height_31 :
@@ -853,19 +1004,23 @@ theorem cycle5_height_31 :
   intro k h1 h2
   have hL : cycle5.L = 3 := rfl
   rw [hL] at h2 ⊢
-  have w1 : cycle5.window 1 1 = 1 := by
-    show 0 + cycle5.bb 2 = 1
-    rw [cycle5_bb.2.1]
-  have w2 : cycle5.window 1 2 = 4 := by
-    show 0 + cycle5.bb 2 + cycle5.bb 3 = 4
-    rw [cycle5_bb.2.1, cycle5_bb.2.2]
-  have w3 : cycle5.window 1 3 = 5 := by
-    show 0 + cycle5.bb 2 + cycle5.bb 3 + cycle5.bb 4 = 5
-    rw [cycle5_bb.2.1, cycle5_bb.2.2, cycle5_bb4]
   rcases (show k = 1 ∨ k = 2 ∨ k = 3 by omega) with h | h | h <;> subst h
-  · rw [cycle5_BB, w1]; decide
-  · rw [cycle5_BB, w2]; decide
-  · rw [cycle5_BB, w3]; decide
+  · rw [cycle5_BB, cycle5_window1.1]; decide
+  · rw [cycle5_BB, cycle5_window1.2.1]; decide
+  · rw [cycle5_BB, cycle5_window1.2.2]; decide
+
+/-- The smallest member `19 = y 2` sits on the lowest level:
+    `k · 5 ≤ 3 · W_k + 0` with `W_1, W_2, W_3 = 3, 4, 5`. -/
+theorem cycle5_height_19 :
+    ∀ k, 1 ≤ k → k ≤ cycle5.L →
+      k * cycle5.BB cycle5.L ≤ cycle5.L * cycle5.window 2 k + 0 := by
+  intro k h1 h2
+  have hL : cycle5.L = 3 := rfl
+  rw [hL] at h2 ⊢
+  rcases (show k = 1 ∨ k = 2 ∨ k = 3 by omega) with h | h | h <;> subst h
+  · rw [cycle5_BB, cycle5_window2.1]; decide
+  · rw [cycle5_BB, cycle5_window2.2.1]; decide
+  · rw [cycle5_BB, cycle5_window2.2.2]; decide
 
 /-- Lemma 14 for the member `31`: `31 ^ 3 = 29791 ≤ 97556 = 29 ^ 3 · 2 ^ 2`. -/
 theorem cycle5_member_pow_le : (1 * cycle5.y 1) ^ cycle5.L ≤ 29 ^ cycle5.L * 2 ^ 2 :=
@@ -912,6 +1067,60 @@ theorem cycle5_repeat_unique : 0 % cycle5.L = 3 % cycle5.L := by
     · rw [cycle5_BB, cycle5_BB12.2]; decide
     · rw [cycle5_BB]; decide
   · show 5 + 2 ≤ 0 + cycle5.bb 1 + cycle5.bb 2 + cycle5.bb 3 + cycle5.bb 4 + 1
+    rw [cycle5_bb.1, cycle5_bb.2.1, cycle5_bb.2.2, cycle5_bb4]
+    decide
+
+/-! ### The local form on `cycle5`
+
+The repeated stretch "one step, one halving" starts from `y 1 = 31` and from
+`y 2 = 19`.  The larger, `31`, has height `2`; the largest member `49` has
+height `4`.  So the local statements hold with `D = 2` where the global ones
+need `D = 4`. -/
+
+/-- The local repeat theorem, exact form, on a real cycle:
+    `(19 + 2 ^ 2) ^ 3 = 12167 ≤ 97556 = 29 ^ 3 · 2 ^ 2`. -/
+theorem cycle5_repeat_bound_local :
+    (1 * (cycle5.y (1 + 1) + 2 ^ (cycle5.window 0 1 + 1))) ^ cycle5.L
+      ≤ 29 ^ cycle5.L * 2 ^ 2 :=
+  cycle5.repeat_bound_local (by decide) (by decide) cycle5_agree (by decide)
+    cycle5_size cycle5_height_31
+
+/-- The local repeat theorem on a real cycle, with `N = 5` and `D = 2`:
+    `(1 + 1) · 3 = 6 < 5 · 3 + 2`. -/
+theorem cycle5_repeat_theorem_local :
+    (cycle5.window 0 1 + 1) * cycle5.L < 5 * cycle5.L + 2 :=
+  cycle5.repeat_theorem_local (N := 5) (by decide) cycle5_agree cycle5_size_exp
+    cycle5_height_31
+    (fun k h1 h2 => by
+      have h : k * cycle5.BB cycle5.L ≤ cycle5.L * cycle5.window (1 + 1) k + 0 :=
+        cycle5_height_19 k h1 h2
+      omega)
+
+/-- `repeat_unique_local` with its hypotheses met.  The stretch `1, 1, 3, 1`
+    leads into `y 0` and into `y 3`, and starts both times from the member
+    `31`, which sits at most `s = 1` whole halving above the lowest level.
+    It has `X = 6` halvings and `N + s = 5 + 1 = 6 ≤ X + 1`.  The global
+    `repeat_unique` needs `s = 2` here. -/
+theorem cycle5_repeat_unique_local : 0 % cycle5.L = 3 % cycle5.L := by
+  have hD : ∀ n k, 1 ≤ k → k ≤ cycle5.L →
+      k * cycle5.BB cycle5.L ≤ cycle5.L * (cycle5.window (1 + cycle5.L * n) k + 1) := by
+    intro n k h1 h2
+    rw [cycle5.window_add_mul 1 n k]
+    have hL : cycle5.L = 3 := rfl
+    rw [hL] at h2 ⊢
+    rcases (show k = 1 ∨ k = 2 ∨ k = 3 by omega) with h | h | h <;> subst h
+    · rw [cycle5_BB, cycle5_window1.1]; decide
+    · rw [cycle5_BB, cycle5_window1.2.1]; decide
+    · rw [cycle5_BB, cycle5_window1.2.2]; decide
+  refine cycle5.repeat_unique_local (j := 4) (N := 5) (s := 1) ?_ cycle5_size_exp
+    (hD 1) (hD 2) ?_
+  · intro i _
+    have h := cycle5.bb_add_mul (i + 1) 1
+    have e : 3 + i + 1 = i + 1 + cycle5.L * 1 := by
+      show 3 + i + 1 = i + 1 + 3 * 1
+      omega
+    rw [Nat.zero_add, e, h]
+  · show 5 + 1 ≤ 0 + cycle5.bb 1 + cycle5.bb 2 + cycle5.bb 3 + cycle5.bb 4 + 1
     rw [cycle5_bb.1, cycle5_bb.2.1, cycle5_bb.2.2, cycle5_bb4]
     decide
 

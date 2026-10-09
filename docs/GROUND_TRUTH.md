@@ -389,9 +389,9 @@ formalized.
 
 ## 7. Formalization status (`lean/`)
 
-Lean 4.33.1, **no Mathlib**, `"packages": []`. 391 declarations audited
+Lean 4.33.1, **no Mathlib**, `"packages": []`. 403 declarations audited
 (current count; earlier revisions of this section said 302 and then 341):
-286 depend on `[propext, Quot.sound]`, 32 on `[propext]`, 73 on
+298 depend on `[propext, Quot.sound]`, 32 on `[propext]`, 73 on
 nothing. Zero
 `sorry`, zero `axiom`, zero `native_decide`, zero `set_option`.
 
@@ -828,7 +828,7 @@ Knight or the related work checked; a wider literature search is pending.  Indep
 referee passes found no error in Theorems 1, 2 or 3; the second corrected the citation of
 Rhin's bound and enumerated the 8 942 349 896 two-swap words of the finite range; the third
 checked 4 857 430 974 run words with `L ≤ 700`; a fourth found no error in Theorem 4.
-**In Lean** (2026-10-08, `lean/Collatz/Repeat.lean`, 50 declarations, no `sorry`, no
+**In Lean** (2026-10-08, `lean/Collatz/Repeat.lean`, 62 declarations with the local form, no `sorry`, no
 `Classical.choice`): the repeat identity and both divisibilities; `M − m ≥ 2^(X+1)` and
 `M − m ≥ 2·3^j`; the bound `(b·n)^L ≤ a^L 2^D` for every member `n`, with `D` at least the
 height of that member above the lowest level; Theorem 4 in exact form,
@@ -843,7 +843,23 @@ one.  The member bound is proved by a walk back to the first member below the th
 with no real numbers.  A fifth referee pass found the formal statements faithful and two
 claims in the surrounding prose wrong; both are corrected.  Theorems 1–3 and the
 corollaries of Theorem 4 are not formalized (`Collatz/Unproved.lean`, entry 8).
-Witnesses: `test_balance.py` (43), `lean/check.sh`.
+**Theorem 5** (local repeats, 2026-10-09, `docs/BALANCE.md` section 6.2; PROVED, and in Lean
+as `repeat_bound_local`, `repeat_theorem_local`): the gap `2^(X+1)` is a gap between the two
+members the stretch starts from, and by Lemma 14 the member at a corner of height `h` above
+the lowest level is at most `2^(τ + h/L)`.  So `X + 1 < τ + max(h_p, h_q)/L`: only the two
+starting members enter, and the rest of the staircase is free.  Theorem 4 is the case
+`h = σL`.  Corollary 20: a word whose staircase stays on or below a balanced one (at most `u`
+steps above it) and agrees with it along `2j + 2` consecutive corners, `⌊jB/L⌋ ≥ τ + u`, is
+not a loop; at Hercher's length that is 679 consecutive letters by Rhin's explicit bound,
+97 with the exact `τ = 75.43`.  Corollary 21: `k` corners of a balanced word moved down by
+any number of steps are excluded once `k(2j + 3) ≤ L` (201 950 139 corners at that length).
+COMPUTED: Theorem 5 on the 144 004 repeated stretches of the census loops (141 056 start
+from two members below the spread) and on all 122 422 primitive words with `L ≤ 9` taken as
+loops of `3n + d/g`; 210 random words hanging below a balanced staircase, of which 84 are out
+of reach of Theorem 4.  The low corners are the ones nearest the line in the staircase
+drawing, where the members are smallest.  A typical word has no two low corners sharing a
+stretch of weight `τ`, so it is still untouched.
+Witnesses: `test_balance.py` (49), `lean/check.sh`.
 
 ### Verification status
 
@@ -867,10 +883,10 @@ Witnesses: `test_balance.py` (43), `lean/check.sh`.
 | landing form: bijection, leaf rule mod 9, saturation, automaton = `Φ_k`, `S_k(q) = q·S_k(1)` (docs/LANDING.md) | ✓ (`test_landing.py`, 24) | ✗ — not formalized (Lemma U and T0 are; the rest is bookkeeping) |
 | drop function: parity/sign, height classes, fibers = divisors of `3d+1` of the form `2^x − 3`, unbounded multiplicity, telescoping, zero-sum sets vs chains, the gates at both ends on zero-sum sets (docs/DROP.md) | ✓ (`test_drop.py`, 26) | ✗ — not formalized (two-line identities and computation) |
 | loop sieve: power-of-2 rule and closure, counting bound `C(log₂N + 2d, d)`, doorways, shadow of `2^71` (exact word model, rate `λ/3`), rational loops through every open class (docs/LOOP_SIEVE.md) | ✓ (`test_loopsieve.py`, 18) | ✗ — not formalized (T0 and the closure are one-liners; the rest is computation) |
-| near balance: `Z[θ]/(θ^B − 3) ≅ Z/d`, θ-identity, norm test, Knight's case (second proof, lowest terms), spread ≥ 1.8614, one- and two-swap theorems, run theorem, repeat theorem (docs/BALANCE.md) | ✓ (`test_balance.py`, 43) | ✓ `Repeat.lean` for the repeat theorem: `repeat_identity`, `repeat_dvd`, `repeat_gap_M`, `member_pow_le`, `repeat_bound`, `repeat_theorem` (Lemma 13, the upper half of Lemma 14 and Theorem 4 in whole numbers). ✗ for the rest: Theorems 1–3 need norms in number fields, the corollaries need Christoffel-word counts, the finite checks are computation |
+| near balance: `Z[θ]/(θ^B − 3) ≅ Z/d`, θ-identity, norm test, Knight's case (second proof, lowest terms), spread ≥ 1.8614, one- and two-swap theorems, run theorem, repeat theorem (docs/BALANCE.md) | ✓ (`test_balance.py`, 49) | ✓ `Repeat.lean` for the repeat theorem and its local form: `repeat_identity`, `repeat_dvd`, `repeat_gap_M`, `member_pow_le`, `repeat_bound`, `repeat_theorem`, `repeat_bound_local`, `repeat_theorem_local` (Lemma 13, the upper half of Lemma 14 and Theorems 4 and 5 in whole numbers). ✗ for the rest: Theorems 1–3 need norms in number fields, the corollaries need Christoffel-word counts, the finite checks are computation |
 | over-dispersion, tail rate, box dimension | ✓ | ✗ — infeasible in-kernel, open, unresolved limit |
 
-Lean total: **391 declarations**, all certifying `[propext, Quot.sound]` or
+Lean total: **403 declarations**, all certifying `[propext, Quot.sound]` or
 `[propext]` — no `sorry`, no `Classical.choice`, no Mathlib.
 
 ### A duplication that was removed

@@ -12,7 +12,7 @@ lake build      # zero errors, zero warnings
 
 **Status: no `sorry` anywhere.** `#print axioms` runs at build time on **every
 named declaration** — every theorem, every definition, the `Cycle` structure
-itself, and every `Cycle` instance (391 declarations, `Collatz/Audit.lean`).
+itself, and every `Cycle` instance (403 declarations, `Collatz/Audit.lean`).
 All report `[propext, Quot.sound]`, `[propext]`, or nothing — no `sorryAx`, and
 no `Classical.choice`.
 
@@ -450,8 +450,8 @@ NOVELTY: none. This is the classical Crandall-style squeeze, rearranged to avoid
 
 ## `Collatz/Repeat.lean` — the repeat theorem
 
-`docs/BALANCE.md` section 6, Lemma 13, the upper half of Lemma 14 and Theorem 4,
-in whole numbers. Valid for every `q`. 50 declarations: 48 on
+`docs/BALANCE.md` section 6, Lemma 13, the upper half of Lemma 14 and Theorems 4
+and 5, in whole numbers. Valid for every `q`. 62 declarations: 60 on
 `[propext, Quot.sound]`, 2 on `[propext]`.
 
 **The statement.** Suppose the same stretch of halving counts occurs at two
@@ -491,6 +491,7 @@ value `D = σL` always satisfies it.
 | `Cycle.max_pow_le` | the same for the largest member |
 | `Cycle.repeat_bound`, `repeat_theorem`, `repeat_theorem_q1` | the statements above |
 | `Cycle.repeat_unique` | a stretch with `X + 1 ≥ N + s` halvings occurs at one place only |
+| `Cycle.repeat_bound_local`, `repeat_theorem_local`, `repeat_unique_local` | the local form (Theorem 5): the same three statements with `D` (or `s`) the height of the two members the stretch starts from, `k·B ≤ L·window (p+j) k + D`; nothing is asked of the rest of the cycle |
 
 **No analysis is needed.** The written proof of the size bound sums a geometric
 series with the real ratio `2^(B/L)/3`. `Cycle.member_chain` replaces it by a
@@ -509,7 +510,8 @@ statements are instantiated there, all except `repeat_theorem_q1`:
 `19 + 6 ≤ 49`; the size test at `a/b = 29`, `92^3 = 778688 ≤ 780448 = 29^3·32`;
 heights `D = 4` for `49` and `D = 2` for `31`; `49^3 = 117649 ≤ 390224 = 29^3·2^4`;
 `(19 + 4)^3 = 12167 ≤ 390224`; `(1 + 1)·3 = 6 < 5·3 + 4`; and `repeat_unique`
-with `N + s = 7 = X + 1` on the stretch `1, 1, 3, 1`.
+with `N + s = 7 = X + 1` on the stretch `1, 1, 3, 1`. The local forms hold there
+with `D = 2`, the height of `31`, where the global ones need `D = 4`.
 
 With `L = 3` these bounds are far from sharp. The example shows that the
 hypotheses can be met together, nothing more.
@@ -522,6 +524,7 @@ lowered by one.
 
 Not a bound on `τ`: Ellison's and Rhin's theorems are cited in
 `docs/BALANCE.md`, not proved here. Not the corollaries about patterns near
-balance: those need the count of stretches of a Christoffel word. Not the lower
+balance, or hanging below a balanced staircase: those need the count of
+stretches of a Christoffel word. Not the lower
 half of Lemma 14. Not Theorems 1–3 of `docs/BALANCE.md`, which need a number
 field. See `Collatz/Unproved.lean`, entry 8.

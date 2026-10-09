@@ -1,8 +1,9 @@
 # Loops near perfect balance — norms in Q(2^(1/L)), and repeats
 
 **Provenance.** A user-led pass of 2026-09-30 to 10-02 (`python/collatz_maxodd/balance.py`,
-`python/tests/test_balance.py`, `web/balance.html`), and on 2026-10-08 a Lean 4
-formalization of Lemmas 13 and 14 and Theorem 4 (`lean/Collatz/Repeat.lean`, section 6.1).  The question was whether the idea
+`python/tests/test_balance.py`, `web/balance.html`), on 2026-10-08 a Lean 4
+formalization of Lemmas 13 and 14 and Theorem 4 (`lean/Collatz/Repeat.lean`, section 6.1),
+and on 2026-10-09 the local form of Theorem 4 (Theorem 5, section 6.2).  The question was whether the idea
 behind Knight's theorem on balanced loops can be pushed one step further.  Labels: **PROVED**
 (complete proof here), **COMPUTED** (exact, pinned by a test), **CITED**.  Classical Collatz
 only (`q = 1`); the 3n+q census is a harness.
@@ -885,8 +886,9 @@ that no loop is one swap from a balanced word for any `(L, B)`, coprime or not.
 Lemma 13, the upper half of Lemma 14 and Theorem 4 are formalized in
 `lean/Collatz/Repeat.lean`, inside the Mathlib-free Lean 4 development of this repository.
 The file has no `sorry`.  The gate `lean/check.sh` passes, and its axiom audit reports
-`[propext, Quot.sound]` for 48 of the 50 new declarations and `[propext]` for the other two:
-no `Classical.choice`.  The statements hold for every `3n+q`.
+`[propext, Quot.sound]` for 60 of the 62 declarations of the file and `[propext]` for the
+other two: no `Classical.choice`.  The statements hold for every `3n+q`.  The local forms of
+section 6.2 are in the same file and are listed there.
 
 **Dictionary.**  Lean lists a loop backwards from its largest member: `y 0 = M`, and
 `y (k+1)` is the member before `y k`, with `3·y(k+1) + q = 2^(bb (k+1))·y k`.  If `M = n_t`
@@ -1001,6 +1003,145 @@ are not vacuous as statements about `3n+q`.
   every loop tried the conclusion survives the least `D` lowered by one.  Each weakened
   conclusion tried (`2^(X+2)`, `4·3^j`, the same place twice) fails on real loops.
 
+### 6.2 The local form: only the two starting members matter (PROVED)
+
+Theorem 4 compares a repeated stretch with the largest member of the loop, so it needs the
+whole staircase to stay near the line.  The gap of Lemma 13 is a gap between the two members
+the stretch starts from.  It is enough to bound those two.
+
+**Heights.**  Put `h_p = D'_p − min D'`, the *height* of corner `p` above the lowest level,
+in level units.  Lemma 14 reads `n_p ≤ 2^(τ + h_p/L)`: low corners carry small members.
+Since `D'_p/L = pB/L − X_p` is the distance of corner `p` below the line, the low corners are
+the ones that reach highest against the line in the staircase drawing.
+
+**Theorem 5 (local repeats).**  In a positive loop of `3n+1`, let the stretches of length `j`
+at two positions `p ≢ q` (mod `L`) be equal, with weight `X`.  Then
+
+    X + 1 < τ + max(h_p, h_q)/L.
+
+*Proof.* `2^(X+1) ≤ |n_p − n_q| < max(n_p, n_q) ≤ 2^(τ + max(h_p, h_q)/L)`, by Lemma 13 and
+by Lemma 14 applied to the larger of the two members.  ∎
+
+Theorem 4 is this statement with `max(h_p, h_q)` replaced by its largest possible value
+`σL`.  For `3n+q` the statement is `X + 1 < log₂ q + τ + max(h_p, h_q)/L`.  In words: of two
+members whose next `X` halvings agree, one is larger than `2^(X+1)`, and a member at height
+`h` is at most `2^(τ + h/L)`.  So among the members of height at most `HL`, no stretch of
+weight `τ + H − 1` or more starts twice.  The rest of the loop does not enter: it may contain
+members of any size.
+
+The other half of Lemma 13 adds nothing here.  It gives
+`1 + j log₂3 < τ + max(h_(p+j), h_(q+j))/L`, and `h_(p+j) = h_p + jB − LX`, so this is
+`X + 1 < τ + max(h_p, h_q)/L + j(B/L − log₂3)`, which is weaker.
+
+**Lemma 20 (a balanced stretch repeats itself).**  Let `c` be a balanced word of length `L`
+and `1 ≤ j ≤ L − 2`.  Among any `j + 2` consecutive corners of `c`, two carry the same
+stretch of length `j`.
+
+*Proof.* By Lemma 15 there are at most `j + 1` different stretches of length `j`, and the
+`j + 2` corners are different corners.  ∎
+
+**Corollary 20 (touching a balanced staircase from below).**  Let `log₂3 < B/L < 2`, with
+any gcd.  Let `c` be a balanced word of length `L` and sum `B`, or a rotation of one, and let
+`w` be a word with positive letters of the same length and sum.  Write
+`m_p = X_p(w) − X_p(c)` for the number of steps by which corner `p` of `w` sits above corner
+`p` of `c`.  Suppose that for some `j ≥ 1` and `u ≥ 0`:
+
+1. `m` takes one value `m*` on `2j + 2` consecutive corners, read cyclically.  Equivalently,
+   `w` and `c` have `2j + 1` consecutive letters in common, at the same positions;
+2. `m_p ≤ m* + u` at every corner;
+3. `⌊jB/L⌋ ≥ τ + u`.
+
+Then no rotation of `w` is the halving word of a loop.  For every admissible `B`, condition
+3 holds for some `j` with `2j + 1 ≤ 2Ψ(L, u) − 1`, with `Ψ` as in Corollary 16.
+
+*Proof.* The levels of `w` are `D_p(c) − L m_p`, and the levels of `c` lie in an interval
+`[λ, λ + L − g]`.  So `min D'(w) ≥ λ − L(m* + u)`, while the touching corners have levels at
+most `λ + L − g − L m*`.  Their heights are therefore at most `(u + 1)L − g`.  By Lemma 20,
+two of the first `j + 2` touching corners carry the same stretch of length `j` of `c`.  That
+stretch lies inside the common letters, so it is a stretch of `w` as well, and its weight is
+at least `⌊jB/L⌋` by Lemma 15.  Theorem 5 then gives `⌊jB/L⌋ + 1 < τ + u + 1 − g/L`, against
+condition 3.  For the explicit form take `j = ⌈(u + 1 + τ̄)/log₂3⌉`, as in the proof of
+Corollary 16.  ∎
+
+The convention for non-primitive words is that of Corollary 16.
+
+With `u = 0`, condition 2 says that the staircase of `w` never rises above that of `c`, once
+the two are shifted to touch.  Below means fewer halvings so far, hence larger members.  So
+the corollary reads: *a staircase that hangs below a balanced one and touches it along
+`2j + 2` consecutive corners is not the staircase of a loop.*  Nothing is assumed about how
+far below it hangs, or at how many corners.
+
+COMPUTED (`test_local_repeat_numbers`): the number `2j + 1` of consecutive letters that must
+agree, for `u = 0`, with the exact size exponent.
+
+| `L, B` | 13, 21 | 41, 65 | 200, 317 | 306, 485 | 987, 1 565 |
+|---|---|---|---|---|---|
+| `τ` | 3.97 | 10.2 | 13.6 | 16.6 | 9.53 |
+| letters that must agree | 7 | 15 | 19 | 23 | 15 |
+
+At Hercher's length `L = 137 528 045 312` the explicit form needs 679 letters.  For the
+exact pair, where `τ = 75.43`, it needs 97.  The other letters, more than `1.37·10^11` of
+them, are restricted only by condition 2.
+
+**Corollary 21 (corners moved down).**  In the setting of Corollary 16, let `w` differ from
+the balanced word `c` at `k ≥ 1` corners, each moved any number of steps down and at most `u`
+steps up.  If some `j` satisfies `k(2j + 3) ≤ L` and `⌊jB/L⌋ ≥ τ + u`, then no rotation of `w`
+is the halving word of a loop.
+
+*Proof.* The `L − k` unmoved corners form at most `k` cyclic runs, so one run has at least
+`(L − k)/k ≥ 2j + 2` corners.  Apply Corollary 20 with `m* = 0`.  ∎
+
+Corollary 16 asks every moved corner to stay within `u` steps above and `v` steps below, and
+needs `⌊jB/L⌋ ≥ u + v + 1 + τ`.  Here the depth `v` does not enter.  The price is a factor 2
+in the count: at Hercher's length, with `u = 0`, Corollary 21 covers up to 201 950 139
+corners moved down by any amount (1 389 172 174 with the exact `τ`), where Corollary 16
+covers 401 035 064 corners moved one step.
+
+**In Lean** (`lean/Collatz/Repeat.lean`, with the dictionary of section 6.1).  The stretch
+starts from the members `y (p+j)` and `y (r+j)`, and the height hypothesis for a member `y s`
+is `k·B ≤ L·window s k + D` for `1 ≤ k ≤ L`.
+
+| Lean name | whole-number statement |
+|---|---|
+| `Cycle.repeat_bound_local` | if `y(r+j) ≤ y(p+j)` and `D` is at least the height of `y(p+j)`: `(b·(y(r+j) + 2^(X+1)))^L ≤ a^L · 2^D` |
+| `Cycle.repeat_theorem_local` | if `D` is at least the heights of both starting members: `(X + 1)·L < N·L + D` |
+| `Cycle.repeat_unique_local` | if both starting members sit at most `s` whole halvings above the lowest level and `X + 1 ≥ N + s`, then `p ≡ r (mod L)` |
+
+As in section 6.1, the first is exact and the second rounds the size exponent up to a whole
+number.  Lemma 20 and Corollaries 20 and 21 are statements about balanced words and are not
+formalized.
+
+**Remarks.**
+* What this adds.  Theorem 4 excludes words whose whole staircase stays within a bounded
+  distance of the line.  Theorem 5 asks this of two corners only.  In Corollary 20 all but
+  `2j + 1` letters are free, subject to condition 2, and the spread `σ` can be of order `L`.
+* What it does not reach.  The two corners must be low, and they must share a stretch of
+  weight about `τ`.  A typical word has few corners within a bounded height of its lowest
+  level, and they share no such stretch.  So a word without structure is still untouched.
+  For loops made of a few long runs of single halvings the theorem gives a classical fact:
+  of two runs of length at least `K`, one starts above `2^(K+1)`, because a member followed
+  by `K` single halvings is `−1` modulo `2^(K+1)`.
+* It really is about `3n+1`.  Every primitive word with positive letters is the halving word
+  of a loop of `3n + d/g`, `g = gcd(d, c(w))`, and Theorem 5 holds there with `log₂ q` added.
+* COMPUTED, in the suite.
+  * Theorem 5 on the 144 004 repeated stretches of the 1 681 census loops, in exact
+    arithmetic with the least whole `N`.  For 141 056 of them the two starting members both
+    sit below the spread.  The least value of `N + max(h_p, h_q)/L − (X + 1)` is 1
+    (`test_local_repeat_theorem_on_real_loops`).
+  * Theorem 5 on all 122 422 primitive words with `L ≤ 9`, `2^B > 3^L` and `B ≤ 2L + 1`, each
+    taken as a loop of `3n + d/g`: 1 688 793 repeated stretches
+    (`test_local_repeat_theorem_on_every_small_word`).
+  * The Lean statements of the local form, in Lean's indexing, on the census
+    (`test_lean_statements_on_real_loops`).
+  * Lemma 20 for every pair with `L ≤ 60` and every `j`: 1 292 357 cases
+    (`test_consecutive_corners_of_a_balanced_word_repeat`).
+  * Corollary 20 in practice: 210 random words that hang below a balanced staircase and touch
+    it along `2j + 2` corners, at four lengths from 60 to 150, with `u ≤ 2`.  Theorem 5
+    excludes all of them.  Theorem 4 excludes 126.  The other 84, with spreads up to
+    `σ = 18.6`, are out of its reach.  Each word is a loop of `3n + d/g` with `d/g > 1`, and
+    with that `q` nothing is excluded (`test_low_stretch_corollary`).
+  * Corollary 21 on 40 words with up to 19 steps of depth (`test_lowered_corners_corollary`).
+
 ## 7. How far the norm test reaches (COMPUTED)
 
 Corollary 3 applies to every word.  Among the primitive cyclic words made of 1s and 2s with
@@ -1028,7 +1169,8 @@ test assumes `gcd(L, B) = 1`; when `gcd(L, B) > 1` no loop's word is balanced, t
 balanced primitive words are one swap from a power of a Christoffel word, and Lemma 1 and
 Theorems 1, 2 and 3 do not cover them.  At distance 3 the size argument fails for some words
 (section 4, last remark).  Section 6 fills both gaps by a different argument: Lemma 19 and
-Corollary 18 cover every gcd up to three swaps.  Corollary 16 covers `k` corners moved a
+Corollary 18 cover every gcd up to three swaps.  Corollary 20 covers any word that hangs
+below a balanced staircase and touches it along about `2Ψ` corners.  Corollary 16 covers `k` corners moved a
 bounded number of steps once `L` is large compared with `k log L`, and `k` arbitrary swaps
 once `L` is large compared with `k^(3/2)`.
 
@@ -1047,7 +1189,7 @@ and 3 exclude families of loop shapes, but at the opposite end: theirs are the m
 unbalanced loops, these the loops within two swaps of perfect balance or one run of levels
 away from it, for coprime `(L, B)`.
 
-Theorem 4 passes the same five tests.  A: every bound carries a factor `q`, and for large `q`
+Theorems 4 and 5 pass the same five tests.  A: every bound carries a factor `q`, and for large `q`
 loops next to balance exist.  B: it uses `2^(B/L) > 3`.  C: it combines a 2-adic congruence
 with a bound on real size, so it is not a statement about residues alone.  D: it is exact.
 E: at the smallest `B` it uses Rhin's bound for `2^B − 3^L`.
@@ -1062,7 +1204,8 @@ Theorems 1, 2 and 3 and the table of section 7 were not found in these sources. 
 literature search is needed before calling Theorems 1, 2 and 3 new mathematics; they are new
 to this repository.
 
-Section 6 is built from classical parts.  Lemma 13 is the lemma of Terras (*Acta Arith.* 30
+Section 6 is built from classical parts, and so is its local form (Theorem 5), which uses
+the same two facts member by member.  Lemma 13 is the lemma of Terras (*Acta Arith.* 30
 (1976) 241–252) and Everett (*Adv. Math.* 25 (1977) 42–45) in Syracuse form.  The bound
 `m ≤ 1/(2^(B/L) − 3)` is the squeeze of Crandall (1978) and Eliahou (1993) for `3x+1`, and
 Belaga's for `3x+d` (*Acta Arith.* 106 (2003) 197–206); Fernández and Ibáñez restate it
@@ -1106,6 +1249,8 @@ on secondary sources.
 | Lemma 14 (sizes) and Theorem 4 on real `3n+q` loops | `test_member_size_bounds_on_real_loops`, `test_longest_repeat_and_spread` |
 | Lemma 13, upper half of Lemma 14 and Theorem 4, machine-checked (section 6.1) | `lean/Collatz/Repeat.lean`, gate `lean/check.sh` |
 | the Lean statements replayed on real `3n+q` loops; the size test is needed | `test_lean_statements_on_real_loops`, `test_lean_size_hypothesis_is_needed` |
+| Theorem 5 (local repeats) on real loops and on every small word | `test_local_repeat_theorem_on_real_loops`, `test_local_repeat_theorem_on_every_small_word` |
+| Lemma 20, Corollaries 20 and 21, and their numbers | `test_consecutive_corners_of_a_balanced_word_repeat`, `test_low_stretch_corollary`, `test_lowered_corners_corollary`, `test_local_repeat_numbers` |
 | Lemma 15 (stretches of balanced words) | `test_balanced_words_are_full_of_repeats` |
 | Corollary 16: in practice, explicit form, thresholds, Hercher's length, arbitrary swaps | `test_repeat_theorem_excludes_words_near_balance`, `test_repeat_theorem_numbers`, `test_swap_span` |
 | Corollary 17 (few runs) | `test_few_runs_have_few_stretches` |
@@ -1114,5 +1259,5 @@ on secondary sources.
 | section 7 | `test_reach_profiles` |
 | filter test A | `test_q13_has_balanced_and_one_swap_loops` |
 
-Run: `cd python && uv run pytest tests/test_balance.py` (43 tests), and
-`cd lean && ./check.sh` (391 declarations, of which 50 are in `Collatz/Repeat.lean`).
+Run: `cd python && uv run pytest tests/test_balance.py` (49 tests), and
+`cd lean && ./check.sh` (403 declarations, of which 62 are in `Collatz/Repeat.lean`).

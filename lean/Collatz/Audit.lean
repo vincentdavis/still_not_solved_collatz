@@ -441,16 +441,19 @@ header says why each one is not a theorem. -/
 
 /-! ## The repeat theorem (`Collatz/Repeat.lean`).
 
-Theorem 4 of docs/BALANCE.md in whole numbers: a stretch of halving counts that
-occurs at two different places of a cycle forces members apart
+Theorems 4 and 5 of docs/BALANCE.md in whole numbers: a stretch of halving
+counts that occurs at two different places of a cycle forces members apart
 (`repeat_identity`, `repeat_dvd`, `repeat_gap_M`), each member is bounded
 through the size test and its height (`member_pow_le`, `max_pow_le`), hence
-`repeat_bound` (exact form) and `repeat_theorem` (whole-exponent form).  The
-general statements other than `repeat_theorem_q1` are instantiated on the real
-cycle `cycle5`. -/
+`repeat_bound` (exact form), `repeat_theorem` (whole-exponent form), and the
+local forms `repeat_bound_local`, `repeat_theorem_local`, which ask only for
+the heights of the two members the stretch starts from.  The general
+statements other than `repeat_theorem_q1` are instantiated on the real cycle
+`cycle5`. -/
 #print axioms Collatz.three_mul_split
 #print axioms Collatz.coprime_split
 #print axioms Collatz.three_pow_odd
+#print axioms Collatz.exp_lt_of_two_pow_lt
 #print axioms Collatz.size_pos
 #print axioms Collatz.size_mono
 #print axioms Collatz.le_of_size
@@ -459,6 +462,7 @@ cycle `cycle5`. -/
 #print axioms Collatz.Cycle.window_congr
 #print axioms Collatz.Cycle.le_window
 #print axioms Collatz.Cycle.bb_add_mul
+#print axioms Collatz.Cycle.window_add_mul
 #print axioms Collatz.Cycle.repeat_identity
 #print axioms Collatz.Cycle.repeat_split
 #print axioms Collatz.Cycle.y_ne_of_mod_ne
@@ -476,6 +480,10 @@ cycle `cycle5`. -/
 #print axioms Collatz.Cycle.repeat_theorem
 #print axioms Collatz.Cycle.repeat_theorem_q1
 #print axioms Collatz.Cycle.repeat_unique
+#print axioms Collatz.Cycle.repeat_bound_local
+#print axioms Collatz.Cycle.repeat_theorem_local_of_le
+#print axioms Collatz.Cycle.repeat_theorem_local
+#print axioms Collatz.Cycle.repeat_unique_local
 #print axioms Collatz.cycle5_bb
 #print axioms Collatz.cycle5_bb4
 #print axioms Collatz.cycle5_agree
@@ -491,10 +499,16 @@ cycle `cycle5`. -/
 #print axioms Collatz.cycle5_m_le_of_size
 #print axioms Collatz.cycle5_BB12
 #print axioms Collatz.cycle5_height
+#print axioms Collatz.cycle5_window1
+#print axioms Collatz.cycle5_window2
 #print axioms Collatz.cycle5_height_31
+#print axioms Collatz.cycle5_height_19
 #print axioms Collatz.cycle5_member_pow_le
 #print axioms Collatz.cycle5_max_pow_le
 #print axioms Collatz.cycle5_repeat_bound
 #print axioms Collatz.cycle5_size_exp
 #print axioms Collatz.cycle5_repeat_theorem
 #print axioms Collatz.cycle5_repeat_unique
+#print axioms Collatz.cycle5_repeat_bound_local
+#print axioms Collatz.cycle5_repeat_theorem_local
+#print axioms Collatz.cycle5_repeat_unique_local
