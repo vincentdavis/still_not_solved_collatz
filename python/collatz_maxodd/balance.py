@@ -45,10 +45,10 @@ Classical Collatz, ``q = 1``.  A loop with ``L`` odd members and ``B`` halvings 
 * **Local repeats.**  The gap ``2^(X+1)`` is a gap between the two members the stretch starts
   from, and the member at corner ``p`` is at most ``2^(tau + h_p/L)``, ``h_p`` its height above
   the lowest level.  So ``X + 1 < tau + max(h_p, h_q)/L``: only the two starting members
-  matter, and the rest of the staircase is free (``heights``, ``local_repeat``).  A word whose
-  staircase stays on or below a balanced one and touches it along ``2j + 2`` consecutive
-  corners, ``floor(jB/L) >= tau``, is therefore not a loop (``touching_stretch``,
-  ``low_stretch_length``).
+  matter, and the rest of the staircase enters only through the lowest level (``heights``,
+  ``local_repeat``).  A word whose staircase stays on or below a balanced one and touches it
+  along ``2j + 2`` consecutive corners, ``floor(jB/L) >= tau``, is therefore not a loop
+  (``touching_stretch``, ``low_stretch_length``).
 """
 
 from __future__ import annotations
@@ -119,6 +119,7 @@ __all__ = [
     "low_stretch_length",
     "touching_stretch",
     "max_lowered_corners",
+    "heaviest_repeat",
 ]
 
 LOG2_3 = math.log2(3)
@@ -813,25 +814,27 @@ def local_repeat(
 
 def low_stretch_window(L: int, B: int, u: int = 0, exact: bool = False) -> int:
     """Least ``j`` with ``floor(jB/L) >= u + tau``: the length of stretch whose repetition
-    Corollary 20 needs when the staircase rises at most ``u`` steps above the balanced one.
+    Corollary 21 needs when the staircase rises at most ``u`` steps above the balanced one.
     ``tau`` is the bound of ``size_exponent_bound`` (or the exact value when ``exact``)."""
     return moved_corner_window(L, B, u, exact)
 
 
 def low_stretch_length(L: int, B: int, u: int = 0, exact: bool = False) -> int:
-    """Corollary 20: a word whose staircase stays at most ``u`` steps above a balanced one and
+    """Corollary 21: a word whose staircase stays at most ``u`` steps above a balanced one and
     agrees with it on this many consecutive letters, ``2j + 1`` with ``j = low_stretch_window``,
-    is not a loop.  The agreement is along ``2j + 2`` consecutive corners."""
+    is not a loop, provided ``2j + 2 <= L``.  The agreement is along ``2j + 2`` consecutive
+    corners.  This many letters suffice; fewer may do."""
     return 2 * low_stretch_window(L, B, u, exact) + 1
 
 
 def touching_stretch(
     w: tuple[int, ...] | list[int], c: tuple[int, ...] | list[int], j: int, u: int = 0
 ) -> int | None:
-    """Hypothesis of Corollary 20.  With ``m_p = X_p(w) - X_p(c)`` the displacement of corner
-    ``p`` of ``w`` above the corner of ``c``: the first ``p0`` such that ``m`` is constant on the
+    """Hypothesis of Corollary 21.  With ``m_p = X_p(w) - X_p(c)`` the displacement of corner
+    ``p`` of ``w`` above the corner of ``c``: a corner ``p0`` such that ``m`` is constant on the
     ``2j + 2`` corners ``p0, ..., p0 + 2j + 1`` (read cyclically) and ``m_p <= m_p0 + u`` at every
-    corner.  ``None`` if there is none.  ``w`` and ``c`` must have the same length and sum."""
+    corner; the first one met when scanning from position 0.  ``None`` if there is none, and
+    always ``None`` when ``2j + 2 > L``.  ``w`` and ``c`` must have the same length and sum."""
     w, c = tuple(w), tuple(c)
     L = len(w)
     if len(c) != L or sum(c) != sum(w):
@@ -854,7 +857,39 @@ def touching_stretch(
 
 
 def max_lowered_corners(L: int, B: int, u: int = 0, exact: bool = False) -> int:
-    """Corollary 21: the largest ``k`` such that a word differing from a balanced word in ``k``
+    """Corollary 22: the largest ``k`` such that a word differing from a balanced word in ``k``
     corners, each moved any number of steps down and at most ``u`` steps up, cannot be a loop:
-    the largest ``k`` with ``k (2j + 3) <= L`` for ``j = low_stretch_window``."""
-    return L // (2 * low_stretch_window(L, B, u, exact) + 3)
+    the largest ``k`` with ``k (2j + 2) < L`` for ``j = low_stretch_window``."""
+    return (L - 1) // (2 * low_stretch_window(L, B, u, exact) + 2)
+
+
+def heaviest_repeat(w: tuple[int, ...] | list[int]) -> int:
+    """The largest weight of a stretch that starts at two different cyclic positions (0 if
+    all letters differ).  This, not the longest repeat, is what Theorem 4 compares with
+    ``sigma + tau``.  Positions are grouped by their stretch of length ``j`` and the groups are
+    refined one letter at a time, so the cost is ``L`` times the length of the longest repeat."""
+    w = tuple(w)
+    L = len(w)
+    ids = [0] * L
+    weight = [0] * L
+    best = 0
+    for j in range(1, L):
+        key: dict[tuple[int, int], int] = {}
+        new = [0] * L
+        for p in range(L):
+            x = w[(p + j - 1) % L]
+            new[p] = key.setdefault((ids[p], x), len(key))
+            weight[p] += x
+        count = [0] * len(key)
+        for p in range(L):
+            count[new[p]] += 1
+        repeated = False
+        for p in range(L):
+            if count[new[p]] > 1:
+                repeated = True
+                if weight[p] > best:
+                    best = weight[p]
+        if not repeated:
+            break
+        ids = new
+    return best

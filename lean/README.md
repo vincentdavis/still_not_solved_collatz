@@ -491,7 +491,7 @@ value `D = σL` always satisfies it.
 | `Cycle.max_pow_le` | the same for the largest member |
 | `Cycle.repeat_bound`, `repeat_theorem`, `repeat_theorem_q1` | the statements above |
 | `Cycle.repeat_unique` | a stretch with `X + 1 ≥ N + s` halvings occurs at one place only |
-| `Cycle.repeat_bound_local`, `repeat_theorem_local`, `repeat_unique_local` | the local form (Theorem 5): the same three statements with `D` (or `s`) the height of the two members the stretch starts from, `k·B ≤ L·window (p+j) k + D`; nothing is asked of the rest of the cycle |
+| `Cycle.repeat_bound_local`, `repeat_theorem_local`, `repeat_unique_local` | the local form (Theorem 5): the same three statements with `D` (or `s`) the height of the two members the stretch starts from, `k·B ≤ L·window (p+j) k + D`; the rest of the cycle enters only through the lowest level, and above it may sit as high as it likes. Neither this form nor the one with the largest member contains the other |
 
 **No analysis is needed.** The written proof of the size bound sums a geometric
 series with the real ratio `2^(B/L)/3`. `Cycle.member_chain` replaces it by a

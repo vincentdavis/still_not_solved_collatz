@@ -449,7 +449,7 @@ through the size test and its height (`member_pow_le`, `max_pow_le`), hence
 local forms `repeat_bound_local`, `repeat_theorem_local`, which ask only for
 the heights of the two members the stretch starts from.  The general
 statements other than `repeat_theorem_q1` are instantiated on the real cycle
-`cycle5`. -/
+`cycle5` (`repeat_theorem_local_of_le` through `repeat_theorem_local`). -/
 #print axioms Collatz.three_mul_split
 #print axioms Collatz.coprime_split
 #print axioms Collatz.three_pow_odd

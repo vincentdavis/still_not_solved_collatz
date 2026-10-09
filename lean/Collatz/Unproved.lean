@@ -191,7 +191,7 @@
       hypothesis `hN`; for a given pair `(L, B)` that hypothesis is a
       comparison of two integers and needs neither.
 
-  (c) Lemmas 15 and 20 and Corollaries 16-18, 20 and 21 (few moved corners, few
+  (c) Lemmas 15 and 20 and Corollaries 16-18, 21 and 22 (few moved corners, few
       runs, three corners for every length, touching a balanced staircase from
       below, corners moved down).  These are statements about Christoffel
       words: a balanced word has at most `j + 1` different stretches of length

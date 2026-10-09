@@ -27,10 +27,14 @@
        `Cycle.bb_period`            the halving pattern has no period shorter
        than `L`;
     8. `Cycle.repeat_bound_local`, `Cycle.repeat_theorem_local`,
-       `Cycle.repeat_unique_local`  the local form (Theorem 5): in 5 and 6 the
-       height `D` of the largest member can be replaced by the heights of the
-       two members the stretch starts from.  Nothing is then asked of the
-       rest of the cycle.
+       `Cycle.repeat_unique_local`  the local form (Theorem 5): the same
+       conclusions with `D` at least the height of the larger of the two
+       members the stretch starts from (`repeat_bound_local`, where the smaller
+       starting member also takes the place of `m`), or of both
+       (`repeat_theorem_local`).  The rest of the cycle then enters only
+       through the lowest level, from which heights are measured; above that
+       level it may sit as high as it likes.  Neither form contains the
+       other: the largest member need not sit on the highest level.
 
   HOW THIS MATCHES THE WRITTEN THEOREM.  docs/BALANCE.md states Theorem 4 for
   `q = 1` as `X < sigma + tau - 1`, with two real numbers:
@@ -74,7 +78,7 @@
   WHAT IS NOT HERE.  The two Diophantine inputs that bound `tau` from above
   (Ellison 1971, Rhin 1987) are cited, not formalized.  The word combinatorics
   that turns "few moved corners" or "touches a balanced staircase" into "some
-  stretch repeats" (Lemmas 15 and 20 and Corollaries 16-18, 20 and 21 of
+  stretch repeats" (Lemmas 15 and 20 and Corollaries 16-18, 21 and 22 of
   docs/BALANCE.md) is checked in Python, not here.  The
   lower half of Lemma 14 is not formalized.  Theorems 1-3 of docs/BALANCE.md
   need the number field `Q(2^(1/L))` and are out of reach without Mathlib.
@@ -770,8 +774,8 @@ In the statements below the two copies of the stretch start at the members
 
         (b · (y (r+j) + 2 ^ (X+1))) ^ L  ≤  a ^ L · 2 ^ D ,
 
-    i.e. `y (r+j) + 2 ^ (X+1) ≤ (a/b) · 2 ^ (D/L)`.  Nothing is asked of the
-    rest of the cycle. -/
+    i.e. `y (r+j) + 2 ^ (X+1) ≤ (a/b) · 2 ^ (D/L)`.  The rest of the cycle enters
+    only through the lowest level, from which `D` is measured. -/
 theorem repeat_bound_local {p r j a b D : Nat} (hb : 0 < b)
     (hpr : p % C.L ≠ r % C.L)
     (hagree : ∀ i, i < j → C.bb (p + i + 1) = C.bb (r + i + 1))
@@ -809,8 +813,10 @@ theorem repeat_theorem_local_of_le {p r j N D : Nat}
     least the heights of the two members the stretch starts from, `y (p+j)` and
     `y (r+j)`.  Then `(X + 1) · L < N · L + D`, that is, `X + 1 < N + D / L`.
 
-    `repeat_theorem` is the case where `D` is at least the height of the
-    largest member.  Here the rest of the cycle may sit as high as it likes. -/
+    `repeat_theorem` asks instead for the height of the largest member.
+    Neither statement contains the other: the largest member need not sit on the
+    highest level, so one of the two starting members can sit above it.  Here
+    the rest of the cycle may sit as high as it likes. -/
 theorem repeat_theorem_local {p r j N D : Nat}
     (hpr : p % C.L ≠ r % C.L)
     (hagree : ∀ i, i < j → C.bb (p + i + 1) = C.bb (r + i + 1))
@@ -1050,7 +1056,11 @@ theorem cycle5_repeat_theorem :
 /-- `repeat_unique` with its hypotheses met exactly.  The stretch of four steps
     with halving counts `1, 1, 3, 1` leads into `y 0` and into `y 3`; it has
     `X = 6` halvings, and `N + s = 5 + 2 = 7 = X + 1`.  The conclusion is
-    `0 ≡ 3 (mod 3)`: the two places are the same place of the cycle. -/
+    `0 ≡ 3 (mod 3)`: the two places are the same place of the cycle.
+
+    This shows only that the hypotheses can be met together.  On any cycle they
+    are met by `r = p + L` and a long enough stretch; a uniqueness statement
+    has no other kind of instance. -/
 theorem cycle5_repeat_unique : 0 % cycle5.L = 3 % cycle5.L := by
   refine cycle5.repeat_unique (j := 4) (N := 5) (s := 2) ?_ cycle5_size_exp ?_ ?_
   · intro i _
@@ -1100,7 +1110,8 @@ theorem cycle5_repeat_theorem_local :
     leads into `y 0` and into `y 3`, and starts both times from the member
     `31`, which sits at most `s = 1` whole halving above the lowest level.
     It has `X = 6` halvings and `N + s = 5 + 1 = 6 ≤ X + 1`.  The global
-    `repeat_unique` needs `s = 2` here. -/
+    `repeat_unique` needs `s = 2` here.  As for `cycle5_repeat_unique`, this
+    shows only that the hypotheses can be met together. -/
 theorem cycle5_repeat_unique_local : 0 % cycle5.L = 3 % cycle5.L := by
   have hD : ∀ n k, 1 ≤ k → k ≤ cycle5.L →
       k * cycle5.BB cycle5.L ≤ cycle5.L * (cycle5.window (1 + cycle5.L * n) k + 1) := by
